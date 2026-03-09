@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+.env
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated PDFs and reports
+*.pdf
+pcc_report_*/
+backend/static/reports/
+
+# C5AI+ learning store (runtime data, not source)
+c5ai_plus/learning/store/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Office documents (binary)
+*.docx
+*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db

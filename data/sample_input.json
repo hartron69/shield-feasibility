@@ -1,0 +1,95 @@
+{
+  "name": "Nordic Aqua Partners AS",
+  "registration_number": "NO-912345678",
+  "country": "Norge",
+  "reporting_currency": "NOK",
+  "captive_domicile_preference": "Guernsey",
+  "management_commitment_years": 7,
+  "willing_to_provide_capital": true,
+  "has_risk_manager": false,
+  "governance_maturity": "developing",
+
+  "sites": [
+    {
+      "name": "Hardanger Nord",
+      "site_type": "production",
+      "location": "Hardangerfjorden, Hordaland",
+      "species": "Atlantisk laks",
+      "biomass_tonnes": 4200,
+      "biomass_value_per_tonne": 72000,
+      "equipment_value": 37000000,
+      "infrastructure_value": 29000000,
+      "annual_revenue": 404000000
+    },
+    {
+      "name": "Hardanger Sør",
+      "site_type": "production",
+      "location": "Hardangerfjorden, Hordaland",
+      "species": "Atlantisk laks",
+      "biomass_tonnes": 3800,
+      "biomass_value_per_tonne": 72000,
+      "equipment_value": 30500000,
+      "infrastructure_value": 25000000,
+      "annual_revenue": 359000000
+    },
+    {
+      "name": "Sunnfjord Prosessering",
+      "site_type": "processing",
+      "location": "Sunnfjord, Vestland",
+      "species": "Atlantisk laks",
+      "biomass_tonnes": 1200,
+      "biomass_value_per_tonne": 72000,
+      "equipment_value": 44000000,
+      "infrastructure_value": 59000000,
+      "annual_revenue": 134000000
+    }
+  ],
+
+  "current_insurance": {
+    "annual_premium": 19500000,
+    "per_occurrence_deductible": 1600000,
+    "annual_aggregate_deductible": 3700000,
+    "coverage_limit": 263000000,
+    "aggregate_limit": 473000000,
+    "coverage_lines": ["Fiskedød", "Tingskade", "Driftsavbrudd", "Forurensningsansvar"],
+    "insurer_names": ["Lloyd's Syndikat 1234", "Norwegian Hull Club", "Zurich Marine"],
+    "current_loss_ratio": 0.58,
+    "market_rating_trend": 0.07
+  },
+
+  "historical_losses": [
+    {"year": 2019, "event_type": "mortality",             "gross_loss": 8600000,  "insured_loss": 7000000,  "retained_loss": 1600000},
+    {"year": 2019, "event_type": "property",              "gross_loss": 2000000,  "insured_loss": 400000,   "retained_loss": 1600000},
+    {"year": 2020, "event_type": "mortality",             "gross_loss": 25200000, "insured_loss": 23600000, "retained_loss": 1600000},
+    {"year": 2020, "event_type": "business_interruption", "gross_loss": 4700000,  "insured_loss": 3100000,  "retained_loss": 1600000},
+    {"year": 2021, "event_type": "mortality",             "gross_loss": 3300000,  "insured_loss": 1700000,  "retained_loss": 1600000},
+    {"year": 2021, "event_type": "property",              "gross_loss": 7600000,  "insured_loss": 6000000,  "retained_loss": 1600000},
+    {"year": 2022, "event_type": "mortality",             "gross_loss": 17300000, "insured_loss": 15700000, "retained_loss": 1600000},
+    {"year": 2022, "event_type": "mortality",             "gross_loss": 10300000, "insured_loss": 8700000,  "retained_loss": 1600000},
+    {"year": 2023, "event_type": "mortality",             "gross_loss": 5700000,  "insured_loss": 4100000,  "retained_loss": 1600000},
+    {"year": 2023, "event_type": "property",              "gross_loss": 3000000,  "insured_loss": 1400000,  "retained_loss": 1600000},
+    {"year": 2023, "event_type": "business_interruption", "gross_loss": 4000000,  "insured_loss": 2400000,  "retained_loss": 1600000}
+  ],
+
+  "financials": {
+    "annual_revenue": 897000000,
+    "ebitda": 191000000,
+    "total_assets": 1176000000,
+    "net_equity": 567000000,
+    "credit_rating": "BB+",
+    "free_cash_flow": 103000000,
+    "years_in_operation": 14
+  },
+
+  "risk_params": {
+    "expected_annual_events": 2.8,
+    "mean_loss_severity": 7100000,
+    "cv_loss_severity": 0.75,
+    "catastrophe_probability": 0.04,
+    "catastrophe_loss_multiplier": 8.5,
+    "inter_site_correlation": 0.15,
+    "bi_trigger_threshold": 5250000,
+    "bi_daily_revenue_loss": 1000000,
+    "bi_average_interruption_days": 18
+  }
+}

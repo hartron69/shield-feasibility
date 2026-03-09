@@ -1,0 +1,716 @@
+{
+  "metadata": {
+    "model_version": "5.0.0",
+    "generated_at": "2026-03-06T23:16:54.908773+00:00",
+    "operator_id": "nordic-aqua-001",
+    "operator_name": "Nordic Aqua Partners AS",
+    "forecast_horizon_years": 5,
+    "overall_confidence": "high",
+    "overall_data_quality": "SUFFICIENT",
+    "sites_included": [
+      "hardanger-nord",
+      "hardanger-sor",
+      "sunnfjord-pros"
+    ],
+    "warnings": [
+      "networkx not installed – site risk network disabled. Install with: pip install networkx",
+      "Site 'sunnfjord-pros': only 18 observations (need 24 for ML model). Using prior distributions."
+    ]
+  },
+  "site_forecasts": [
+    {
+      "site_id": "hardanger-nord",
+      "site_name": "Hardanger Nord",
+      "annual_forecasts": [
+        {
+          "risk_type": "hab",
+          "year": 1,
+          "event_probability": 0.392,
+          "expected_loss_mean": 10668672.0,
+          "expected_loss_p50": 9348060.130853109,
+          "expected_loss_p90": 18065839.09186359,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 2,
+          "event_probability": 0.392,
+          "expected_loss_mean": 10668672.0,
+          "expected_loss_p50": 9348060.130853109,
+          "expected_loss_p90": 18065839.09186359,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 3,
+          "event_probability": 0.392,
+          "expected_loss_mean": 10668672.0,
+          "expected_loss_p50": 9348060.130853109,
+          "expected_loss_p90": 18065839.09186359,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 4,
+          "event_probability": 0.392,
+          "expected_loss_mean": 10668672.0,
+          "expected_loss_p50": 9348060.130853109,
+          "expected_loss_p90": 18065839.09186359,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 5,
+          "event_probability": 0.392,
+          "expected_loss_mean": 10668672.0,
+          "expected_loss_p50": 9348060.130853109,
+          "expected_loss_p90": 18065839.09186359,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 1,
+          "event_probability": 0.6041666666666666,
+          "expected_loss_mean": 6012854.641395607,
+          "expected_loss_p50": 5155980.318334574,
+          "expected_loss_p90": 10494183.657293333,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 2,
+          "event_probability": 0.6041666666666666,
+          "expected_loss_mean": 6012854.641395607,
+          "expected_loss_p50": 5155980.318334574,
+          "expected_loss_p90": 10494183.657293333,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 3,
+          "event_probability": 0.6041666666666666,
+          "expected_loss_mean": 6012854.641395607,
+          "expected_loss_p50": 5155980.318334574,
+          "expected_loss_p90": 10494183.657293333,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 4,
+          "event_probability": 0.6041666666666666,
+          "expected_loss_mean": 6012854.641395607,
+          "expected_loss_p50": 5155980.318334574,
+          "expected_loss_p90": 10494183.657293333,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 5,
+          "event_probability": 0.6041666666666666,
+          "expected_loss_mean": 6012854.641395607,
+          "expected_loss_p50": 5155980.318334574,
+          "expected_loss_p90": 10494183.657293333,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 1,
+          "event_probability": 0.1122,
+          "expected_loss_mean": 678585.6,
+          "expected_loss_p50": 555918.9843245655,
+          "expected_loss_p90": 1248797.7959114152,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 2,
+          "event_probability": 0.1122,
+          "expected_loss_mean": 678585.6,
+          "expected_loss_p50": 555918.9843245655,
+          "expected_loss_p90": 1248797.7959114152,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 3,
+          "event_probability": 0.1122,
+          "expected_loss_mean": 678585.6,
+          "expected_loss_p50": 555918.9843245655,
+          "expected_loss_p90": 1248797.7959114152,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 4,
+          "event_probability": 0.1122,
+          "expected_loss_mean": 678585.6,
+          "expected_loss_p50": 555918.9843245655,
+          "expected_loss_p90": 1248797.7959114152,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 5,
+          "event_probability": 0.1122,
+          "expected_loss_mean": 678585.6,
+          "expected_loss_p50": 555918.9843245655,
+          "expected_loss_p90": 1248797.7959114152,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 1,
+          "event_probability": 0.12833000000000003,
+          "expected_loss_mean": 2328419.5200000005,
+          "expected_loss_p50": 1952248.4826138003,
+          "expected_loss_p90": 4177858.6414161115,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 2,
+          "event_probability": 0.12833000000000003,
+          "expected_loss_mean": 2328419.5200000005,
+          "expected_loss_p50": 1952248.4826138003,
+          "expected_loss_p90": 4177858.6414161115,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 3,
+          "event_probability": 0.12833000000000003,
+          "expected_loss_mean": 2328419.5200000005,
+          "expected_loss_p50": 1952248.4826138003,
+          "expected_loss_p90": 4177858.6414161115,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 4,
+          "event_probability": 0.12833000000000003,
+          "expected_loss_mean": 2328419.5200000005,
+          "expected_loss_p50": 1952248.4826138003,
+          "expected_loss_p90": 4177858.6414161115,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 5,
+          "event_probability": 0.12833000000000003,
+          "expected_loss_mean": 2328419.5200000005,
+          "expected_loss_p50": 1952248.4826138003,
+          "expected_loss_p90": 4177858.6414161115,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        }
+      ]
+    },
+    {
+      "site_id": "hardanger-sor",
+      "site_name": "Hardanger Sor",
+      "annual_forecasts": [
+        {
+          "risk_type": "hab",
+          "year": 1,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 1959551.9999999998,
+          "expected_loss_p50": 1716990.636279138,
+          "expected_loss_p90": 3318215.3434035084,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 2,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 1959551.9999999998,
+          "expected_loss_p50": 1716990.636279138,
+          "expected_loss_p90": 3318215.3434035084,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 3,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 1959551.9999999998,
+          "expected_loss_p50": 1716990.636279138,
+          "expected_loss_p90": 3318215.3434035084,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 4,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 1959551.9999999998,
+          "expected_loss_p50": 1716990.636279138,
+          "expected_loss_p90": 3318215.3434035084,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "hab",
+          "year": 5,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 1959551.9999999998,
+          "expected_loss_p50": 1716990.636279138,
+          "expected_loss_p90": 3318215.3434035084,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 1,
+          "event_probability": 0.5625,
+          "expected_loss_mean": 4440961.622269997,
+          "expected_loss_p50": 3808093.1744574346,
+          "expected_loss_p90": 7750772.246886666,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 2,
+          "event_probability": 0.5625,
+          "expected_loss_mean": 4440961.622269997,
+          "expected_loss_p50": 3808093.1744574346,
+          "expected_loss_p90": 7750772.246886666,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 3,
+          "event_probability": 0.5625,
+          "expected_loss_mean": 4440961.622269997,
+          "expected_loss_p50": 3808093.1744574346,
+          "expected_loss_p90": 7750772.246886666,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 4,
+          "event_probability": 0.5625,
+          "expected_loss_mean": 4440961.622269997,
+          "expected_loss_p50": 3808093.1744574346,
+          "expected_loss_p90": 7750772.246886666,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "lice",
+          "year": 5,
+          "event_probability": 0.5625,
+          "expected_loss_mean": 4440961.622269997,
+          "expected_loss_p50": 3808093.1744574346,
+          "expected_loss_p90": 7750772.246886666,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior_fallback"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 1,
+          "event_probability": 0.1105,
+          "expected_loss_mean": 572832.0,
+          "expected_loss_p50": 469282.2594947628,
+          "expected_loss_p90": 1054179.9575875595,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 2,
+          "event_probability": 0.1105,
+          "expected_loss_mean": 572832.0,
+          "expected_loss_p50": 469282.2594947628,
+          "expected_loss_p90": 1054179.9575875595,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 3,
+          "event_probability": 0.1105,
+          "expected_loss_mean": 572832.0,
+          "expected_loss_p50": 469282.2594947628,
+          "expected_loss_p90": 1054179.9575875595,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 4,
+          "event_probability": 0.1105,
+          "expected_loss_mean": 572832.0,
+          "expected_loss_p50": 469282.2594947628,
+          "expected_loss_p90": 1054179.9575875595,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 5,
+          "event_probability": 0.1105,
+          "expected_loss_mean": 572832.0,
+          "expected_loss_p50": 469282.2594947628,
+          "expected_loss_p90": 1054179.9575875595,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 1,
+          "event_probability": 0.1265,
+          "expected_loss_mean": 1967328.0,
+          "expected_loss_p50": 1649493.6027695013,
+          "expected_loss_p90": 3529955.9270572746,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 2,
+          "event_probability": 0.1265,
+          "expected_loss_mean": 1967328.0,
+          "expected_loss_p50": 1649493.6027695013,
+          "expected_loss_p90": 3529955.9270572746,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 3,
+          "event_probability": 0.1265,
+          "expected_loss_mean": 1967328.0,
+          "expected_loss_p50": 1649493.6027695013,
+          "expected_loss_p90": 3529955.9270572746,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 4,
+          "event_probability": 0.1265,
+          "expected_loss_mean": 1967328.0,
+          "expected_loss_p50": 1649493.6027695013,
+          "expected_loss_p90": 3529955.9270572746,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 5,
+          "event_probability": 0.1265,
+          "expected_loss_mean": 1967328.0,
+          "expected_loss_p50": 1649493.6027695013,
+          "expected_loss_p90": 3529955.9270572746,
+          "confidence_score": 0.79,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "treatment_adjusted_prior"
+        }
+      ]
+    },
+    {
+      "site_id": "sunnfjord-pros",
+      "site_name": "Sunnfjord Prosessering",
+      "annual_forecasts": [
+        {
+          "risk_type": "hab",
+          "year": 1,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 653183.9999999999,
+          "expected_loss_p50": 572330.2120930473,
+          "expected_loss_p90": 1106071.7811345053,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "hab",
+          "year": 2,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 653183.9999999999,
+          "expected_loss_p50": 572330.2120930473,
+          "expected_loss_p90": 1106071.7811345053,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "hab",
+          "year": 3,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 653183.9999999999,
+          "expected_loss_p50": 572330.2120930473,
+          "expected_loss_p90": 1106071.7811345053,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "hab",
+          "year": 4,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 653183.9999999999,
+          "expected_loss_p50": 572330.2120930473,
+          "expected_loss_p90": 1106071.7811345053,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "hab",
+          "year": 5,
+          "event_probability": 0.08399999999999999,
+          "expected_loss_mean": 653183.9999999999,
+          "expected_loss_p50": 572330.2120930473,
+          "expected_loss_p90": 1106071.7811345053,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "lice",
+          "year": 1,
+          "event_probability": 0.3,
+          "expected_loss_mean": 227369.11618855738,
+          "expected_loss_p50": 194967.4086572016,
+          "expected_loss_p90": 396825.36924348056,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "lice",
+          "year": 2,
+          "event_probability": 0.3,
+          "expected_loss_mean": 227369.11618855738,
+          "expected_loss_p50": 194967.4086572016,
+          "expected_loss_p90": 396825.36924348056,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "lice",
+          "year": 3,
+          "event_probability": 0.3,
+          "expected_loss_mean": 227369.11618855738,
+          "expected_loss_p50": 194967.4086572016,
+          "expected_loss_p90": 396825.36924348056,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "lice",
+          "year": 4,
+          "event_probability": 0.3,
+          "expected_loss_mean": 227369.11618855738,
+          "expected_loss_p50": 194967.4086572016,
+          "expected_loss_p90": 396825.36924348056,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "lice",
+          "year": 5,
+          "event_probability": 0.3,
+          "expected_loss_mean": 227369.11618855738,
+          "expected_loss_p50": 194967.4086572016,
+          "expected_loss_p90": 396825.36924348056,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 1,
+          "event_probability": 0.1035,
+          "expected_loss_mean": 178848.0,
+          "expected_loss_p50": 146517.99052098935,
+          "expected_loss_p90": 329133.1089300527,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 2,
+          "event_probability": 0.1035,
+          "expected_loss_mean": 178848.0,
+          "expected_loss_p50": 146517.99052098935,
+          "expected_loss_p90": 329133.1089300527,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 3,
+          "event_probability": 0.1035,
+          "expected_loss_mean": 178848.0,
+          "expected_loss_p50": 146517.99052098935,
+          "expected_loss_p90": 329133.1089300527,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 4,
+          "event_probability": 0.1035,
+          "expected_loss_mean": 178848.0,
+          "expected_loss_p50": 146517.99052098935,
+          "expected_loss_p90": 329133.1089300527,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "jellyfish",
+          "year": 5,
+          "event_probability": 0.1035,
+          "expected_loss_mean": 178848.0,
+          "expected_loss_p50": 146517.99052098935,
+          "expected_loss_p90": 329133.1089300527,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "temp_adjusted_prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 1,
+          "event_probability": 0.1,
+          "expected_loss_mean": 518400.0,
+          "expected_loss_p50": 434649.1706902501,
+          "expected_loss_p90": 930159.6645737209,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 2,
+          "event_probability": 0.1,
+          "expected_loss_mean": 518400.0,
+          "expected_loss_p50": 434649.1706902501,
+          "expected_loss_p90": 930159.6645737209,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 3,
+          "event_probability": 0.1,
+          "expected_loss_mean": 518400.0,
+          "expected_loss_p50": 434649.1706902501,
+          "expected_loss_p90": 930159.6645737209,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 4,
+          "event_probability": 0.1,
+          "expected_loss_mean": 518400.0,
+          "expected_loss_p50": 434649.1706902501,
+          "expected_loss_p90": 930159.6645737209,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        },
+        {
+          "risk_type": "pathogen",
+          "year": 5,
+          "event_probability": 0.1,
+          "expected_loss_mean": 518400.0,
+          "expected_loss_p50": 434649.1706902501,
+          "expected_loss_p90": 930159.6645737209,
+          "confidence_score": 0.545,
+          "data_quality_flag": "SUFFICIENT",
+          "model_used": "prior"
+        }
+      ]
+    }
+  ],
+  "operator_aggregate": {
+    "annual_expected_loss_by_type": {
+      "hab": 13281408.0,
+      "lice": 10681185.379854161,
+      "jellyfish": 1430265.6,
+      "pathogen": 4814147.5200000005
+    },
+    "total_expected_annual_loss": 30207006.499854162,
+    "c5ai_vs_static_ratio": 1.339454,
+    "loss_breakdown_fractions": {
+      "hab": 0.43967956032043964,
+      "lice": 0.3535996464003536,
+      "jellyfish": 0.04734895265104735,
+      "pathogen": 0.15937184062815937
+    }
+  }
+}

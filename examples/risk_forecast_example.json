@@ -1,0 +1,86 @@
+{
+  "metadata": {
+    "model_version": "5.0.0",
+    "generated_at": "2026-03-06T10:00:00+00:00",
+    "operator_id": "nordic-aqua-001",
+    "operator_name": "Nordic Aqua Partners AS",
+    "forecast_horizon_years": 5,
+    "overall_confidence": "medium",
+    "overall_data_quality": "LIMITED",
+    "sites_included": ["hardanger-nord", "hardanger-sor", "sunnfjord-pros"],
+    "warnings": [
+      "Sunnfjord Prosessering: kun 18 observasjoner (trenger 24). Bruker prior-distribusjon.",
+      "Klorofyll-data mangler for alle lokaliteter – HAB-estimater har noe lavere presisjon."
+    ]
+  },
+  "site_forecasts": [
+    {
+      "site_id": "hardanger-nord",
+      "site_name": "Hardanger Nord",
+      "annual_forecasts": [
+        {"risk_type": "hab",       "year": 1, "event_probability": 0.14, "expected_loss_mean": 3850000, "expected_loss_p50": 2695000, "expected_loss_p90": 8085000, "confidence_score": 0.62, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 2, "event_probability": 0.15, "expected_loss_mean": 4000000, "expected_loss_p50": 2800000, "expected_loss_p90": 8400000, "confidence_score": 0.62, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 3, "event_probability": 0.14, "expected_loss_mean": 3850000, "expected_loss_p50": 2695000, "expected_loss_p90": 8085000, "confidence_score": 0.62, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 4, "event_probability": 0.16, "expected_loss_mean": 4200000, "expected_loss_p50": 2940000, "expected_loss_p90": 8820000, "confidence_score": 0.62, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 5, "event_probability": 0.15, "expected_loss_mean": 4000000, "expected_loss_p50": 2800000, "expected_loss_p90": 8400000, "confidence_score": 0.62, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 1, "event_probability": 0.32, "expected_loss_mean": 2100000, "expected_loss_p50": 1680000, "expected_loss_p90": 4200000, "confidence_score": 0.58, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 2, "event_probability": 0.30, "expected_loss_mean": 1950000, "expected_loss_p50": 1560000, "expected_loss_p90": 3900000, "confidence_score": 0.58, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 3, "event_probability": 0.31, "expected_loss_mean": 2020000, "expected_loss_p50": 1616000, "expected_loss_p90": 4040000, "confidence_score": 0.58, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 4, "event_probability": 0.33, "expected_loss_mean": 2150000, "expected_loss_p50": 1720000, "expected_loss_p90": 4300000, "confidence_score": 0.58, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 5, "event_probability": 0.29, "expected_loss_mean": 1890000, "expected_loss_p50": 1512000, "expected_loss_p90": 3780000, "confidence_score": 0.58, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 1, "event_probability": 0.08, "expected_loss_mean": 720000, "expected_loss_p50": 504000, "expected_loss_p90": 1512000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 2, "event_probability": 0.08, "expected_loss_mean": 720000, "expected_loss_p50": 504000, "expected_loss_p90": 1512000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 3, "event_probability": 0.08, "expected_loss_mean": 720000, "expected_loss_p50": 504000, "expected_loss_p90": 1512000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 4, "event_probability": 0.08, "expected_loss_mean": 720000, "expected_loss_p50": 504000, "expected_loss_p90": 1512000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 5, "event_probability": 0.08, "expected_loss_mean": 720000, "expected_loss_p50": 504000, "expected_loss_p90": 1512000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 1, "event_probability": 0.10, "expected_loss_mean": 1080000, "expected_loss_p50": 756000, "expected_loss_p90": 2268000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 2, "event_probability": 0.10, "expected_loss_mean": 1080000, "expected_loss_p50": 756000, "expected_loss_p90": 2268000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 3, "event_probability": 0.10, "expected_loss_mean": 1080000, "expected_loss_p50": 756000, "expected_loss_p90": 2268000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 4, "event_probability": 0.10, "expected_loss_mean": 1080000, "expected_loss_p50": 756000, "expected_loss_p90": 2268000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 5, "event_probability": 0.10, "expected_loss_mean": 1080000, "expected_loss_p50": 756000, "expected_loss_p90": 2268000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"}
+      ]
+    },
+    {
+      "site_id": "hardanger-sor",
+      "site_name": "Hardanger Sor",
+      "annual_forecasts": [
+        {"risk_type": "hab",       "year": 1, "event_probability": 0.13, "expected_loss_mean": 3250000, "expected_loss_p50": 2275000, "expected_loss_p90": 6825000, "confidence_score": 0.60, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 2, "event_probability": 0.13, "expected_loss_mean": 3250000, "expected_loss_p50": 2275000, "expected_loss_p90": 6825000, "confidence_score": 0.60, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 3, "event_probability": 0.12, "expected_loss_mean": 3000000, "expected_loss_p50": 2100000, "expected_loss_p90": 6300000, "confidence_score": 0.60, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 4, "event_probability": 0.14, "expected_loss_mean": 3500000, "expected_loss_p50": 2450000, "expected_loss_p90": 7350000, "confidence_score": 0.60, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "hab",       "year": 5, "event_probability": 0.13, "expected_loss_mean": 3250000, "expected_loss_p50": 2275000, "expected_loss_p90": 6825000, "confidence_score": 0.60, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 1, "event_probability": 0.28, "expected_loss_mean": 1820000, "expected_loss_p50": 1456000, "expected_loss_p90": 3640000, "confidence_score": 0.55, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 2, "event_probability": 0.27, "expected_loss_mean": 1755000, "expected_loss_p50": 1404000, "expected_loss_p90": 3510000, "confidence_score": 0.55, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 3, "event_probability": 0.28, "expected_loss_mean": 1820000, "expected_loss_p50": 1456000, "expected_loss_p90": 3640000, "confidence_score": 0.55, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 4, "event_probability": 0.30, "expected_loss_mean": 1950000, "expected_loss_p50": 1560000, "expected_loss_p90": 3900000, "confidence_score": 0.55, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "lice",      "year": 5, "event_probability": 0.26, "expected_loss_mean": 1690000, "expected_loss_p50": 1352000, "expected_loss_p90": 3380000, "confidence_score": 0.55, "data_quality_flag": "LIMITED", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 1, "event_probability": 0.08, "expected_loss_mean": 600000, "expected_loss_p50": 420000, "expected_loss_p90": 1260000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 2, "event_probability": 0.08, "expected_loss_mean": 600000, "expected_loss_p50": 420000, "expected_loss_p90": 1260000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 3, "event_probability": 0.08, "expected_loss_mean": 600000, "expected_loss_p50": 420000, "expected_loss_p90": 1260000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 4, "event_probability": 0.08, "expected_loss_mean": 600000, "expected_loss_p50": 420000, "expected_loss_p90": 1260000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "jellyfish", "year": 5, "event_probability": 0.08, "expected_loss_mean": 600000, "expected_loss_p50": 420000, "expected_loss_p90": 1260000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 1, "event_probability": 0.10, "expected_loss_mean": 900000, "expected_loss_p50": 630000, "expected_loss_p90": 1890000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 2, "event_probability": 0.10, "expected_loss_mean": 900000, "expected_loss_p50": 630000, "expected_loss_p90": 1890000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 3, "event_probability": 0.10, "expected_loss_mean": 900000, "expected_loss_p50": 630000, "expected_loss_p90": 1890000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 4, "event_probability": 0.10, "expected_loss_mean": 900000, "expected_loss_p50": 630000, "expected_loss_p90": 1890000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"},
+        {"risk_type": "pathogen",  "year": 5, "event_probability": 0.10, "expected_loss_mean": 900000, "expected_loss_p50": 630000, "expected_loss_p90": 1890000, "confidence_score": 0.20, "data_quality_flag": "PRIOR_ONLY", "model_used": "prior"}
+      ]
+    }
+  ],
+  "operator_aggregate": {
+    "annual_expected_loss_by_type": {
+      "hab": 7363000,
+      "lice": 3617000,
+      "jellyfish": 1320000,
+      "pathogen": 1980000
+    },
+    "total_expected_annual_loss": 14280000,
+    "c5ai_vs_static_ratio": 0.632,
+    "loss_breakdown_fractions": {
+      "hab": 0.5156,
+      "lice": 0.2533,
+      "jellyfish": 0.0924,
+      "pathogen": 0.1387
+    }
+  }
+}
