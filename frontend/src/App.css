@@ -1145,3 +1145,106 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--teal); c
   color: var(--dark-grey);
   margin-bottom: 2px;
 }
+
+
+/* ========================================================================
+   Multi-Domain C5AI+ Extension – Sprint styles
+   ======================================================================== */
+
+/* ── Domain forecast grid ──────────────────────────────────────────────── */
+.domain-forecast-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  border-left: 4px solid var(--navy);
+  padding-left: 10px;
+  margin-bottom: 16px;
+}
+
+.domain-forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.domain-forecast-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.domain-risk-label {
+  font-size: 12px;
+  font-weight: 700;
+  border-left: 3px solid var(--navy);
+  padding-left: 8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Domain badges ─────────────────────────────────────────────────────── */
+.domain-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.domain-badge-biological {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.domain-badge-structural {
+  background: #DBEAFE;
+  color: #1E3A8A;
+}
+
+.domain-badge-environmental {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.domain-badge-operational {
+  background: #EDE9FE;
+  color: #4C1D95;
+}
+
+/* ── Structural/Environmental/Operational input panel reuse ────────────── */
+.bio-row-adverse td {
+  background: #FFF7ED;
+}
+
+.delta-bad {
+  color: #B91C1C;
+  font-weight: 600;
+}
+
+.delta-good {
+  color: #059669;
+  font-weight: 600;
+}
+
+.threshold-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.threshold-adverse {
+  background: #FEE2E2;
+  color: #B91C1C;
+}
+
+.threshold-ok {
+  background: #D1FAE5;
+  color: #065F46;
+}

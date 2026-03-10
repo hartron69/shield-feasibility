@@ -94,6 +94,40 @@ export default function OverviewPage({ onNavigate }) {
         ))}
       </div>
 
+      {/* ── Top alert per domain ──────────────────────────────────────────── */}
+      <div className="card">
+        <div className="section-title" style={{ marginBottom: 10 }}>Top Alert by Domain</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {Object.entries(DOMAIN_COLORS).map(([domain, color]) => {
+            const domainAlerts = MOCK_ALERTS.filter(a => {
+              const d = a.domain || ({'hab':'biological','lice':'biological','jellyfish':'biological','pathogen':'biological'}[a.risk_type] || domain)
+              return d === domain
+            })
+            const top = domainAlerts.sort((a, b) => {
+              const order = { CRITICAL: 0, WARNING: 1, WATCH: 2, NORMAL: 3 }
+              return (order[a.alert_level] ?? 4) - (order[b.alert_level] ?? 4)
+            })[0]
+            return (
+              <div key={domain} style={{ flex: 1, minWidth: 180, padding: '10px 14px', border: `2px solid ${color}20`, borderRadius: 8, background: `${color}08` }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'capitalize', marginBottom: 4 }}>
+                  {domain}
+                </div>
+                {top ? (
+                  <>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>{top.risk_type.replace(/_/g, ' ')}</div>
+                    <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>
+                      {top.alert_level} · {top.site_id}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>No active alerts</div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
       {/* ── Input completeness ────────────────────────────────────────────── */}
       <div className="card">
         <div className="section-title" style={{ marginBottom:10 }}>Input Data Completeness</div>

@@ -4,6 +4,13 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Multi-Domain C5AI+ Extension (2026-03-10)
+**Tests after:** 1155 passed, 0 failed | Frontend build: 0 errors, 82 modules
+**Artifacts:** `docs/sprints/sprint_multidomain_c5ai/`
+**Summary:** Extended C5AI+ to cover structural, environmental, and operational risk domains alongside biological. New packages: `c5ai_plus/structural/`, `c5ai_plus/environmental/`, `c5ai_plus/operational/`, `c5ai_plus/multi_domain_engine.py`. Alert layer extended with 15 new risk types and domain field. GUI updated with 3 new input panels, 3 new forecast tabs, domain filters, and domain badges. 63 new tests.
+
+---
+
 ## Sprint – Biological Input Line Charts (2026-03-10)
 **Tests after:** 1092 passed, 0 failed | Frontend build: 0 errors, 76 modules
 **Artifacts:** `docs/sprints/sprint_bio_charts/`

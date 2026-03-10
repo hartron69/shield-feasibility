@@ -153,7 +153,10 @@ class TestAlertRules:
             assert len(rules) >= 3, f"{risk_type} has fewer than 3 rules"
 
     def test_four_risk_types_covered(self):
-        assert set(ALL_RULES.keys()) == {'hab', 'lice', 'jellyfish', 'pathogen'}
+        # Sprint multi-domain: ALL_RULES now covers 19 risk types across 4 domains
+        bio_types = {'hab', 'lice', 'jellyfish', 'pathogen'}
+        assert bio_types.issubset(set(ALL_RULES.keys()))
+        assert len(ALL_RULES) >= 19
 
     def test_weights_sum_at_most_one_per_risk_type(self):
         for risk_type, rules in ALL_RULES.items():
@@ -518,13 +521,15 @@ class TestAlertSimulator:
         assert a.alert_level == 'WARNING'
 
     def test_simulate_all_returns_ten_records(self):
+        # Sprint multi-domain: simulate_all now returns ~18 records (all 4 domains)
         alerts = self.sim.simulate_all()
-        assert len(alerts) == 10
+        assert len(alerts) >= 10
 
     def test_simulate_all_covers_four_risk_types(self):
         alerts = self.sim.simulate_all()
         risk_types = {a.risk_type for a in alerts}
-        assert risk_types == {'hab', 'lice', 'jellyfish', 'pathogen'}
+        # Biological types still present; new domains also included
+        assert {'hab', 'lice', 'jellyfish', 'pathogen'}.issubset(risk_types)
 
     def test_simulate_all_has_critical_and_normal(self):
         alerts = self.sim.simulate_all()

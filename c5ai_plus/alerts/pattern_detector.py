@@ -196,6 +196,77 @@ class PatternDetector:
             baseline_prob = C5AI_SETTINGS.pathogen_prior_event_probability  # 0.10
             return current_probability, baseline_prob, 'increasing'
 
+        # ── Structural rules ──────────────────────────────────────────────────
+        if rid == 'mooring_overload':
+            current = env.get('mooring_inspection_score', 0.8 - current_probability * 0.4)
+            # Low score is bad, so invert for z-score (baseline - current)
+            return 0.6 - current, 0.0, 'decreasing'
+
+        if rid == 'net_degradation':
+            current = env.get('net_strength_residual_pct', 90.0 - current_probability * 30.0)
+            return 70.0 - current, 0.0, 'decreasing'
+
+        if rid == 'cage_deformation':
+            current = env.get('deformation_load_index', 0.2 + current_probability * 0.6)
+            baseline = 0.5
+            return current, baseline, 'increasing'
+
+        if rid == 'anchor_deterioration':
+            current = env.get('anchor_line_condition', 0.9 - current_probability * 0.5)
+            return 0.5 - current, 0.0, 'decreasing'
+
+        if rid == 'inspection_overdue':
+            current = env.get('last_inspection_days_ago', 90 + int(current_probability * 200))
+            baseline = 180.0
+            return float(current), baseline, 'increasing'
+
+        # ── Environmental rules ───────────────────────────────────────────────
+        if rid == 'low_oxygen_env':
+            current = env.get('dissolved_oxygen_mg_l', 8.5 - current_probability * 3.0)
+            return 7.0 - current, 0.0, 'decreasing'
+
+        if rid == 'temp_anomaly':
+            temp = env.get('surface_temp_c', 10.0 + current_probability * 8.0)
+            return abs(temp - 10.0), 3.0, 'increasing'
+
+        if rid == 'high_current_wave':
+            current = env.get('current_speed_ms', 0.3 + current_probability * 0.6)
+            baseline = 0.6
+            return current, baseline, 'increasing'
+
+        if rid == 'ice_formation':
+            current = env.get('ice_risk_score', current_probability * 0.5)
+            baseline = 0.05
+            return current, baseline, 'increasing'
+
+        if rid == 'exposure_event':
+            current = env.get('combined_exposure_score', 0.2 + current_probability * 0.8)
+            baseline = 0.5
+            return current, baseline, 'increasing'
+
+        # ── Operational rules ─────────────────────────────────────────────────
+        if rid == 'staffing_gap':
+            current = env.get('staffing_score', 0.9 - current_probability * 0.4)
+            return 0.6 - current, 0.0, 'decreasing'
+
+        if rid == 'training_deficit':
+            current = env.get('training_compliance_pct', 90 - current_probability * 30)
+            return 80.0 - current, 0.0, 'decreasing'
+
+        if rid == 'equipment_readiness_low':
+            current = env.get('equipment_readiness_score', 0.9 - current_probability * 0.4)
+            return 0.7 - current, 0.0, 'decreasing'
+
+        if rid == 'high_incident_rate':
+            current = env.get('incident_rate_12m', current_probability * 2.0)
+            baseline = 1.0
+            return float(current), baseline, 'increasing'
+
+        if rid == 'maintenance_overdue':
+            current = env.get('maintenance_backlog_score', current_probability * 0.6)
+            baseline = 0.3
+            return current, baseline, 'increasing'
+
         # Fallback: generic probability proxy
         return current_probability, 0.15, 'increasing'
 

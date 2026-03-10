@@ -126,10 +126,127 @@ PATHOGEN_RULES: List[AlertRule] = [
     ),
 ]
 
+# ── Structural rules ──────────────────────────────────────────────────────────
+STRUCTURAL_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='mooring_overload',
+        risk_type='mooring_failure',
+        description='Mooring inspection score below safety threshold (<0.6)',
+        weight=0.30,
+    ),
+    AlertRule(
+        rule_id='net_degradation',
+        risk_type='net_integrity',
+        description='Net strength residual below acceptable level (<70%)',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='cage_deformation',
+        risk_type='cage_structural',
+        description='Deformation load index elevated above baseline (>0.5)',
+        weight=0.20,
+    ),
+    AlertRule(
+        rule_id='anchor_deterioration',
+        risk_type='anchor_deterioration',
+        description='Anchor line condition deteriorated — score below 0.5',
+        weight=0.15,
+    ),
+    AlertRule(
+        rule_id='inspection_overdue',
+        risk_type='deformation',
+        description='Inspection overdue — last inspection > 180 days ago',
+        weight=0.10,
+    ),
+]
+
+# ── Environmental rules ────────────────────────────────────────────────────────
+ENVIRONMENTAL_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='low_oxygen_env',
+        risk_type='oxygen_stress',
+        description='Dissolved oxygen below critical threshold (<7 mg/L)',
+        weight=0.30,
+    ),
+    AlertRule(
+        rule_id='temp_anomaly',
+        risk_type='temperature_extreme',
+        description='Sea surface temperature outside safe operating range',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='high_current_wave',
+        risk_type='current_storm',
+        description='Current speed or significant wave height exceeds design limit',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='ice_formation',
+        risk_type='ice',
+        description='Ice risk score elevated — risk of equipment damage',
+        weight=0.10,
+    ),
+    AlertRule(
+        rule_id='exposure_event',
+        risk_type='exposure_anomaly',
+        description='Open-coast site with anomalous combined environmental loading',
+        weight=0.10,
+    ),
+]
+
+# ── Operational rules ──────────────────────────────────────────────────────────
+OPERATIONAL_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='staffing_gap',
+        risk_type='human_error',
+        description='Staffing score below minimum safe threshold (<0.6)',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='training_deficit',
+        risk_type='procedure_failure',
+        description='Training compliance below required level (<80%)',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='equipment_readiness_low',
+        risk_type='equipment_failure',
+        description='Equipment readiness score below operational minimum (<0.7)',
+        weight=0.20,
+    ),
+    AlertRule(
+        rule_id='high_incident_rate',
+        risk_type='incident',
+        description='Incident rate in last 12 months above baseline (>1/month)',
+        weight=0.15,
+    ),
+    AlertRule(
+        rule_id='maintenance_overdue',
+        risk_type='maintenance_backlog',
+        description='Maintenance backlog score elevated — deferred work accumulating',
+        weight=0.15,
+    ),
+]
+
 # ── Master rule registry ──────────────────────────────────────────────────────
 ALL_RULES: Dict[str, List[AlertRule]] = {
-    'hab':       HAB_RULES,
-    'lice':      LICE_RULES,
-    'jellyfish': JELLYFISH_RULES,
-    'pathogen':  PATHOGEN_RULES,
+    'hab':                  HAB_RULES,
+    'lice':                 LICE_RULES,
+    'jellyfish':            JELLYFISH_RULES,
+    'pathogen':             PATHOGEN_RULES,
+    'mooring_failure':      STRUCTURAL_RULES,
+    'net_integrity':        STRUCTURAL_RULES,
+    'cage_structural':      STRUCTURAL_RULES,
+    'deformation':          STRUCTURAL_RULES,
+    'anchor_deterioration': STRUCTURAL_RULES,
+    'oxygen_stress':        ENVIRONMENTAL_RULES,
+    'temperature_extreme':  ENVIRONMENTAL_RULES,
+    'current_storm':        ENVIRONMENTAL_RULES,
+    'ice':                  ENVIRONMENTAL_RULES,
+    'exposure_anomaly':     ENVIRONMENTAL_RULES,
+    'human_error':          OPERATIONAL_RULES,
+    'procedure_failure':    OPERATIONAL_RULES,
+    'equipment_failure':    OPERATIONAL_RULES,
+    'incident':             OPERATIONAL_RULES,
+    'maintenance_backlog':  OPERATIONAL_RULES,
 }

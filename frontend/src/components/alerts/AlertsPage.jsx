@@ -5,11 +5,28 @@ import AlertDetailPanel from './AlertDetailPanel.jsx'
 
 const LEVELS = ['All', 'CRITICAL', 'WARNING', 'WATCH', 'NORMAL']
 const RISK_TYPES = ['All', 'hab', 'lice', 'jellyfish', 'pathogen']
+const DOMAINS = ['All', 'biological', 'structural', 'environmental', 'operational']
+
+const RISK_TYPE_DOMAIN = {
+  hab: 'biological', lice: 'biological', jellyfish: 'biological', pathogen: 'biological',
+  mooring_failure: 'structural', net_integrity: 'structural', cage_structural: 'structural',
+  deformation: 'structural', anchor_deterioration: 'structural',
+  oxygen_stress: 'environmental', temperature_extreme: 'environmental',
+  current_storm: 'environmental', ice: 'environmental', exposure_anomaly: 'environmental',
+  human_error: 'operational', procedure_failure: 'operational',
+  equipment_failure: 'operational', incident: 'operational', maintenance_backlog: 'operational',
+}
+
+const DOMAIN_COLORS = {
+  biological: '#059669', structural: '#2563EB',
+  environmental: '#D97706', operational: '#7C3AED',
+}
 
 export default function AlertsPage({ alertsData }) {
-  const [levelFilter, setLevelFilter]     = useState('All')
-  const [riskFilter, setRiskFilter]       = useState('All')
-  const [selectedId, setSelectedId]       = useState(null)
+  const [levelFilter, setLevelFilter]   = useState('All')
+  const [riskFilter, setRiskFilter]     = useState('All')
+  const [domainFilter, setDomainFilter] = useState('All')
+  const [selectedId, setSelectedId]     = useState(null)
 
   const alerts = alertsData || []
 
@@ -17,9 +34,13 @@ export default function AlertsPage({ alertsData }) {
     return alerts.filter(a => {
       if (levelFilter !== 'All' && a.alert_level !== levelFilter) return false
       if (riskFilter !== 'All' && a.risk_type !== riskFilter) return false
+      if (domainFilter !== 'All') {
+        const domain = a.domain || RISK_TYPE_DOMAIN[a.risk_type] || 'biological'
+        if (domain !== domainFilter) return false
+      }
       return true
     })
-  }, [alerts, levelFilter, riskFilter])
+  }, [alerts, levelFilter, riskFilter, domainFilter])
 
   const selectedAlert = useMemo(
     () => alerts.find(a => a.alert_id === selectedId) || null,
@@ -61,6 +82,19 @@ export default function AlertsPage({ alertsData }) {
               onClick={() => setRiskFilter(r)}
             >
               {r === 'All' ? 'All' : r.charAt(0).toUpperCase() + r.slice(1)}
+            </button>
+          ))}
+        </div>
+        <div className="alert-filter-group">
+          <span className="alert-filter-label">Domain:</span>
+          {DOMAINS.map(d => (
+            <button
+              key={d}
+              className={`alert-filter-pill ${domainFilter === d ? 'active' : ''}`}
+              style={domainFilter === d && d !== 'All' ? { background: DOMAIN_COLORS[d], color: '#fff', borderColor: DOMAIN_COLORS[d] } : {}}
+              onClick={() => setDomainFilter(d)}
+            >
+              {d === 'All' ? 'All' : d.charAt(0).toUpperCase() + d.slice(1)}
             </button>
           ))}
         </div>

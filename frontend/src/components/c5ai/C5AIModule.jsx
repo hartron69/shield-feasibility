@@ -1,24 +1,34 @@
 import React, { useState } from 'react'
 import RiskOverviewTab from './RiskOverviewTab.jsx'
 import BiologicalForecastTab from './BiologicalForecastTab.jsx'
-import RiskDriversTab from './RiskDriversTab.jsx'
+import StructuralForecastTab from './StructuralForecastTab.jsx'
+import EnvironmentalForecastTab from './EnvironmentalForecastTab.jsx'
+import OperationalForecastTab from './OperationalForecastTab.jsx'
 import LearningStatusTab from './LearningStatusTab.jsx'
+import AlertTable from '../alerts/AlertTable.jsx'
+import AlertDetailPanel from '../alerts/AlertDetailPanel.jsx'
+import { MOCK_ALERTS } from '../../data/mockAlertsData.js'
 
 const TABS = [
-  { id: 'overview',    label: 'Risk Overview' },
-  { id: 'forecast',   label: 'Biological Forecast' },
-  { id: 'drivers',    label: 'Risk Drivers' },
-  { id: 'learning',   label: 'Learning Status' },
+  { id: 'overview',      label: 'Risk Overview' },
+  { id: 'biological',    label: 'Biological' },
+  { id: 'structural',    label: 'Structural' },
+  { id: 'environmental', label: 'Environmental' },
+  { id: 'operational',   label: 'Operational' },
+  { id: 'learning',      label: 'Learning Status' },
+  { id: 'alerts',        label: 'Alerts' },
 ]
 
 export default function C5AIModule({ c5aiData, feasibilityResult, operator }) {
   const [activeTab, setActiveTab] = useState('overview')
+  const [selectedAlertId, setSelectedAlertId] = useState(null)
   const L = c5aiData.learning
   const status = L.status
+  const selectedAlert = MOCK_ALERTS.find(a => a.alert_id === selectedAlertId) || null
 
   return (
     <div className="c5ai-module">
-      {/* ── Module header ─────────────────────────────────────────────────── */}
+      {/* Module header */}
       <div className="c5ai-header">
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -45,7 +55,7 @@ export default function C5AIModule({ c5aiData, feasibilityResult, operator }) {
         </div>
       </div>
 
-      {/* ── Tab bar ───────────────────────────────────────────────────────── */}
+      {/* Tab bar */}
       <div className="tab-bar">
         {TABS.map(t => (
           <button
@@ -58,18 +68,42 @@ export default function C5AIModule({ c5aiData, feasibilityResult, operator }) {
         ))}
       </div>
 
-      {/* ── Tab content ───────────────────────────────────────────────────── */}
+      {/* Tab content */}
       {activeTab === 'overview' && (
         <RiskOverviewTab data={c5aiData} feasibilityResult={feasibilityResult} />
       )}
-      {activeTab === 'forecast' && (
+      {activeTab === 'biological' && (
         <BiologicalForecastTab data={c5aiData} />
       )}
-      {activeTab === 'drivers' && (
-        <RiskDriversTab data={c5aiData} />
+      {activeTab === 'structural' && (
+        <StructuralForecastTab data={c5aiData} />
+      )}
+      {activeTab === 'environmental' && (
+        <EnvironmentalForecastTab data={c5aiData} />
+      )}
+      {activeTab === 'operational' && (
+        <OperationalForecastTab data={c5aiData} />
       )}
       {activeTab === 'learning' && (
         <LearningStatusTab data={c5aiData} />
+      )}
+      {activeTab === 'alerts' && (
+        <div>
+          <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--dark-grey)' }}>
+            Early warning signals for this operator's sites. Click a row for details.
+          </div>
+          <AlertTable
+            alerts={MOCK_ALERTS}
+            selectedId={selectedAlertId}
+            onSelect={setSelectedAlertId}
+          />
+          {selectedAlert && (
+            <AlertDetailPanel
+              alert={selectedAlert}
+              onClose={() => setSelectedAlertId(null)}
+            />
+          )}
+        </div>
       )}
     </div>
   )

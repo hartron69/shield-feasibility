@@ -355,6 +355,111 @@ export const C5AI_MOCK = {
     },
   },
 
+  // ── E. Structural Forecast ─────────────────────────────────────────────────
+
+  structural_forecast: [
+    {
+      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      risks: {
+        mooring_failure:      { probability: 0.22, expected_loss_mean: 1_980_000, expected_loss_p50: 1_050_000, expected_loss_p90: 4_200_000, confidence: 0.48, drivers: ['Mooring inspection score 0.55 < 0.60', 'Inspection overdue (210d > 180d)'] },
+        net_integrity:        { probability: 0.27, expected_loss_mean: 2_700_000, expected_loss_p50: 1_440_000, expected_loss_p90: 5_600_000, confidence: 0.42, drivers: ['Net strength 72% below 70% threshold', 'Net age 3.5y > 3-year guideline'] },
+        cage_structural:      { probability: 0.18, expected_loss_mean: 3_600_000, expected_loss_p50: 1_860_000, expected_loss_p90: 7_200_000, confidence: 0.52, drivers: ['Deformation load index 0.62 above threshold'] },
+        deformation:          { probability: 0.22, expected_loss_mean: 2_160_000, expected_loss_p50: 1_140_000, expected_loss_p90: 4_500_000, confidence: 0.45, drivers: ['Load index 0.62 > 0.40', 'Monitoring overdue 210d'] },
+        anchor_deterioration: { probability: 0.14, expected_loss_mean:   960_000, expected_loss_p50:   540_000, expected_loss_p90: 2_040_000, confidence: 0.55, drivers: ['Anchor condition 0.58 < 0.50 approaching critical'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      risks: {
+        mooring_failure:      { probability: 0.05, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   960_000, confidence: 0.68, drivers: ['Mooring within normal parameters'] },
+        net_integrity:        { probability: 0.08, expected_loss_mean:   800_000, expected_loss_p50:   430_000, expected_loss_p90: 1_660_000, confidence: 0.70, drivers: ['Net condition normal'] },
+        cage_structural:      { probability: 0.04, expected_loss_mean:   720_000, expected_loss_p50:   380_000, expected_loss_p90: 1_500_000, confidence: 0.72, drivers: ['Structural loads within design range'] },
+        deformation:          { probability: 0.06, expected_loss_mean:   600_000, expected_loss_p50:   320_000, expected_loss_p90: 1_250_000, confidence: 0.70, drivers: ['Load index 0.38 within normal range'] },
+        anchor_deterioration: { probability: 0.04, expected_loss_mean:   320_000, expected_loss_p50:   180_000, expected_loss_p90:   680_000, confidence: 0.72, drivers: ['Anchor lines recently inspected'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      risks: {
+        mooring_failure:      { probability: 0.05, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   960_000, confidence: 0.72, drivers: ['Mooring score 0.92 — excellent'] },
+        net_integrity:        { probability: 0.08, expected_loss_mean:   800_000, expected_loss_p50:   430_000, expected_loss_p90: 1_660_000, confidence: 0.75, drivers: ['New net — 0.9 years, 96% residual strength'] },
+        cage_structural:      { probability: 0.04, expected_loss_mean:   720_000, expected_loss_p50:   380_000, expected_loss_p90: 1_500_000, confidence: 0.78, drivers: ['Load index 0.18 — well below design limit'] },
+        deformation:          { probability: 0.06, expected_loss_mean:   600_000, expected_loss_p50:   320_000, expected_loss_p90: 1_250_000, confidence: 0.75, drivers: ['Recently inspected (42d), load minimal'] },
+        anchor_deterioration: { probability: 0.04, expected_loss_mean:   320_000, expected_loss_p50:   180_000, expected_loss_p90:   680_000, confidence: 0.78, drivers: ['Anchor condition 0.94 — near new'] },
+      },
+    },
+  ],
+
+  // ── F. Environmental Forecast ──────────────────────────────────────────────
+
+  environmental_forecast: [
+    {
+      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      risks: {
+        oxygen_stress:      { probability: 0.26, expected_loss_mean: 2_080_000, expected_loss_p50: 1_100_000, expected_loss_p90: 4_300_000, confidence: 0.45, drivers: ['DO 6.8 mg/L below 7.0 mg/L safe limit', 'O2 saturation 78% below 80%'] },
+        temperature_extreme:{ probability: 0.22, expected_loss_mean: 1_320_000, expected_loss_p50:   700_000, expected_loss_p90: 2_700_000, confidence: 0.50, drivers: ['Surface temp 16.2C above safe high (16C)'] },
+        current_storm:      { probability: 0.27, expected_loss_mean: 3_780_000, expected_loss_p50: 1_960_000, expected_loss_p90: 7_800_000, confidence: 0.42, drivers: ['Current 0.72 m/s exceeds design limit (0.60)', 'Wave height 2.8m > 2.0m limit'] },
+        ice:                { probability: 0.03, expected_loss_mean:   300_000, expected_loss_p50:   154_000, expected_loss_p90:   650_000, confidence: 0.68, drivers: ['Ice risk score negligible (0.02)'] },
+        exposure_anomaly:   { probability: 0.14, expected_loss_mean:   980_000, expected_loss_p50:   522_000, expected_loss_p90: 2_100_000, confidence: 0.52, drivers: ['Open coast + high current + elevated wave height'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      risks: {
+        oxygen_stress:      { probability: 0.10, expected_loss_mean:   800_000, expected_loss_p50:   425_000, expected_loss_p90: 1_650_000, confidence: 0.65, drivers: ['Oxygen within normal range'] },
+        temperature_extreme:{ probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.68, drivers: ['Temperature 12.4C — within safe range'] },
+        current_storm:      { probability: 0.07, expected_loss_mean:   980_000, expected_loss_p50:   520_000, expected_loss_p90: 2_050_000, confidence: 0.70, drivers: ['Current and wave within design limits'] },
+        ice:                { probability: 0.03, expected_loss_mean:   300_000, expected_loss_p50:   154_000, expected_loss_p90:   650_000, confidence: 0.70, drivers: ['Low ice risk (0.05)'] },
+        exposure_anomaly:   { probability: 0.05, expected_loss_mean:   350_000, expected_loss_p50:   186_000, expected_loss_p90:   730_000, confidence: 0.72, drivers: ['Semi-exposed, environmental loading normal'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      risks: {
+        oxygen_stress:      { probability: 0.10, expected_loss_mean:   800_000, expected_loss_p50:   425_000, expected_loss_p90: 1_650_000, confidence: 0.68, drivers: ['DO 9.5 mg/L — optimal'] },
+        temperature_extreme:{ probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.70, drivers: ['Temp 9.8C — within safe range'] },
+        current_storm:      { probability: 0.07, expected_loss_mean:   980_000, expected_loss_p50:   520_000, expected_loss_p90: 2_050_000, confidence: 0.72, drivers: ['Current 0.18 m/s — calm sheltered site'] },
+        ice:                { probability: 0.07, expected_loss_mean:   700_000, expected_loss_p50:   364_000, expected_loss_p90: 1_500_000, confidence: 0.65, drivers: ['Ice score 0.10 — fjord sheltered but high latitude'] },
+        exposure_anomaly:   { probability: 0.05, expected_loss_mean:   350_000, expected_loss_p50:   186_000, expected_loss_p90:   730_000, confidence: 0.75, drivers: ['Sheltered site — minimal combined loading'] },
+      },
+    },
+  ],
+
+  // ── G. Operational Forecast ────────────────────────────────────────────────
+
+  operational_forecast: [
+    {
+      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      risks: {
+        human_error:         { probability: 0.27, expected_loss_mean: 1_350_000, expected_loss_p50:   700_000, expected_loss_p90: 2_800_000, confidence: 0.48, drivers: ['Staffing score 0.55 < 0.60', 'High-risk ops 6.5/month'] },
+        procedure_failure:   { probability: 0.22, expected_loss_mean: 1_320_000, expected_loss_p50:   700_000, expected_loss_p90: 2_700_000, confidence: 0.50, drivers: ['Training compliance 72% < 80% requirement'] },
+        equipment_failure:   { probability: 0.25, expected_loss_mean: 1_750_000, expected_loss_p50:   920_000, expected_loss_p90: 3_600_000, confidence: 0.45, drivers: ['Equipment readiness 0.65 < 0.70 minimum', 'Maintenance backlog 0.48 > 0.30'] },
+        incident:            { probability: 0.18, expected_loss_mean:   720_000, expected_loss_p50:   386_000, expected_loss_p90: 1_550_000, confidence: 0.52, drivers: ['Incident rate 1.4/month > baseline 1.0/month'] },
+        maintenance_backlog: { probability: 0.22, expected_loss_mean: 1_100_000, expected_loss_p50:   586_000, expected_loss_p90: 2_300_000, confidence: 0.48, drivers: ['Backlog score 0.48 > safe level 0.30'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      risks: {
+        human_error:         { probability: 0.12, expected_loss_mean:   600_000, expected_loss_p50:   310_000, expected_loss_p90: 1_250_000, confidence: 0.68, drivers: ['Staffing within normal range'] },
+        procedure_failure:   { probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.70, drivers: ['Training compliance 88% — adequate'] },
+        equipment_failure:   { probability: 0.10, expected_loss_mean:   700_000, expected_loss_p50:   374_000, expected_loss_p90: 1_500_000, confidence: 0.68, drivers: ['Equipment readiness 0.82 — good'] },
+        incident:            { probability: 0.06, expected_loss_mean:   240_000, expected_loss_p50:   128_000, expected_loss_p90:   510_000, confidence: 0.72, drivers: ['Incident rate 0.6/month — below baseline'] },
+        maintenance_backlog: { probability: 0.09, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   940_000, confidence: 0.70, drivers: ['Backlog score 0.22 within acceptable range'] },
+      },
+    },
+    {
+      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      risks: {
+        human_error:         { probability: 0.12, expected_loss_mean:   600_000, expected_loss_p50:   310_000, expected_loss_p90: 1_250_000, confidence: 0.72, drivers: ['Staffing 0.92 — excellent'] },
+        procedure_failure:   { probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.75, drivers: ['Training 97% — best in class'] },
+        equipment_failure:   { probability: 0.10, expected_loss_mean:   700_000, expected_loss_p50:   374_000, expected_loss_p90: 1_500_000, confidence: 0.72, drivers: ['Equipment readiness 0.95 — excellent'] },
+        incident:            { probability: 0.06, expected_loss_mean:   240_000, expected_loss_p50:   128_000, expected_loss_p90:   510_000, confidence: 0.75, drivers: ['Incident rate 0.2/month — lowest of all sites'] },
+        maintenance_backlog: { probability: 0.09, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   940_000, confidence: 0.72, drivers: ['Backlog 0.08 — minimal'] },
+      },
+    },
+  ],
+
   // ── PCC Integration ────────────────────────────────────────────────────────
 
   pcc_integration: {

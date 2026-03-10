@@ -66,5 +66,60 @@ class C5AISettings:
     learning_shadow_min_improvement: float = 0.05
     learning_bayesian_concentration: float = 5.0
 
+    # Structural risk priors
+    mooring_failure_prior_probability: float = 0.05
+    mooring_failure_loss_fraction_mean: float = 0.15
+    mooring_failure_loss_fraction_cv: float = 0.60
+    net_integrity_prior_probability: float = 0.08
+    net_integrity_loss_fraction_mean: float = 0.10
+    net_integrity_loss_fraction_cv: float = 0.65
+    cage_structural_prior_probability: float = 0.04
+    cage_structural_loss_fraction_mean: float = 0.20
+    cage_structural_loss_fraction_cv: float = 0.70
+    deformation_prior_probability: float = 0.06
+    deformation_loss_fraction_mean: float = 0.12
+    deformation_loss_fraction_cv: float = 0.60
+    anchor_deterioration_prior_probability: float = 0.04
+    anchor_deterioration_loss_fraction_mean: float = 0.08
+    anchor_deterioration_loss_fraction_cv: float = 0.55
+
+    # Environmental risk priors
+    oxygen_stress_prior_probability: float = 0.10
+    oxygen_stress_loss_fraction_mean: float = 0.08
+    oxygen_stress_loss_fraction_cv: float = 0.60
+    temperature_extreme_prior_probability: float = 0.08
+    temperature_extreme_loss_fraction_mean: float = 0.06
+    temperature_extreme_loss_fraction_cv: float = 0.65
+    current_storm_prior_probability: float = 0.07
+    current_storm_loss_fraction_mean: float = 0.14
+    current_storm_loss_fraction_cv: float = 0.70
+    ice_prior_probability: float = 0.03
+    ice_loss_fraction_mean: float = 0.10
+    ice_loss_fraction_cv: float = 0.75
+    exposure_anomaly_prior_probability: float = 0.05
+    exposure_anomaly_loss_fraction_mean: float = 0.07
+    exposure_anomaly_loss_fraction_cv: float = 0.60
+
+    # Operational risk priors
+    human_error_prior_probability: float = 0.12
+    human_error_loss_fraction_mean: float = 0.05
+    human_error_loss_fraction_cv: float = 0.70
+    procedure_failure_prior_probability: float = 0.08
+    procedure_failure_loss_fraction_mean: float = 0.06
+    procedure_failure_loss_fraction_cv: float = 0.65
+    equipment_failure_prior_probability: float = 0.10
+    equipment_failure_loss_fraction_mean: float = 0.07
+    equipment_failure_loss_fraction_cv: float = 0.60
+    incident_prior_probability: float = 0.06
+    incident_loss_fraction_mean: float = 0.04
+    incident_loss_fraction_cv: float = 0.55
+    maintenance_backlog_prior_probability: float = 0.09
+    maintenance_backlog_loss_fraction_mean: float = 0.05
+    maintenance_backlog_loss_fraction_cv: float = 0.60
+
+    # Domain loss fractions
+    domain_loss_fraction_structural: float = 0.22
+    domain_loss_fraction_environmental: float = 0.17
+    domain_loss_fraction_operational: float = 0.09
 
 C5AI_SETTINGS = C5AISettings()

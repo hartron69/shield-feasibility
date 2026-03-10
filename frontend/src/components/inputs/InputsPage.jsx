@@ -4,6 +4,9 @@ import BiologicalInputsPanel from './BiologicalInputsPanel.jsx'
 import AlertSignalsPanel from './AlertSignalsPanel.jsx'
 import DataQualityPanel from './DataQualityPanel.jsx'
 import ScenarioOverridePanel from './ScenarioOverridePanel.jsx'
+import StructuralInputsPanel from './StructuralInputsPanel.jsx'
+import EnvironmentalInputsPanel from './EnvironmentalInputsPanel.jsx'
+import OperationalInputsPanel from './OperationalInputsPanel.jsx'
 import {
   MOCK_SITE_PROFILES,
   MOCK_BIOLOGICAL_INPUTS,
@@ -12,19 +15,25 @@ import {
 } from '../../data/mockInputsData.js'
 
 const TABS = [
-  { id: 'site',      label: 'Site Profile' },
-  { id: 'bio',       label: 'Biological Inputs' },
-  { id: 'signals',   label: 'Alert Signals' },
-  { id: 'quality',   label: 'Data Quality' },
-  { id: 'scenario',  label: 'Scenario Inputs' },
+  { id: 'site',          label: 'Site Profile' },
+  { id: 'bio',           label: 'Biological' },
+  { id: 'structural',    label: 'Structural' },
+  { id: 'environmental', label: 'Environmental' },
+  { id: 'operational',   label: 'Operational' },
+  { id: 'signals',       label: 'Alert Signals' },
+  { id: 'quality',       label: 'Data Quality' },
+  { id: 'scenario',      label: 'Scenario Inputs' },
 ]
 
 const TAB_DESCRIPTIONS = {
-  site:     'Static site information used as inputs to the risk model.',
-  bio:      'Environmental and biological readings per site, recorded or simulated.',
-  signals:  'Precursor pattern signals detected by the C5AI+ alert engine.',
-  quality:  'Data completeness and confidence indicators per site and risk type.',
-  scenario: 'Override baseline inputs to explore alternative risk scenarios.',
+  site:          'Static site information used as inputs to the risk model.',
+  bio:           'Environmental and biological readings per site, recorded or simulated.',
+  structural:    'Structural condition indicators: net age, mooring, deformation, anchors.',
+  environmental: 'Environmental readings: dissolved oxygen, temperature, current, wave height.',
+  operational:   'Operational indicators: staffing, training, incident rate, maintenance backlog.',
+  signals:       'Precursor pattern signals detected by the C5AI+ alert engine.',
+  quality:       'Data completeness and confidence indicators per site and risk type.',
+  scenario:      'Override baseline inputs to explore alternative risk scenarios.',
 }
 
 export default function InputsPage() {
@@ -54,11 +63,14 @@ export default function InputsPage() {
 
       {/* Tab content */}
       <div className="inputs-tab-content">
-        {activeTab === 'site'     && <SiteProfileForm    sites={MOCK_SITE_PROFILES} />}
-        {activeTab === 'bio'      && <BiologicalInputsPanel bioInputs={MOCK_BIOLOGICAL_INPUTS} />}
-        {activeTab === 'signals'  && <AlertSignalsPanel  signals={MOCK_ALERT_SIGNALS} />}
-        {activeTab === 'quality'  && <DataQualityPanel   qualityData={MOCK_DATA_QUALITY} />}
-        {activeTab === 'scenario' && <ScenarioOverridePanel />}
+        {activeTab === 'site'          && <SiteProfileForm       sites={MOCK_SITE_PROFILES} />}
+        {activeTab === 'bio'           && <BiologicalInputsPanel bioInputs={MOCK_BIOLOGICAL_INPUTS} />}
+        {activeTab === 'structural'    && <StructuralInputsPanel />}
+        {activeTab === 'environmental' && <EnvironmentalInputsPanel />}
+        {activeTab === 'operational'   && <OperationalInputsPanel />}
+        {activeTab === 'signals'       && <AlertSignalsPanel     signals={MOCK_ALERT_SIGNALS} />}
+        {activeTab === 'quality'       && <DataQualityPanel      qualityData={MOCK_DATA_QUALITY} />}
+        {activeTab === 'scenario'      && <ScenarioOverridePanel />}
       </div>
     </div>
   )

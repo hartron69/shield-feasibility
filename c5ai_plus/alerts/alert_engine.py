@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from c5ai_plus.alerts.alert_explainer import AlertExplainer
-from c5ai_plus.alerts.alert_models import AlertRecord, AlertSummary
+from c5ai_plus.alerts.alert_models import AlertRecord, AlertSummary, RISK_TYPE_DOMAIN
 from c5ai_plus.alerts.alert_rules import ALL_RULES
 from c5ai_plus.alerts.pattern_detector import PatternDetector
 from c5ai_plus.alerts.probability_shift_detector import ProbabilityShiftDetector
@@ -20,10 +20,25 @@ from c5ai_plus.config.c5ai_settings import C5AI_SETTINGS
 
 # ── Risk-type prior map (fallback when no previous_probabilities provided) ───
 _RISK_TYPE_PRIORS: Dict[str, float] = {
-    'hab':       C5AI_SETTINGS.hab_prior_event_probability,
-    'lice':      C5AI_SETTINGS.lice_prior_event_probability,
-    'jellyfish': C5AI_SETTINGS.jellyfish_prior_event_probability,
-    'pathogen':  C5AI_SETTINGS.pathogen_prior_event_probability,
+    'hab':                  C5AI_SETTINGS.hab_prior_event_probability,
+    'lice':                 C5AI_SETTINGS.lice_prior_event_probability,
+    'jellyfish':            C5AI_SETTINGS.jellyfish_prior_event_probability,
+    'pathogen':             C5AI_SETTINGS.pathogen_prior_event_probability,
+    'mooring_failure':      C5AI_SETTINGS.mooring_failure_prior_probability,
+    'net_integrity':        C5AI_SETTINGS.net_integrity_prior_probability,
+    'cage_structural':      C5AI_SETTINGS.cage_structural_prior_probability,
+    'deformation':          C5AI_SETTINGS.deformation_prior_probability,
+    'anchor_deterioration': C5AI_SETTINGS.anchor_deterioration_prior_probability,
+    'oxygen_stress':        C5AI_SETTINGS.oxygen_stress_prior_probability,
+    'temperature_extreme':  C5AI_SETTINGS.temperature_extreme_prior_probability,
+    'current_storm':        C5AI_SETTINGS.current_storm_prior_probability,
+    'ice':                  C5AI_SETTINGS.ice_prior_probability,
+    'exposure_anomaly':     C5AI_SETTINGS.exposure_anomaly_prior_probability,
+    'human_error':          C5AI_SETTINGS.human_error_prior_probability,
+    'procedure_failure':    C5AI_SETTINGS.procedure_failure_prior_probability,
+    'equipment_failure':    C5AI_SETTINGS.equipment_failure_prior_probability,
+    'incident':             C5AI_SETTINGS.incident_prior_probability,
+    'maintenance_backlog':  C5AI_SETTINGS.maintenance_backlog_prior_probability,
 }
 
 
@@ -158,6 +173,7 @@ class AlertEngine:
                     explanation_text='',
                     recommended_actions=[],
                     generated_at=now,
+                    domain=RISK_TYPE_DOMAIN.get(risk_type, ''),
                 )
 
                 # 7. Explain

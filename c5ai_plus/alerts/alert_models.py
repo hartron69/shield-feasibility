@@ -12,6 +12,29 @@ from typing import List, Optional
 ALERT_LEVELS = ('NORMAL', 'WATCH', 'WARNING', 'CRITICAL')
 WORKFLOW_STATUSES = ('OPEN', 'ACKNOWLEDGED', 'IN_PROGRESS', 'CLOSED')
 
+# Canonical mapping of all 19 risk_types to their domain
+RISK_TYPE_DOMAIN: dict = {
+    'hab':                  'biological',
+    'lice':                 'biological',
+    'jellyfish':            'biological',
+    'pathogen':             'biological',
+    'mooring_failure':      'structural',
+    'net_integrity':        'structural',
+    'cage_structural':      'structural',
+    'deformation':          'structural',
+    'anchor_deterioration': 'structural',
+    'oxygen_stress':        'environmental',
+    'temperature_extreme':  'environmental',
+    'current_storm':        'environmental',
+    'ice':                  'environmental',
+    'exposure_anomaly':     'environmental',
+    'human_error':          'operational',
+    'procedure_failure':    'operational',
+    'equipment_failure':    'operational',
+    'incident':             'operational',
+    'maintenance_backlog':  'operational',
+}
+
 
 @dataclass
 class PatternSignal:
@@ -73,6 +96,7 @@ class AlertRecord:
     owner_role: str = 'risk_manager'
     board_visibility: bool = False
     generated_at: str = ''
+    domain: str = ''         # populated from RISK_TYPE_DOMAIN; '' = backward compat
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()

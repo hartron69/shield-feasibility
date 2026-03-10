@@ -2,8 +2,19 @@ import React from 'react'
 import AlertLevelBadge from './AlertLevelBadge.jsx'
 import ProbabilityShiftBadge from './ProbabilityShiftBadge.jsx'
 
+const RISK_TYPE_DOMAIN = {
+  hab: 'biological', lice: 'biological', jellyfish: 'biological', pathogen: 'biological',
+  mooring_failure: 'structural', net_integrity: 'structural', cage_structural: 'structural',
+  deformation: 'structural', anchor_deterioration: 'structural',
+  oxygen_stress: 'environmental', temperature_extreme: 'environmental',
+  current_storm: 'environmental', ice: 'environmental', exposure_anomaly: 'environmental',
+  human_error: 'operational', procedure_failure: 'operational',
+  equipment_failure: 'operational', incident: 'operational', maintenance_backlog: 'operational',
+}
+
 export default function AlertDetailPanel({ alert, onClose }) {
   if (!alert) return null
+  const domain = alert.domain || RISK_TYPE_DOMAIN[alert.risk_type] || 'biological'
 
   return (
     <div className="alert-detail-panel">
@@ -12,6 +23,9 @@ export default function AlertDetailPanel({ alert, onClose }) {
           <AlertLevelBadge level={alert.alert_level} />
           <span style={{ fontWeight: 700, fontSize: 15 }}>
             {alert.risk_type.toUpperCase()} — {alert.site_id}
+          </span>
+          <span className={`domain-badge domain-badge-${domain}`}>
+            {domain.charAt(0).toUpperCase() + domain.slice(1)}
           </span>
           {alert.board_visibility && (
             <span className="board-flag">Board</span>
