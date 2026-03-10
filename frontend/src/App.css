@@ -967,3 +967,181 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--teal); c
   display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px;
 }
 .strategy-card { padding:18px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BIO LINE CHARTS – Grafvisning for biologiske tidsserier
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Toolbar (site-selector + view-toggle) ─────────────────────────────── */
+.bio-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.bio-site-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bio-site-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--dark);
+  transition: background 0.15s, color 0.15s;
+}
+.bio-site-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.bio-site-btn:hover:not(.active) {
+  background: var(--light-bg);
+}
+
+.bio-recorded-at {
+  font-size: 11px;
+  color: var(--dark-grey);
+  margin-left: 4px;
+}
+
+/* ── View toggle (Grafer / Tabell) ─────────────────────────────────────── */
+.bio-view-toggle {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.bio-toggle-btn {
+  padding: 5px 14px;
+  border: none;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--dark-grey);
+  transition: background 0.15s, color 0.15s;
+}
+.bio-toggle-btn + .bio-toggle-btn {
+  border-left: 1px solid var(--border);
+}
+.bio-toggle-btn.active {
+  background: var(--primary);
+  color: #fff;
+}
+.bio-toggle-btn:hover:not(.active) {
+  background: var(--light-bg);
+}
+
+/* ── Gruppe-filter ─────────────────────────────────────────────────────── */
+.bio-group-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.bio-group-btn {
+  padding: 3px 11px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--dark-grey);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.bio-group-btn.active {
+  background: #EEF2FF;
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+.bio-group-btn:hover:not(.active) {
+  background: var(--light-bg);
+  color: var(--dark);
+}
+
+/* ── Graf-rutenett ─────────────────────────────────────────────────────── */
+.bio-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+/* ── Graf-kort ─────────────────────────────────────────────────────────── */
+.bio-chart-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px 6px;
+  transition: box-shadow 0.15s;
+}
+.bio-chart-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.bio-chart-card-alert {
+  border-color: #FCA5A5;
+  background: #FFF5F5;
+}
+
+/* ── Kort-header ───────────────────────────────────────────────────────── */
+.bio-chart-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.bio-chart-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dark);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bio-chart-threshold-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  border-radius: 10px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.bio-chart-current-val {
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── SVG wrap ──────────────────────────────────────────────────────────── */
+.bio-chart-wrap {
+  width: 100%;
+}
+
+.bio-chart-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dark-grey);
+  margin-bottom: 2px;
+}

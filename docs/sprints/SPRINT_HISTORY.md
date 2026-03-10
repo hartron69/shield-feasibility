@@ -4,6 +4,16 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Biological Input Line Charts (2026-03-10)
+**Tests after:** 1092 passed, 0 failed | Frontend build: 0 errors, 76 modules
+**Artifacts:** `docs/sprints/sprint_bio_charts/`
+
+Pure SVG time-series charts (no new npm deps) on the Inputs → Biological Inputs tab.
+New: `mockBioTimeseries.js` (12 months × 11 params × 3 sites), `BioLineChart.jsx` (smooth Catmull-Rom spline, hover tooltip, baseline + threshold reference lines, risk-zone fill).
+Updated: `BiologicalInputsPanel.jsx` (Grafer/Tabell toggle, 5-group filter, breached-threshold card highlighting). CSS: ~3.8 kB appended to App.css.
+
+---
+
 ## Sprint – Inputs GUI (2026-03-10)
 **Tests after:** 1092 passed, 0 failed | Frontend build: 0 errors
 **Artifacts:** `docs/sprints/sprint_inputs_gui/`
