@@ -1,0 +1,135 @@
+"""
+C5AI+ v5.0 – Named Alert Rule Definitions.
+
+Pure data — no logic here. Rules are consumed by detectors.
+Each rule has a weight in [0, 1] that scales its contribution to the
+precursor_score. All weights within a risk_type should sum <= 1.0.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List
+
+
+@dataclass(frozen=True)
+class AlertRule:
+    rule_id: str
+    risk_type: str
+    description: str
+    weight: float          # contribution to precursor_score; sum per risk_type <= 1.0
+
+
+# ── HAB (Harmful Algal Bloom) rules ──────────────────────────────────────────
+HAB_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='hab_warm_surface',
+        risk_type='hab',
+        description='Surface water temperature above HAB threshold (>15°C)',
+        weight=0.30,
+    ),
+    AlertRule(
+        rule_id='hab_low_oxygen',
+        risk_type='hab',
+        description='Dissolved oxygen below safety threshold (<7 mg/L)',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='hab_high_nitrate',
+        risk_type='hab',
+        description='Elevated nitrate concentration indicating algal nutrient load',
+        weight=0.20,
+    ),
+    AlertRule(
+        rule_id='hab_high_prior',
+        risk_type='hab',
+        description='Prior event probability above baseline (>15%)',
+        weight=0.25,
+    ),
+]
+
+# ── Sea lice rules ────────────────────────────────────────────────────────────
+LICE_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='lice_warm_water',
+        risk_type='lice',
+        description='Water temperature above lice reproduction threshold (>10°C)',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='lice_elevated_counts',
+        risk_type='lice',
+        description='Lice counts exceeding treatment trigger threshold',
+        weight=0.30,
+    ),
+    AlertRule(
+        rule_id='lice_treatment_fatigue',
+        risk_type='lice',
+        description='Recent treatment history indicating possible resistance',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='lice_open_exposure',
+        risk_type='lice',
+        description='Open coast exposure with high ambient lice pressure',
+        weight=0.20,
+    ),
+]
+
+# ── Jellyfish rules ───────────────────────────────────────────────────────────
+JELLYFISH_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='jellyfish_warm_seasonal',
+        risk_type='jellyfish',
+        description='Seasonal warm period coinciding with jellyfish bloom window',
+        weight=0.35,
+    ),
+    AlertRule(
+        rule_id='jellyfish_current_pattern',
+        risk_type='jellyfish',
+        description='Onshore current pattern directing bloom toward site',
+        weight=0.35,
+    ),
+    AlertRule(
+        rule_id='jellyfish_prior_sightings',
+        risk_type='jellyfish',
+        description='Recent jellyfish sightings reported in neighbouring fjords',
+        weight=0.30,
+    ),
+]
+
+# ── Pathogen rules ────────────────────────────────────────────────────────────
+PATHOGEN_RULES: List[AlertRule] = [
+    AlertRule(
+        rule_id='pathogen_neighbor_outbreak',
+        risk_type='pathogen',
+        description='Active pathogen outbreak at neighbouring site within 50 km',
+        weight=0.35,
+    ),
+    AlertRule(
+        rule_id='pathogen_high_biomass',
+        risk_type='pathogen',
+        description='Biomass density above threshold increasing transmission risk',
+        weight=0.25,
+    ),
+    AlertRule(
+        rule_id='pathogen_operational_stress',
+        risk_type='pathogen',
+        description='Recent handling or transport events stressing fish immune system',
+        weight=0.20,
+    ),
+    AlertRule(
+        rule_id='pathogen_high_prior',
+        risk_type='pathogen',
+        description='Prior event probability above baseline (>12%)',
+        weight=0.20,
+    ),
+]
+
+# ── Master rule registry ──────────────────────────────────────────────────────
+ALL_RULES: Dict[str, List[AlertRule]] = {
+    'hab':       HAB_RULES,
+    'lice':      LICE_RULES,
+    'jellyfish': JELLYFISH_RULES,
+    'pathogen':  PATHOGEN_RULES,
+}

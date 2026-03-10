@@ -4,6 +4,22 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Inputs GUI (2026-03-10)
+**Tests after:** 1092 passed, 0 failed | Frontend build: 0 errors
+**Artifacts:** `docs/sprints/sprint_inputs_gui/`
+
+Navigation expanded from 3 to 9 items. New Inputs page with 5 tabs (Site Profile, Biological Inputs, Alert Signals, Data Quality, Scenario Inputs). New reusable components: `InputSourceBadge`, `InputCompletenessCard`, `SiteProfileForm`, `BiologicalInputsPanel`, `AlertSignalsPanel`, `DataQualityPanel`, `ScenarioOverridePanel`. New lightweight pages: `OverviewPage`, `StrategyComparisonPage`, `LearningPage`, `ReportsPage`. Mock data in `mockInputsData.js`. Zero breaking changes.
+
+---
+
+## Sprint – Alert Layer (2026-03-10)
+**Tests after:** 1092 passed (+64) | Frontend build: 0 errors
+**Artifacts:** `docs/sprints/sprint_alert_layer/`
+
+Early warning / alert layer. 8 new Python files in `c5ai_plus/alerts/`. 64 new tests. React alert components: `AlertsPage`, `AlertTable`, `AlertDetailPanel`, `AlertSummaryCards`, `AlertLevelBadge`, `ProbabilityShiftBadge`. Mock data in `mockAlertsData.js`.
+
+---
+
 ## Sprint 1 – Portfolio Risk Core
 **Date:** 2026-03-06
 **Tests after:** 404 passed, 2 skipped
