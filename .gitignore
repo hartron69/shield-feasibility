@@ -6,24 +6,35 @@ __pycache__/
 .venv/
 venv/
 .env
+*.egg
 
 # pytest / coverage
 .pytest_cache/
 .coverage
 htmlcov/
+.hypothesis/
 
 # Generated PDFs and reports
 *.pdf
 pcc_report_*/
 backend/static/reports/
+risk_forecast.json
 
-# C5AI+ learning store (runtime data, not source)
+# C5AI+ runtime data (not source)
 c5ai_plus/learning/store/
+c5ai_plus/export/output/
 
 # Frontend
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/.env.local
+
+# IDE / editors
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Office documents (binary)
 *.docx
@@ -32,3 +43,10 @@ frontend/.vite/
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Secrets / credentials
+*.pem
+*.key
+*.secret
+secrets.json
