@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(C:/Users/haral/dev/shield-feasibility/tests/test_domain_loss_breakdown.py:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

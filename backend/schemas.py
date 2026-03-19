@@ -315,3 +315,55 @@ class MitigationActionInfo(BaseModel):
     annual_cost_nok: float
     capex_nok: float
     targeted_risk_types: List[str]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Settefisk (smolt) request models — Sprint S1
+# ─────────────────────────────────────────────────────────────────────────────
+
+class BuildingComponentInput(BaseModel):
+    name: str
+    area_sqm: float = Field(gt=0)
+    value_per_sqm_nok: float = Field(default=27_000, gt=0)
+    notes: Optional[str] = None
+
+
+class SmoltFacilityInput(BaseModel):
+    facility_name: str
+    facility_type: str = "smolt_ras"   # smolt_ras | smolt_flow | smolt_hybrid
+    building_components: List[BuildingComponentInput] = Field(default_factory=list)
+    site_clearance_nok: float = Field(default=0.0, ge=0)
+    machinery_nok: float = Field(default=0.0, ge=0)
+    avg_biomass_insured_value_nok: float = Field(default=0.0, ge=0)
+    bi_sum_insured_nok: float = Field(default=0.0, ge=0)
+    bi_indemnity_months: int = Field(default=24, ge=6, le=36)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    municipality: Optional[str] = None
+
+
+class SmoltOperatorRequest(BaseModel):
+    """Top-level request for smolt analysis. Sent to POST /api/feasibility/smolt/run."""
+    operator_name: str
+    org_number: Optional[str] = None
+    facilities: List[SmoltFacilityInput] = Field(min_length=1)
+
+    # Financials
+    annual_revenue_nok: Optional[float] = Field(default=None, gt=0)
+    ebitda_nok: Optional[float] = None
+    equity_nok: Optional[float] = None
+    operating_cf_nok: Optional[float] = None
+    liquidity_nok: Optional[float] = None
+
+    # Claims history
+    claims_history_years: int = Field(default=0, ge=0)
+    total_claims_paid_nok: float = Field(default=0.0, ge=0)
+
+    # Current insurance
+    current_market_premium_nok: Optional[float] = None
+    current_insurer: Optional[str] = None
+    current_bi_indemnity_months: Optional[int] = None
+
+    # Model settings (reuses existing schema)
+    model: ModelSettingsInput = Field(default_factory=ModelSettingsInput)
+    generate_pdf: bool = True

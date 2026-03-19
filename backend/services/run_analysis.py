@@ -29,6 +29,8 @@ from backend.services.history_analytics import build_historical_loss_summary
 from backend.services.operator_builder import build_operator_input, load_template_history
 
 
+from data.input_schema import OperatorInput
+
 _REPORTS_DIR = Path(__file__).resolve().parents[2] / "backend" / "static" / "reports"
 
 
@@ -39,6 +41,162 @@ def _buf_to_b64(buf: io.BytesIO) -> str:
 
 def _charts_to_b64(charts: Dict[str, io.BytesIO]) -> Dict[str, str]:
     return {k: _buf_to_b64(v) for k, v in charts.items()}
+
+
+def run_feasibility_analysis(
+    op_input: OperatorInput,
+    model_settings: "ModelSettingsInput",
+    allocation_summary: Optional[AllocationSummary] = None,
+) -> FeasibilityResponse:
+    """
+    Run PCC pipeline steps 2–9 on a pre-built OperatorInput.
+
+    Used by alternative entry points (e.g. smolt route) that build the
+    operator object themselves rather than using the GUI operator builder.
+    Mitigation and pooling are not applied; use run_feasibility_service for
+    those features.
+    """
+    import numpy as np
+
+    model = model_settings
+
+    # Step 2: Domain correlation
+    from models.domain_correlation import (
+        DomainCorrelationMatrix,
+        PREDEFINED_DOMAIN_CORRELATIONS,
+    )
+    domain_corr = PREDEFINED_DOMAIN_CORRELATIONS.get(model.domain_correlation)
+    if domain_corr is None:
+        domain_corr = DomainCorrelationMatrix.expert_default()
+
+    # Step 3: Monte Carlo
+    from models.monte_carlo import MonteCarloEngine
+    engine = MonteCarloEngine(op_input, n_simulations=model.n_simulations, domain_correlation=domain_corr)
+    sim = engine.run()
+
+    # Step 4: Strategy models
+    from models.strategies.full_insurance import FullInsuranceStrategy
+    from models.strategies.hybrid import HybridStrategy
+    from models.strategies.pcc_captive import PCCCaptiveStrategy
+    from models.strategies.self_insurance import SelfInsuranceStrategy
+
+    strategies = {
+        "Full Insurance":   FullInsuranceStrategy(op_input, sim),
+        "Hybrid":           HybridStrategy(op_input, sim),
+        "PCC Captive Cell": PCCCaptiveStrategy(op_input, sim),
+        "Self-Insurance":   SelfInsuranceStrategy(op_input, sim),
+    }
+    strategy_results = {name: s.calculate() for name, s in strategies.items()}
+
+    # Step 5: SCR, cost, volatility, suitability
+    from analysis.scr_calculator import SCRCalculator
+    from analysis.cost_analyzer import CostAnalyzer
+    from analysis.volatility_metrics import VolatilityAnalyzer
+    from analysis.suitability_engine import SuitabilityEngine
+
+    scr_results    = SCRCalculator(sim, strategy_results).calculate_all()
+    cost_analysis  = CostAnalyzer(op_input, strategy_results).analyze()
+    vol_metrics    = VolatilityAnalyzer(sim, strategy_results).analyze()
+    recommendation = SuitabilityEngine(op_input, sim, strategy_results, cost_analysis).assess()
+
+    # Step 6: Charts
+    from reporting.chart_generator import generate_all_charts
+    from reporting.correlated_risk_analytics import build_correlated_risk_summary
+
+    corr_summary = build_correlated_risk_summary(sim.annual_losses, sim.domain_loss_breakdown)
+    raw_charts   = generate_all_charts(
+        sim, strategy_results, scr_results, cost_analysis, vol_metrics, recommendation,
+        correlated_risk_summary=corr_summary,
+        domain_correlation=domain_corr,
+    )
+    b64_charts = _charts_to_b64(raw_charts)
+
+    # Step 7: Baseline KPI block
+    pcc_scr      = scr_results.get("PCC Captive Cell")
+    baseline_scr = pcc_scr.scr_net if pcc_scr else sim.var_995
+
+    annual_losses  = sim.annual_losses   # shape (N, T)
+    per_sim_loss   = annual_losses.sum(axis=1) / annual_losses.shape[1]
+    baseline_e_loss = float(per_sim_loss.mean())
+    baseline_p95   = float(np.percentile(per_sim_loss, 95))
+    baseline_p99   = float(np.percentile(per_sim_loss, 99))
+
+    baseline_kpi = KPISummary(
+        expected_annual_loss=baseline_e_loss,
+        p95_loss=baseline_p95,
+        p99_loss=baseline_p99,
+        scr=baseline_scr,
+        recommended_strategy=recommendation.verdict,
+        verdict=recommendation.verdict,
+        composite_score=recommendation.composite_score,
+        confidence_level=recommendation.confidence_level,
+    )
+    criterion_scores = [
+        {
+            "name": c.name,
+            "weight": c.weight,
+            "raw_score": c.raw_score,
+            "weighted_score": c.weighted_score,
+            "finding": c.finding,
+        }
+        for c in recommendation.criterion_scores
+    ]
+    baseline_block = ScenarioBlock(
+        summary=baseline_kpi,
+        charts=b64_charts,
+        criterion_scores=criterion_scores,
+    )
+
+    # Step 9: PDF (optional)
+    pdf_available = False
+    pdf_url: Optional[str] = None
+    if model.generate_pdf:
+        try:
+            _REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+            report_id = uuid.uuid4().hex
+            out_path  = _REPORTS_DIR / f"report_{report_id}.pdf"
+            from reporting.pdf_report import PDFReportGenerator
+            reporter = PDFReportGenerator(
+                operator=op_input,
+                simulation_results=sim,
+                strategy_results=strategy_results,
+                scr_results=scr_results,
+                cost_analysis=cost_analysis,
+                vol_metrics=vol_metrics,
+                recommendation=recommendation,
+                output_path=str(out_path),
+                domain_loss_breakdown=sim.domain_loss_breakdown,
+                domain_correlation=domain_corr,
+            )
+            reporter.generate()
+            pdf_available = True
+            pdf_url = f"/static/reports/report_{report_id}.pdf"
+        except Exception:
+            pdf_available = False
+
+    # Empty history summary — smolt has no template history
+    hist_summary = build_historical_loss_summary(
+        raw_records=[],
+        calibration_active=False,
+        calibration_mode="none",
+        alloc_calibrated_params={},
+        history_source="template",
+    )
+
+    return FeasibilityResponse(
+        baseline=baseline_block,
+        mitigated=None,
+        comparison=None,
+        report=ReportBlock(available=pdf_available, pdf_url=pdf_url),
+        metadata=MetadataBlock(
+            domain_correlation_active=(domain_corr is not None),
+            mitigation_active=False,
+            n_simulations=model.n_simulations,
+        ),
+        allocation=allocation_summary,
+        history=hist_summary,
+        pooling=None,
+    )
 
 
 def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:

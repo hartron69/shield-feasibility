@@ -8,7 +8,8 @@ from __future__ import annotations
 
 import dataclasses as _dc
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional
+from enum import Enum
 import json
 from pathlib import Path
 
@@ -136,6 +137,9 @@ class OperatorInput:
     has_risk_manager: bool = False
     governance_maturity: str = "developing"  # "basic" | "developing" | "mature"
 
+    # ── Facility type (sea_based | smolt) ─────────────────────────────────────
+    facility_type: str = "sea_based"
+
     # ── C5AI+ integration (optional) ──────────────────────────────────────────
     # Path to a risk_forecast.json produced by C5AI+ v5.0.
     # When provided, MonteCarloEngine uses dynamic biological risk estimates
@@ -254,3 +258,131 @@ def load_from_file(path: str) -> OperatorInput:
     with open(path, "r") as fh:
         raw = json.load(fh)
     return validate_input(raw)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Settefisk (land-based smolt) data model — Sprint S1
+# ─────────────────────────────────────────────────────────────────────────────
+
+class FacilityType(str, Enum):
+    SEA_BASED    = "sea_based"
+    SMOLT_RAS    = "smolt_ras"     # Recirculating Aquaculture System
+    SMOLT_FLOW   = "smolt_flow"    # Flow-through
+    SMOLT_HYBRID = "smolt_hybrid"  # RAS + flow-through
+
+
+@dataclass
+class BuildingComponent:
+    """Single building element with area and value per m²."""
+    name: str
+    area_sqm: float
+    value_per_sqm_nok: float = 27_000   # Norwegian smolt industry average 2024
+    notes: Optional[str] = None
+
+    @property
+    def insured_value_nok(self) -> float:
+        return self.area_sqm * self.value_per_sqm_nok
+
+
+@dataclass
+class SmoltFacilityTIV:
+    """
+    Full TIV specification for one land-based smolt facility.
+    All amounts in NOK.
+    """
+    facility_name: str
+    facility_type: FacilityType = FacilityType.SMOLT_RAS
+
+    # Buildings
+    building_components: List[BuildingComponent] = field(default_factory=list)
+    site_clearance_nok: float = 0.0      # Fire-site clearance cost
+
+    # Machinery and technology
+    machinery_nok: float = 0.0           # RAS system, pumps, tanks, technology
+    machinery_notes: Optional[str] = None
+
+    # Biomass — average insured value across all active generations
+    avg_biomass_insured_value_nok: float = 0.0
+
+    # Business interruption — computed by SmoltBICalculator (Sprint S4)
+    bi_sum_insured_nok: float = 0.0
+    bi_indemnity_months: int = 24
+
+    # Geography
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    municipality: Optional[str] = None
+
+    @property
+    def building_total_nok(self) -> float:
+        return sum(b.insured_value_nok for b in self.building_components) + self.site_clearance_nok
+
+    @property
+    def property_total_nok(self) -> float:
+        """Buildings + machinery."""
+        return self.building_total_nok + self.machinery_nok
+
+    @property
+    def total_tiv_nok(self) -> float:
+        return (self.property_total_nok
+                + self.avg_biomass_insured_value_nok
+                + self.bi_sum_insured_nok)
+
+    @property
+    def tiv_breakdown(self) -> Dict[str, float]:
+        return {
+            "buildings": self.building_total_nok,
+            "machinery": self.machinery_nok,
+            "biomass":   self.avg_biomass_insured_value_nok,
+            "bi":        self.bi_sum_insured_nok,
+        }
+
+    @property
+    def tiv_shares(self) -> Dict[str, float]:
+        total = self.total_tiv_nok
+        if total == 0:
+            return {k: 0.0 for k in self.tiv_breakdown}
+        return {k: v / total for k, v in self.tiv_breakdown.items()}
+
+
+@dataclass
+class SmoltOperatorInput:
+    """
+    Full input object for a smolt operator with one or more facilities.
+    Replaces OperatorInput for facility_type != SEA_BASED.
+    """
+    operator_name: str
+    org_number: Optional[str] = None
+    facilities: List[SmoltFacilityTIV] = field(default_factory=list)
+
+    # Financials (from annual accounts)
+    annual_revenue_nok: Optional[float] = None
+    ebitda_nok: Optional[float] = None
+    equity_nok: Optional[float] = None
+    operating_cf_nok: Optional[float] = None
+    liquidity_nok: Optional[float] = None
+
+    # Claims history
+    claims_history_years: int = 0
+    total_claims_paid_nok: float = 0.0
+
+    # Current insurance
+    current_market_premium_nok: Optional[float] = None
+    current_insurer: Optional[str] = None
+    current_bi_indemnity_months: Optional[int] = None
+
+    @property
+    def total_tiv_nok(self) -> float:
+        return sum(f.total_tiv_nok for f in self.facilities)
+
+    @property
+    def n_facilities(self) -> int:
+        return len(self.facilities)
+
+    @property
+    def consolidated_tiv_breakdown(self) -> Dict[str, float]:
+        result: Dict[str, float] = {"buildings": 0.0, "machinery": 0.0, "biomass": 0.0, "bi": 0.0}
+        for f in self.facilities:
+            for k, v in f.tiv_breakdown.items():
+                result[k] += v
+        return result

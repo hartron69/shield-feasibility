@@ -1,4 +1,6 @@
 import React from 'react'
+import AlertSummaryCards from '../alerts/AlertSummaryCards.jsx'
+import { MOCK_ALERTS } from '../../data/mockAlertsData.js'
 
 const DOMAIN_COLORS = {
   biological:    '#059669',
@@ -37,6 +39,9 @@ export default function RiskOverviewTab({ data, feasibilityResult }) {
 
   return (
     <div>
+      {/* ── Alert summary cards ──────────────────────────────────────────── */}
+      <AlertSummaryCards alerts={MOCK_ALERTS} />
+
       {/* ── Overall score + quick stats ─────────────────────────────────── */}
       <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
         <div className={`risk-score-ring ${scoreClass(overall)}`}>
