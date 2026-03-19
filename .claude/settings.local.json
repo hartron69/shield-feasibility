@@ -6,7 +6,8 @@
       "Bash(ls:*)",
       "Bash(C:/Users/haral/dev/shield-feasibility/tests/test_domain_loss_breakdown.py:*)",
       "Bash(node:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git add:*)"
     ]
   }
 }
