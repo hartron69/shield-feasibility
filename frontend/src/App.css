@@ -1248,3 +1248,272 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--teal); c
   background: #D1FAE5;
   color: #065F46;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Settefisk / Smolt modus — UI-komponenter (Sprint S5)
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── OperatorTypeSelector ─────────────────────────────────────── */
+.operator-type-selector {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--mid-grey);
+}
+.type-btn {
+  flex: 1;
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: var(--light-grey);
+  color: var(--dark-grey);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.15s;
+}
+.type-btn:hover { background: #e8ebf0; }
+.type-btn.active {
+  background: var(--white);
+  color: var(--navy);
+  border-bottom-color: var(--teal);
+}
+
+/* ── Smolt shared input ───────────────────────────────────────── */
+.smolt-input {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  border: 1px solid var(--mid-grey);
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: var(--white);
+}
+.smolt-input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+.smolt-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+.smolt-field-row label {
+  font-size: 11px;
+  color: var(--dark-grey);
+  font-weight: 600;
+}
+.smolt-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 10px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── SmoltTIVPanel ────────────────────────────────────────────── */
+.smolt-tiv-panel { padding: 0; }
+.smolt-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.smolt-total-tiv { color: var(--teal); font-size: 12px; }
+
+.smolt-facility-card {
+  border: 1px solid var(--mid-grey);
+  border-radius: 6px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.smolt-facility-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--light-grey);
+  cursor: pointer;
+  user-select: none;
+}
+.smolt-facility-header:hover { background: #e8ebf0; }
+.smolt-facility-name { font-size: 12px; font-weight: 700; color: var(--navy); }
+.smolt-facility-type-badge {
+  font-size: 10px;
+  color: #fff;
+  background: var(--dark-grey);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 6px;
+}
+.smolt-tiv-badge {
+  font-size: 11px;
+  color: var(--teal);
+  font-weight: 700;
+  margin-left: auto;
+}
+.smolt-facility-body { padding: 10px 12px 12px; }
+
+/* building component row */
+.smolt-component-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.smolt-input-name { flex: 2; }
+.smolt-input-sqm  { flex: 1; }
+.smolt-comp-value { font-size: 11px; color: var(--teal); min-width: 40px; text-align: right; }
+.smolt-remove-btn {
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 3px;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.smolt-add-btn {
+  font-size: 11px;
+  color: var(--teal);
+  background: none;
+  border: 1px dashed var(--teal);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.smolt-add-btn:hover { background: rgba(27,138,122,0.06); }
+
+/* TIV summary box */
+.smolt-tiv-summary {
+  border-top: 1px solid var(--mid-grey);
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.smolt-tiv-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--dark-grey);
+  padding: 2px 0;
+}
+.smolt-tiv-total {
+  font-weight: 700;
+  color: var(--navy);
+  border-top: 1px solid var(--mid-grey);
+  margin-top: 4px;
+  padding-top: 4px;
+  font-size: 12px;
+}
+.smolt-remove-facility-btn {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--danger);
+  background: none;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.smolt-add-facility-btn {
+  width: 100%;
+  font-size: 12px;
+  color: var(--navy);
+  background: var(--light-grey);
+  border: 1px dashed var(--mid-grey);
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.smolt-add-facility-btn:hover { background: #e8ebf0; }
+
+/* ── SmoltBIWidget ────────────────────────────────────────────── */
+.smolt-bi-widget {
+  background: #f8fbfa;
+  border: 1px solid #c6e0da;
+  border-radius: 6px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.smolt-bi-widget-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.smolt-bi-result {
+  font-size: 12px;
+  margin: 6px 0;
+  padding: 5px 8px;
+  background: var(--white);
+  border-radius: 4px;
+  border: 1px solid #c6e0da;
+}
+.smolt-apply-btn {
+  width: 100%;
+  padding: 7px 0;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--teal);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.smolt-apply-btn:disabled { background: var(--mid-grey); cursor: not-allowed; }
+.smolt-apply-btn:hover:not(:disabled) { background: #16796a; }
+
+/* ── SmoltAllocationTab ───────────────────────────────────────── */
+.smolt-donut-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.smolt-donut-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+}
+.smolt-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+.smolt-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.smolt-legend-label { flex: 1; color: var(--dark-grey); }
+.smolt-legend-pct   { font-weight: 700; color: var(--navy); }
+
+.smolt-observations {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: var(--light-grey);
+  border-radius: 6px;
+  border: 1px solid var(--mid-grey);
+}
+.smolt-obs-row {
+  font-size: 12px;
+  color: var(--dark-grey);
+  padding: 3px 0;
+  border-bottom: 1px solid #eee;
+}
+.smolt-obs-row:last-child { border-bottom: none; }
+.smolt-obs-warning { color: #92400E; }

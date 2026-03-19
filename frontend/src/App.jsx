@@ -14,9 +14,12 @@ import OverviewPage from './components/OverviewPage.jsx'
 import StrategyComparisonPage from './components/StrategyComparisonPage.jsx'
 import LearningPage from './components/LearningPage.jsx'
 import ReportsPage from './components/ReportsPage.jsx'
-import { fetchMitigationLibrary, fetchExample, runFeasibility } from './api/client.js'
+import { fetchMitigationLibrary, fetchExample, runFeasibility, fetchSmoltExample, runSmoltFeasibility } from './api/client.js'
 import { C5AI_MOCK } from './data/c5ai_mock.js'
 import { MOCK_ALERTS } from './data/mockAlertsData.js'
+import { AGAQUA_EXAMPLE } from './data/agaquaExample.js'
+import { OperatorTypeSelector } from './components/InputForm/OperatorTypeSelector.jsx'
+import { SmoltTIVPanel } from './components/InputForm/SmoltTIVPanel.jsx'
 
 // ── Derivation constants (calibrated against Nordic Aqua example) ────────────
 const REVENUE_MULTIPLIER = 1.35
@@ -73,6 +76,30 @@ const DEFAULT_POOLING  = {
 
 const ACCORDION_SECTIONS = ['Operator', 'Model', 'Strategy', 'Mitigation', 'Pooling']
 
+const DEFAULT_SMOLT_FACILITY = {
+  facility_name: '',
+  facility_type: 'smolt_ras',
+  building_components: [{ name: '', area_sqm: 0, value_per_sqm_nok: 27000 }],
+  site_clearance_nok: 0,
+  machinery_nok: 0,
+  avg_biomass_insured_value_nok: 0,
+  bi_sum_insured_nok: 0,
+  bi_indemnity_months: 24,
+  municipality: '',
+}
+
+const DEFAULT_SMOLT_FINANCIALS = {
+  operator_name: '',
+  org_number: '',
+  annual_revenue_nok: null,
+  equity_nok: null,
+  operating_cf_nok: null,
+  liquidity_nok: null,
+  claims_history_years: 0,
+  total_claims_paid_nok: 0,
+  current_market_premium_nok: null,
+}
+
 // ── Navigation items ──────────────────────────────────────────────────────────
 // Pages that show the left accordion panel (feasibility inputs)
 const FEASIBILITY_PAGES = new Set(['feasibility', 'strategy'])
@@ -101,6 +128,9 @@ export default function App() {
   const [error, setError]                       = useState(null)
   const [result, setResult]                     = useState(null)
   const [activePage, setActivePage]             = useState('overview')
+  const [operatorType, setOperatorType]         = useState('sea')
+  const [smoltFacilities, setSmoltFacilities]   = useState([{ ...DEFAULT_SMOLT_FACILITY }])
+  const [smoltFinancials, setSmoltFinancials]   = useState({ ...DEFAULT_SMOLT_FINANCIALS })
 
   useEffect(() => {
     fetchMitigationLibrary().then(setLibrary).catch(() => {})
@@ -180,9 +210,45 @@ export default function App() {
     setStrategy(DEFAULT_STRATEGY)
     setPooling(DEFAULT_POOLING)
     setSelectedMitigations([])
+    setSmoltFacilities([{ ...DEFAULT_SMOLT_FACILITY }])
+    setSmoltFinancials({ ...DEFAULT_SMOLT_FINANCIALS })
     setResult(null)
     setError(null)
     setStep(0)
+  }
+
+  async function handleAgaquaExample() {
+    setSmoltFacilities(AGAQUA_EXAMPLE.facilities.map(f => ({ ...f })))
+    setSmoltFinancials({
+      operator_name:             AGAQUA_EXAMPLE.operator_name,
+      org_number:                AGAQUA_EXAMPLE.org_number,
+      annual_revenue_nok:        AGAQUA_EXAMPLE.annual_revenue_nok,
+      equity_nok:                AGAQUA_EXAMPLE.equity_nok,
+      operating_cf_nok:          AGAQUA_EXAMPLE.operating_cf_nok,
+      liquidity_nok:             AGAQUA_EXAMPLE.liquidity_nok,
+      claims_history_years:      AGAQUA_EXAMPLE.claims_history_years,
+      total_claims_paid_nok:     AGAQUA_EXAMPLE.total_claims_paid_nok,
+      current_market_premium_nok: AGAQUA_EXAMPLE.current_market_premium_nok,
+    })
+    setOperatorType('smolt')
+    setActivePage('feasibility')
+  }
+
+  function buildSmoltPayload() {
+    return {
+      operator_name:             smoltFinancials.operator_name || 'Settefisk AS',
+      org_number:                smoltFinancials.org_number    || null,
+      facilities:                smoltFacilities,
+      annual_revenue_nok:        smoltFinancials.annual_revenue_nok        || null,
+      equity_nok:                smoltFinancials.equity_nok                || null,
+      operating_cf_nok:          smoltFinancials.operating_cf_nok          || null,
+      liquidity_nok:             smoltFinancials.liquidity_nok             || null,
+      claims_history_years:      smoltFinancials.claims_history_years      || 0,
+      total_claims_paid_nok:     smoltFinancials.total_claims_paid_nok     || 0,
+      current_market_premium_nok: smoltFinancials.current_market_premium_nok || null,
+      model: { n_simulations: model.n_simulations, generate_pdf: model.generate_pdf },
+      generate_pdf: model.generate_pdf,
+    }
   }
 
   async function handleRun() {
@@ -191,20 +257,24 @@ export default function App() {
     setResult(null)
     setStep(1)
 
-    const payload = {
-      operator_profile: operator,
-      model_settings: model,
-      strategy_settings: strategy,
-      mitigation: { selected_actions: selectedMitigations },
-      pooling_settings: pooling,
-    }
-
     const stepInterval = setInterval(() => {
       setStep((s) => Math.min(s + 1, 5))
     }, 800)
 
     try {
-      const res = await runFeasibility(payload)
+      let res
+      if (operatorType === 'smolt') {
+        res = await runSmoltFeasibility(buildSmoltPayload())
+      } else {
+        const payload = {
+          operator_profile: operator,
+          model_settings: model,
+          strategy_settings: strategy,
+          mitigation: { selected_actions: selectedMitigations },
+          pooling_settings: pooling,
+        }
+        res = await runFeasibility(payload)
+      }
       clearInterval(stepInterval)
       setStep(6)
       setResult(res)
@@ -247,6 +317,28 @@ export default function App() {
         {/* ── Left panel (feasibility inputs only) ────────────────────── */}
         {showLeftPanel && (
           <div className="left-panel">
+            <OperatorTypeSelector value={operatorType} onChange={setOperatorType} />
+            {operatorType === 'smolt' && (
+              <div style={{ padding: '8px 12px 4px', borderBottom: '1px solid #e5e7eb' }}>
+                <div className="smolt-field-row">
+                  <label style={{ fontSize: 12 }}>Operatørnavn</label>
+                  <input
+                    type="text"
+                    value={smoltFinancials.operator_name}
+                    onChange={e => setSmoltFinancials(f => ({ ...f, operator_name: e.target.value }))}
+                    className="smolt-input"
+                    placeholder="Agaqua AS"
+                  />
+                </div>
+                <button
+                  className="smolt-apply-btn"
+                  style={{ marginTop: 4, width: '100%' }}
+                  onClick={handleAgaquaExample}
+                >
+                  Last Agaqua-eksempel
+                </button>
+              </div>
+            )}
             {ACCORDION_SECTIONS.map((section) => (
               <div key={section} className="accordion">
                 <button className="accordion-header" onClick={() => toggleSection(section)}>
@@ -255,8 +347,16 @@ export default function App() {
                 </button>
                 {open[section] && (
                   <div className="accordion-body">
-                    {section === 'Operator' && (
+                    {section === 'Operator' && operatorType === 'sea' && (
                       <OperatorProfile values={operator} onChange={handleOperatorChange} derived={AUTO_FIELDS} />
+                    )}
+                    {section === 'Operator' && operatorType === 'smolt' && (
+                      <SmoltTIVPanel
+                        facilities={smoltFacilities}
+                        onChange={setSmoltFacilities}
+                        onAddFacility={() => setSmoltFacilities(f => [...f, { ...DEFAULT_SMOLT_FACILITY }])}
+                        onRemoveFacility={i => setSmoltFacilities(f => f.filter((_, idx) => idx !== i))}
+                      />
                     )}
                     {section === 'Model' && (
                       <ModelSettings values={model} onChange={setModel} />
@@ -313,6 +413,8 @@ export default function App() {
               result={result}
               selectedMitigations={selectedMitigations}
               library={library}
+              operatorType={operatorType}
+              smoltFacilities={smoltFacilities}
             />
           )}
           {activePage === 'strategy' && (

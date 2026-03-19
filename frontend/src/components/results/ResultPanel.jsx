@@ -5,12 +5,13 @@ import MitigationTab from './MitigationTab.jsx'
 import RecommendationTab from './RecommendationTab.jsx'
 import ReportTab from './ReportTab.jsx'
 import AllocationTab from './AllocationTab.jsx'
+import SmoltAllocationTab from './SmoltAllocationTab.jsx'
 import LossHistoryTab from './LossHistoryTab.jsx'
 import PoolingTab from './PoolingTab.jsx'
 
 const TABS = ['Summary', 'Charts', 'Mitigation', 'Recommendation', 'Allocation', 'Loss History', 'Pooling', 'Report']
 
-export default function ResultPanel({ result, selectedMitigations, library }) {
+export default function ResultPanel({ result, selectedMitigations, library, operatorType, smoltFacilities }) {
   const [activeTab, setActiveTab] = useState('Summary')
 
   if (!result) {
@@ -54,7 +55,9 @@ export default function ResultPanel({ result, selectedMitigations, library }) {
         <RecommendationTab baseline={baseline} />
       )}
       {activeTab === 'Allocation' && (
-        <AllocationTab allocation={allocation} />
+        operatorType === 'smolt'
+          ? <SmoltAllocationTab allocationSummary={allocation} facilities={smoltFacilities} />
+          : <AllocationTab allocation={allocation} />
       )}
       {activeTab === 'Loss History' && (
         <LossHistoryTab history={history} />
