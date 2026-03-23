@@ -1,0 +1,207 @@
+// Mock site-level smolt / RAS risk data
+// 5 demo facilities — realistic Norwegian settefisk operators
+// All NOK values, risk scores 0–100
+
+export const SMOLT_SITE_RISK = [
+  {
+    site_id: 'SMOLT_S01',
+    site_name: 'Agaqua Jelsa',
+    municipality: 'Suldal',
+    production_type: 'RAS',
+    capacity_msmolt: 5.5,
+    total_risk_score: 74,
+    dominant_domain: 'ras_failure',
+    expected_annual_loss_nok: 8_420_000,
+    scr_contribution_nok: 21_800_000,
+    scr_share_pct: 31.2,
+    alerts_open: 3,
+    alert_level: 'CRITICAL',
+    domain_breakdown: {
+      ras_failure:  0.41,
+      oxygen_event: 0.22,
+      power_outage: 0.14,
+      biological:   0.15,
+      operational:  0.08,
+    },
+    top_drivers: [
+      {
+        driver: 'Biofilterkapasitet',
+        severity: 'high',
+        description: 'Biofiltervolum under anbefalt 350 m³/kg tilvekst/dag',
+      },
+      {
+        driver: 'Oksygensystem redundans',
+        severity: 'high',
+        description: 'Kun én O₂-kilde — backup ikke testet siste 90 dager',
+      },
+      {
+        driver: 'Strømsikring',
+        severity: 'medium',
+        description: 'UPS-kapasitet dekker < 4 timer ved fullt anlegg',
+      },
+    ],
+    data_confidence: 0.72,
+  },
+  {
+    site_id: 'SMOLT_S02',
+    site_name: 'Agaqua Tau',
+    municipality: 'Strand',
+    production_type: 'RAS',
+    capacity_msmolt: 4.0,
+    total_risk_score: 61,
+    dominant_domain: 'oxygen_event',
+    expected_annual_loss_nok: 5_180_000,
+    scr_contribution_nok: 13_900_000,
+    scr_share_pct: 19.9,
+    alerts_open: 1,
+    alert_level: 'WARNING',
+    domain_breakdown: {
+      ras_failure:  0.28,
+      oxygen_event: 0.33,
+      power_outage: 0.12,
+      biological:   0.18,
+      operational:  0.09,
+    },
+    top_drivers: [
+      {
+        driver: 'Oksygenmåler kalibrering',
+        severity: 'high',
+        description: 'Tre sensorer ute av kalibreringsintervall',
+      },
+      {
+        driver: 'Biofilter alder',
+        severity: 'medium',
+        description: 'Primærbiofilter er 7 år gammelt — anbefalt utskifting',
+      },
+      {
+        driver: 'Ansattkompetanse',
+        severity: 'low',
+        description: 'Én nøkkelperson mangler sertifisering i RAS-drift',
+      },
+    ],
+    data_confidence: 0.81,
+  },
+  {
+    site_id: 'SMOLT_S03',
+    site_name: 'Nordic Smolt Fjord',
+    municipality: 'Høyanger',
+    production_type: 'RAS',
+    capacity_msmolt: 6.0,
+    total_risk_score: 48,
+    dominant_domain: 'biological',
+    expected_annual_loss_nok: 3_640_000,
+    scr_contribution_nok: 9_100_000,
+    scr_share_pct: 13.0,
+    alerts_open: 1,
+    alert_level: 'WARNING',
+    domain_breakdown: {
+      ras_failure:  0.22,
+      oxygen_event: 0.16,
+      power_outage: 0.09,
+      biological:   0.37,
+      operational:  0.16,
+    },
+    top_drivers: [
+      {
+        driver: 'AGD-risiko',
+        severity: 'medium',
+        description: 'Amøbisk gjellesykdom registrert i regionen',
+      },
+      {
+        driver: 'Vanntemperaturvariasjon',
+        severity: 'medium',
+        description: 'Variasjon ±3 °C over norm siste 30 dager',
+      },
+      {
+        driver: 'Tetthetsstyring',
+        severity: 'low',
+        description: 'To kar over anbefalt tetthet (> 80 kg/m³)',
+      },
+    ],
+    data_confidence: 0.88,
+  },
+  {
+    site_id: 'SMOLT_S04',
+    site_name: 'SalmoSet Ryfylke',
+    municipality: 'Sauda',
+    production_type: 'flow-through',
+    capacity_msmolt: 2.5,
+    total_risk_score: 35,
+    dominant_domain: 'operational',
+    expected_annual_loss_nok: 1_920_000,
+    scr_contribution_nok: 5_200_000,
+    scr_share_pct: 7.4,
+    alerts_open: 0,
+    alert_level: 'WATCH',
+    domain_breakdown: {
+      ras_failure:  0.08,
+      oxygen_event: 0.11,
+      power_outage: 0.14,
+      biological:   0.28,
+      operational:  0.39,
+    },
+    top_drivers: [
+      {
+        driver: 'Vannkildesikring',
+        severity: 'low',
+        description: 'Enkelt inntakspunkt uten reserveløsning',
+      },
+      {
+        driver: 'Vedlikeholdslogg',
+        severity: 'low',
+        description: 'Dokumentasjon av preventivt vedlikehold ikke oppdatert',
+      },
+    ],
+    data_confidence: 0.65,
+  },
+  {
+    site_id: 'SMOLT_S05',
+    site_name: 'AquaGen Sunnfjord',
+    municipality: 'Sunnfjord',
+    production_type: 'RAS',
+    capacity_msmolt: 8.0,
+    total_risk_score: 28,
+    dominant_domain: 'operational',
+    expected_annual_loss_nok: 1_240_000,
+    scr_contribution_nok: 3_840_000,
+    scr_share_pct: 5.5,
+    alerts_open: 0,
+    alert_level: 'NORMAL',
+    domain_breakdown: {
+      ras_failure:  0.18,
+      oxygen_event: 0.14,
+      power_outage: 0.10,
+      biological:   0.22,
+      operational:  0.36,
+    },
+    top_drivers: [
+      {
+        driver: 'Automatiseringsnivå',
+        severity: 'low',
+        description: 'Høy grad av automatisering og redundans — lav operasjonell risiko',
+      },
+    ],
+    data_confidence: 0.93,
+  },
+]
+
+export const SMOLT_SITE_RISK_SUMMARY = {
+  operator_id: 'DEMO_SMOLT_OP',
+  operator_name: 'Agaqua AS',
+  total_eal_nok: 20_400_000,
+  total_scr_nok: 53_840_000,
+  n_sites: 5,
+  n_ras: 4,
+  n_flow_through: 1,
+  critical_sites: 1,
+  warning_sites: 2,
+}
+
+// Domain display metadata for smolt-specific risk categories
+export const SMOLT_DOMAIN_META = {
+  ras_failure:  { label: 'RAS-svikt',    color: '#0D9488' },
+  oxygen_event: { label: 'Oksygenhend.', color: '#0284C7' },
+  power_outage: { label: 'Strømbortfall',color: '#CA8A04' },
+  biological:   { label: 'Biologisk',    color: '#059669' },
+  operational:  { label: 'Operasjonelt', color: '#7C3AED' },
+}

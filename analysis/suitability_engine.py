@@ -181,24 +181,50 @@ class SuitabilityEngine:
         cv = self.sim.std_annual_loss / max(self.sim.mean_annual_loss, 1)
         loss_ratio = self.op.current_insurance.current_loss_ratio
 
-        if cv < 0.30:
-            raw, finding = 100, f"CV={cv:.2f} – very stable loss experience"
-        elif cv < 0.50:
-            raw, finding = 80, f"CV={cv:.2f} – stable with manageable volatility"
-        elif cv < 0.75:
-            raw, finding = 55, f"CV={cv:.2f} – moderate volatility; cell pricing feasible"
-        elif cv < 1.00:
-            raw, finding = 30, f"CV={cv:.2f} – high volatility; pricing risk elevated"
+        # For smolt/RAS land-based operators: use per-event CV input + claims-free history.
+        # The aggregate CV is inflated by low expected-event frequency (compound Poisson),
+        # but individual loss variability (cv_loss_severity) is the relevant stability metric
+        # for a captive pricing per-occurrence losses in a controlled RAS environment.
+        if getattr(self.op, "facility_type", None) == "smolt":
+            cv_input = self.op.risk_params.cv_loss_severity
+            ch_years = getattr(self.op, "claims_history_years", 0)
+            if cv_input < 0.75 and ch_years >= 7:
+                raw = 85
+                finding = (f"CV={cv_input:.2f} (per hendelse) – RAS-landbase, "
+                           f"{ch_years} år skadefri historikk")
+            elif cv_input < 0.75:
+                raw = 65
+                finding = f"CV={cv_input:.2f} (per hendelse) – RAS-landbase, stabilt tapsmønster"
+            elif cv_input < 1.00:
+                raw = 40
+                finding = f"CV={cv_input:.2f} (per hendelse) – moderat volatilitet RAS"
+            else:
+                raw = 20
+                finding = f"CV={cv_input:.2f} (per hendelse) – høy volatilitet"
+            rationale = (
+                f"For landbasert RAS-settefisk brukes CV per hendelse ({cv_input:.2f}) "
+                f"fremfor aggregert simulerings-CV ({cv:.2f}), siden lavt hendelsestall "
+                f"blaser opp aggregert CV i sammensatt Poisson-modell. "
+                f"{ch_years} ar skadefri historikk underbygger stabilt tapsmønster."
+            )
         else:
-            raw, finding = 10, f"CV={cv:.2f} – extreme volatility; captive not suitable"
-
-        rationale = (
-            f"Simulated loss coefficient of variation is {cv:.2f} (σ/μ). "
-            f"A well-capitalised PCC cell can absorb moderate volatility, but "
-            f"extreme loss fluctuations create reserve depletion risk and require "
-            f"large capital top-ups. Historical loss ratio of "
-            f"{loss_ratio:.0%} provides additional context."
-        )
+            if cv < 0.30:
+                raw, finding = 100, f"CV={cv:.2f} – very stable loss experience"
+            elif cv < 0.50:
+                raw, finding = 80, f"CV={cv:.2f} – stable with manageable volatility"
+            elif cv < 0.75:
+                raw, finding = 55, f"CV={cv:.2f} – moderate volatility; cell pricing feasible"
+            elif cv < 1.00:
+                raw, finding = 30, f"CV={cv:.2f} – high volatility; pricing risk elevated"
+            else:
+                raw, finding = 10, f"CV={cv:.2f} – extreme volatility; captive not suitable"
+            rationale = (
+                f"Simulated loss coefficient of variation is {cv:.2f} (σ/μ). "
+                f"A well-capitalised PCC cell can absorb moderate volatility, but "
+                f"extreme loss fluctuations create reserve depletion risk and require "
+                f"large capital top-ups. Historical loss ratio of "
+                f"{loss_ratio:.0%} provides additional context."
+            )
         return CriterionScore("Loss Stability", 0.18, raw, raw * 0.18, finding, rationale)
 
     # ── Criterion 3: Balance Sheet Strength ────────────────────────────────────
@@ -372,20 +398,38 @@ class SuitabilityEngine:
                 raw, finding = quality_map.get(c5ai_quality, (20, f"C5AI+ data quality: {c5ai_quality}"))
                 source = f"C5AI+ data quality ({c5ai_quality})"
             else:
-                # Source 3: Governance / risk manager proxy
-                score_parts = []
-                if self.op.has_risk_manager:
-                    score_parts.append(60)
+                # Source 3a: Smolt — claims-free history is primary indicator
+                if getattr(self.op, "facility_type", None) == "smolt":
+                    ch_years = getattr(self.op, "claims_history_years", 0)
+                    if ch_years >= 10:
+                        raw = 90.0
+                    elif ch_years >= 7:
+                        raw = 75.0
+                    elif ch_years >= 5:
+                        raw = 60.0
+                    elif ch_years >= 3:
+                        raw = 40.0
+                    else:
+                        raw = 20.0
+                    finding = (
+                        f"Smolt: {ch_years} år skadefri historikk ({int(raw)}/100)"
+                    )
+                    source = f"claims_history ({ch_years} år)"
                 else:
-                    score_parts.append(20)
-                gov_bio = {"mature": 80, "developing": 50, "basic": 20}
-                score_parts.append(gov_bio.get(self.op.governance_maturity, 20))
-                raw = float(sum(score_parts) / len(score_parts))
-                finding = (
-                    f"Proxy: risk_manager={'yes' if self.op.has_risk_manager else 'no'}, "
-                    f"governance='{self.op.governance_maturity}'"
-                )
-                source = "proxy (no C5AI+ data)"
+                    # Source 3b: Governance / risk manager proxy (sea-based)
+                    score_parts = []
+                    if self.op.has_risk_manager:
+                        score_parts.append(60)
+                    else:
+                        score_parts.append(20)
+                    gov_bio = {"mature": 80, "developing": 50, "basic": 20}
+                    score_parts.append(gov_bio.get(self.op.governance_maturity, 20))
+                    raw = float(sum(score_parts) / len(score_parts))
+                    finding = (
+                        f"Proxy: risk_manager={'yes' if self.op.has_risk_manager else 'no'}, "
+                        f"governance='{self.op.governance_maturity}'"
+                    )
+                    source = "proxy (no C5AI+ data)"
 
         rationale = (
             f"Biologisk operasjonell beredskap er vurdert basert pa {source}. "
@@ -409,6 +453,216 @@ class SuitabilityEngine:
             return forecast.metadata.overall_data_quality
         except Exception:
             return None
+
+    # ── Mitigated Score Estimate ───────────────────────────────────────────────
+
+    # Smolt-specific operational mitigations that can improve readiness criteria.
+    # Map: action_id → {criterion_name: max_raw_score_uplift}
+    # Uplifts are additive, bounded at 100, and only applied when the action is
+    # present in selected_action_ids.  Rationale for each cap is documented inline.
+    _SMOLT_READINESS_UPLIFTS: Dict[str, Dict[str, float]] = {
+        # RAS operator certification: water chemistry, alarm response, emergency
+        # procedures.  Directly proxies the "training compliance" and "competence"
+        # sub-factors of Operational Readiness.  Cap at 8 pts (≈ one sub-factor
+        # tier upgrade on 5-factor average).
+        "smolt_staff_training": {
+            "Operational Readiness": 8.0,
+        },
+        # Documented ERP with drill schedule and supplier SLAs.  Improves both
+        # the governance sub-factor of Operational Readiness and the biological
+        # response capability that Biological Readiness measures.  Cap at 5 pts
+        # each (moderate signal; plan alone does not substitute for system upgrades).
+        "smolt_emergency_plan": {
+            "Operational Readiness":            5.0,
+            "Biologisk Operasjonell Beredskap": 5.0,
+        },
+        # 24/7 O₂/CO₂/pH/flow/power alarms with automated call-out.  Provides the
+        # continuous monitoring capability that the bio-readiness criterion rewards.
+        # Cap at 5 pts (monitoring capability, not biological treatment competence).
+        "smolt_alarm_system": {
+            "Biologisk Operasjonell Beredskap": 5.0,
+        },
+    }
+
+    def estimate_mitigated_score(
+        self,
+        baseline: "Recommendation",
+        mit_e_loss: float,
+        mit_scr: float,
+        selected_action_ids: Optional[List[str]] = None,
+    ) -> "Tuple[float, str, List[CriterionScore]]":
+        """
+        Estimate composite suitability score for the mitigated scenario.
+
+        Criteria recomputed
+        -------------------
+        * Loss Stability
+            - Sea-based: aggregate CV re-estimated proportional to loss reduction.
+            - Smolt/RAS: per-event severity CV is unchanged by mitigation (the
+              smolt baseline uses cv_loss_severity, not aggregate CV, because
+              compound-Poisson zero-inflation inflates aggregate CV regardless of
+              mitigation effectiveness).  The baseline Loss Stability score is
+              therefore carried forward unchanged.  This is the **correct**
+              treatment: mitigation reduces event frequency/severity, not the
+              shape of per-event severity distributions.
+        * Balance Sheet Strength — capital burden recomputed using *mit_scr*.
+        * Operational Readiness / Biologisk Operasjonell Beredskap (smolt only)
+            — bounded additive uplift when specific smolt operational mitigations
+            are selected (see _SMOLT_READINESS_UPLIFTS).
+
+        Parameters
+        ----------
+        baseline : Recommendation
+            The result of ``assess()`` for the un-mitigated scenario.
+        mit_e_loss : float
+            Expected annual loss after mitigation (NOK).
+        mit_scr : float
+            Solvency Capital Requirement after mitigation (NOK).
+        selected_action_ids : list of str, optional
+            IDs of the selected mitigation actions.  Used to determine smolt
+            readiness uplifts.  If None, no uplift is applied.
+
+        Returns
+        -------
+        (mitigated_composite_score, mitigated_verdict, mitigated_criterion_scores)
+        """
+        is_smolt  = getattr(self.op, "facility_type", None) == "smolt"
+        actions   = set(selected_action_ids or [])
+        new_criteria: List[CriterionScore] = []
+        base_mean = max(self.sim.mean_annual_loss, 1.0)
+        base_std  = self.sim.std_annual_loss
+
+        for c in baseline.criterion_scores:
+
+            if c.name == "Loss Stability":
+                if is_smolt:
+                    # BUG-FIX: smolt baseline uses per-event CV (cv_loss_severity),
+                    # not aggregate simulated CV.  Aggregate CV for compound-Poisson
+                    # with λ≈0.08–0.40/yr inflates to 1.5–4.0+ due to zero-inflation,
+                    # regardless of mitigation.  Using it here would cause a large
+                    # spurious drop in this criterion (e.g., raw 85→10) even when
+                    # loss and SCR improve by 30–50%.
+                    #
+                    # Mitigation reduces event frequency and/or per-event severity,
+                    # but does NOT change the shape of the per-event loss distribution
+                    # (cv_loss_severity).  The claims-free history (ch_years) also
+                    # does not change within one reporting period.
+                    #
+                    # Therefore: carry Loss Stability forward from baseline unchanged.
+                    cv_label = getattr(self.op.risk_params, "cv_loss_severity", None)
+                    new_criteria.append(CriterionScore(
+                        c.name, c.weight, c.raw_score, c.weighted_score,
+                        (f"CV={cv_label:.2f} (per hendelse, uendret av tiltak)"
+                         if cv_label is not None else "uendret av tiltak"),
+                        c.rationale,
+                    ))
+                else:
+                    # Sea-based: aggregate CV re-estimated proportional to
+                    # loss reduction.  Variance scales approximately with mean
+                    # (conservative — mitigation often reduces tail
+                    # disproportionately, so true CV improvement may be larger).
+                    loss_ratio = mit_e_loss / base_mean if base_mean > 0 else 1.0
+                    base_cv    = base_std / base_mean
+                    mit_cv     = base_cv * (loss_ratio ** 0.5)
+
+                    if mit_cv < 0.30:
+                        raw = 100
+                    elif mit_cv < 0.50:
+                        raw = 80
+                    elif mit_cv < 0.75:
+                        raw = 55
+                    elif mit_cv < 1.00:
+                        raw = 30
+                    else:
+                        raw = 10
+
+                    new_criteria.append(CriterionScore(
+                        c.name, c.weight, raw, raw * c.weight,
+                        f"CV≈{mit_cv:.2f} (mitigated estimate)",
+                        c.rationale,
+                    ))
+
+            elif c.name == "Balance Sheet Strength":
+                fin = self.op.financials
+                capital_to_equity = mit_scr / max(fin.net_equity, 1)
+                capital_to_fcf    = mit_scr / max(fin.free_cash_flow, 1)
+
+                if capital_to_equity < 0.10 and capital_to_fcf < 1.0:
+                    raw = 100
+                elif capital_to_equity < 0.20 and capital_to_fcf < 2.0:
+                    raw = 75
+                elif capital_to_equity < 0.35:
+                    raw = 50
+                elif capital_to_equity < 0.50:
+                    raw = 25
+                else:
+                    raw = 5
+
+                new_criteria.append(CriterionScore(
+                    c.name, c.weight, raw, raw * c.weight,
+                    f"Capital burden = {capital_to_equity:.1%} of equity (mitigated)",
+                    c.rationale,
+                ))
+
+            else:
+                # For smolt operators, specific operational mitigations can improve
+                # Operational Readiness and Biologisk Operasjonell Beredskap.
+                # Each uplift is bounded (see _SMOLT_READINESS_UPLIFTS docstring).
+                if is_smolt and c.name in (
+                    "Operational Readiness", "Biologisk Operasjonell Beredskap"
+                ):
+                    uplift = 0.0
+                    for action_id, crit_map in self._SMOLT_READINESS_UPLIFTS.items():
+                        if action_id in actions and c.name in crit_map:
+                            uplift += crit_map[c.name]
+                    if uplift > 0.0:
+                        raw = min(c.raw_score + uplift, 100.0)
+                        new_criteria.append(CriterionScore(
+                            c.name, c.weight, raw, raw * c.weight,
+                            f"{c.finding} (+{uplift:.0f} pts fra tiltak)",
+                            c.rationale,
+                        ))
+                        continue
+                new_criteria.append(c)
+
+        composite = sum(c.weighted_score for c in new_criteria)
+
+        # Apply same verdict thresholds as assess()
+        if composite >= 72:
+            verdict = "STRONGLY RECOMMENDED"
+        elif composite >= 55:
+            verdict = "RECOMMENDED"
+        elif composite >= 40:
+            verdict = "POTENTIALLY SUITABLE"
+        elif composite >= 25:
+            verdict = "NOT RECOMMENDED"
+        else:
+            verdict = "NOT SUITABLE"
+
+        # Carry forward the hard cost gate from baseline (re-running the full
+        # cost model is not needed — the gate depends on strategy costs, which
+        # mitigation does not change).
+        VERDICT_ORDER = [
+            "STRONGLY RECOMMENDED", "RECOMMENDED",
+            "POTENTIALLY SUITABLE", "NOT RECOMMENDED", "NOT SUITABLE",
+        ]
+        pcc_summary = self.cost.summaries.get("PCC Captive Cell")
+        fi_summary  = self.cost.summaries.get("Full Insurance")
+        try:
+            fi_total  = float(fi_summary.total_5yr_undiscounted) if fi_summary else 0.0
+            pcc_total = float(pcc_summary.total_5yr_undiscounted) if pcc_summary else 0.0
+            excess = (pcc_total - fi_total) / fi_total if fi_total > 0 else 0.0
+        except (TypeError, ValueError, AttributeError):
+            excess = 0.0
+
+        if excess > 0.15:
+            if VERDICT_ORDER.index(verdict) < VERDICT_ORDER.index("NOT RECOMMENDED"):
+                verdict = "NOT RECOMMENDED"
+        elif excess > 0.05:
+            if VERDICT_ORDER.index(verdict) < VERDICT_ORDER.index("POTENTIALLY SUITABLE"):
+                verdict = "POTENTIALLY SUITABLE"
+
+        return round(composite, 3), verdict, new_criteria
 
     # ── Aggregate & Recommend ──────────────────────────────────────────────────
 

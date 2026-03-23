@@ -142,7 +142,63 @@ _SUBTYPE_FRACTIONS: Dict[str, Dict[str, float]] = {
 #: no overlapping actions currently target those sub-types.  Caps can be added
 #: as new actions are introduced.
 STRUCTURAL_SUBTYPE_CAPS: Dict[str, float] = {
-    "mooring_failure": 0.48,   # max 48% combined loss reduction
+    # Sea structural sub-type caps
+    "mooring_failure": 0.48,   # max 48% combined loss reduction (sea)
+    # Smolt RAS operational sub-type caps — calibrated for multiple-action overlap.
+    # Three actions target oxygen, two each target power and biofilter.
+    # Caps prevent unrealistic near-elimination when actions are combined.
+    "oxygen":          0.55,   # residual O₂-collapse risk: ~45% irreducible (e.g. sensor failure)
+    "power":           0.70,   # grid + mains both failing: ~30% irreducible even with generator
+    "biofilter":       0.55,   # biological community: ~45% irreducible despite monitoring
+    # Smolt biological sub-type caps (two actions each can target these)
+    "water_quality":   0.70,   # temperature/CO₂/pH collectively: 30% irreducible process risk
+    "biosecurity":     0.65,   # contamination risk: 35% irreducible (water intake, visitors)
+}
+
+# ── Smolt / RAS domain fractions and sub-type priors ─────────────────────────
+# Land-based RAS facility: operational risk dominates (~70%); biological from
+# water quality and biosecurity (~22%); structural (building) and environmental
+# (flood, utility) are minor.
+
+#: Smolt domain fractions of total portfolio loss.
+SMOLT_DOMAIN_FRACTIONS: Dict[str, float] = {
+    "operational":   0.70,
+    "biological":    0.22,
+    "structural":    0.05,
+    "environmental": 0.03,
+}
+
+#: Smolt operational sub-types — RAS-specific peril names used as mitigation targets.
+_SMOLT_OPS_SUBTYPE_FRACTIONS: Dict[str, float] = {
+    "biofilter":    0.31,  # biofilter failure / nitrification breakdown
+    "oxygen":       0.36,  # O₂ collapse, hypoxia events
+    "power":        0.26,  # power outage, pump failure
+    "general_ops":  0.07,  # procedure failures, human error
+}
+
+#: Smolt biological sub-types — water-quality and biosecurity effects on fish.
+_SMOLT_BIO_SUBTYPE_FRACTIONS: Dict[str, float] = {
+    "water_quality": 0.60,  # CO₂/pH/nitrate stress, temperature fluctuation
+    "biosecurity":   0.40,  # pathogen, contamination, VHS/IHN risk
+}
+
+#: Smolt structural sub-types — land-based building and equipment damage.
+_SMOLT_STRUCT_SUBTYPE_FRACTIONS: Dict[str, float] = {
+    "building":          0.70,  # fire, flood, structural collapse
+    "equipment_damage":  0.30,  # tank/pipe/mechanical damage
+}
+
+#: Smolt environmental sub-types — external utility and weather events.
+_SMOLT_ENV_SUBTYPE_FRACTIONS: Dict[str, float] = {
+    "flood":           0.70,  # site flooding
+    "utility_failure": 0.30,  # grid/water supply failure (non-power)
+}
+
+_SMOLT_SUBTYPE_FRACTIONS: Dict[str, Dict[str, float]] = {
+    "operational":   _SMOLT_OPS_SUBTYPE_FRACTIONS,
+    "biological":    _SMOLT_BIO_SUBTYPE_FRACTIONS,
+    "structural":    _SMOLT_STRUCT_SUBTYPE_FRACTIONS,
+    "environmental": _SMOLT_ENV_SUBTYPE_FRACTIONS,
 }
 
 
@@ -430,6 +486,53 @@ def build_domain_loss_breakdown(
     return dbd
 
 
+def build_smolt_domain_loss_breakdown(
+    annual_losses: np.ndarray,
+    domain_correlation: Optional["DomainCorrelationMatrix"] = None,
+    rng: Optional[np.random.Generator] = None,
+) -> "DomainLossBreakdown":
+    """
+    Build a DomainLossBreakdown using smolt / land-based RAS sub-types.
+
+    Sub-type keys match the ``targeted_risk_types`` in smolt mitigation actions:
+        operational → biofilter, oxygen, power, general_ops
+        biological  → water_quality, biosecurity
+        structural  → building, equipment_damage
+        environmental → flood, utility_failure
+
+    Domain fractions (SMOLT_DOMAIN_FRACTIONS):
+        operational 70%, biological 22%, structural 5%, environmental 3%.
+    """
+    shape = annual_losses.shape
+
+    def _split(domain_loss: np.ndarray, fractions: Dict[str, float]) -> Dict[str, np.ndarray]:
+        return {k: domain_loss * v for k, v in fractions.items()}
+
+    # Allocate total loss to domains
+    op_losses  = annual_losses * SMOLT_DOMAIN_FRACTIONS["operational"]
+    bio_losses = annual_losses * SMOLT_DOMAIN_FRACTIONS["biological"]
+    str_losses = annual_losses * SMOLT_DOMAIN_FRACTIONS["structural"]
+    env_losses = annual_losses * SMOLT_DOMAIN_FRACTIONS["environmental"]
+
+    dbd = DomainLossBreakdown(
+        operational   = _split(op_losses,  _SMOLT_OPS_SUBTYPE_FRACTIONS),
+        biological    = _split(bio_losses, _SMOLT_BIO_SUBTYPE_FRACTIONS),
+        structural    = _split(str_losses, _SMOLT_STRUCT_SUBTYPE_FRACTIONS),
+        environmental = _split(env_losses, _SMOLT_ENV_SUBTYPE_FRACTIONS),
+        bio_modelled              = False,
+        structural_model_type    = "smolt_stub",
+        environmental_model_type = "smolt_stub",
+        operational_model_type   = "smolt_stub",
+    )
+
+    if domain_correlation is not None:
+        if rng is None:
+            rng = np.random.default_rng(0)
+        dbd = apply_domain_correlation(dbd, annual_losses, domain_correlation, rng)
+
+    return dbd
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Sprint 7 – correlated domain weight perturbation
 # ─────────────────────────────────────────────────────────────────────────────
@@ -523,9 +626,14 @@ def apply_domain_correlation(
 
     if not dbd.bio_modelled:
         # ── Prior-only path: perturb all 4 domain fractions ──────────────────
+        # Use smolt or sea fractions depending on facility type
+        is_smolt = dbd.operational_model_type == "smolt_stub"
+        domain_fracs_map = SMOLT_DOMAIN_FRACTIONS if is_smolt else DEFAULT_DOMAIN_FRACTIONS
+        subtype_fracs_map = _SMOLT_SUBTYPE_FRACTIONS if is_smolt else _SUBTYPE_FRACTIONS
+
         domain_names = list(DOMAINS)
         base_fracs = np.array(
-            [DEFAULT_DOMAIN_FRACTIONS[d] for d in domain_names], dtype=float
+            [domain_fracs_map[d] for d in domain_names], dtype=float
         )
 
         # Use sub_matrix in case domain_corr covers a subset; default is 4-domain
@@ -536,17 +644,24 @@ def apply_domain_correlation(
         for di, dname in enumerate(domain_names):
             domain_losses[dname] = annual_losses * weights[:, :, di]
 
-        biological    = _split_by_subtype(domain_losses["biological"],    "biological")
-        structural    = _split_by_subtype(domain_losses["structural"],    "structural")
-        environmental = _split_by_subtype(domain_losses["environmental"], "environmental")
-        operational   = _split_by_subtype(domain_losses["operational"],   "operational")
+        def _split_domain(arr: np.ndarray, domain: str) -> Dict[str, np.ndarray]:
+            return {st: arr * frac for st, frac in subtype_fracs_map[domain].items()}
 
+        biological    = _split_domain(domain_losses["biological"],    "biological")
+        structural    = _split_domain(domain_losses["structural"],    "structural")
+        environmental = _split_domain(domain_losses["environmental"], "environmental")
+        operational   = _split_domain(domain_losses["operational"],   "operational")
+
+        op_type = "smolt_stub" if is_smolt else "stub"
         return DomainLossBreakdown(
             biological=biological,
             structural=structural,
             environmental=environmental,
             operational=operational,
             bio_modelled=False,
+            structural_model_type=op_type,
+            environmental_model_type=op_type,
+            operational_model_type=op_type,
             domain_correlation_applied=True,
         )
 

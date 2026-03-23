@@ -19,7 +19,10 @@
       "biomass_value_per_tonne": 72000,
       "equipment_value": 37000000,
       "infrastructure_value": 29000000,
-      "annual_revenue": 404000000
+      "annual_revenue": 404000000,
+      "fjord_exposure": "semi_exposed",
+      "lice_pressure_factor": 1.10,
+      "hab_risk_factor": 0.90
     },
     {
       "name": "Hardanger Sør",
@@ -30,7 +33,10 @@
       "biomass_value_per_tonne": 72000,
       "equipment_value": 30500000,
       "infrastructure_value": 25000000,
-      "annual_revenue": 359000000
+      "annual_revenue": 359000000,
+      "fjord_exposure": "sheltered",
+      "lice_pressure_factor": 0.85,
+      "hab_risk_factor": 0.70
     },
     {
       "name": "Sunnfjord Prosessering",
@@ -41,7 +47,8 @@
       "biomass_value_per_tonne": 72000,
       "equipment_value": 44000000,
       "infrastructure_value": 59000000,
-      "annual_revenue": 134000000
+      "annual_revenue": 134000000,
+      "fjord_exposure": "semi_exposed"
     }
   ],
 

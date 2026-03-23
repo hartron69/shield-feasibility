@@ -5,6 +5,8 @@ Verifies that actions with targeted_risk_types affect only the relevant
 bio_loss_breakdown slices, and that portfolio-wide actions remain unchanged.
 """
 
+import warnings
+
 import numpy as np
 import pytest
 from unittest.mock import MagicMock
@@ -14,6 +16,7 @@ from analysis.mitigation import (
     MitigationAnalyzer,
     MitigationScenario,
     PREDEFINED_MITIGATIONS,
+    SMOLT_DOMAIN_MAPPING,
 )
 
 
@@ -337,3 +340,120 @@ class TestCombinedActions:
         scenario = analyzer.compare([action], bio_loss_breakdown=bio_bd)
         assert scenario.baseline_expected_loss > 0
         assert abs(scenario.baseline_expected_loss - sim.mean_annual_loss) < 1.0
+
+
+# ── Smolt domain mapping tests ────────────────────────────────────────────────
+
+def _smolt_actions():
+    return [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == 'smolt']
+
+
+def _make_smolt_domain_bd(n=200, t=5, seed=7):
+    """Build a minimal DomainLossBreakdown mock with smolt sub-types."""
+    from models.domain_loss_breakdown import DomainLossBreakdown
+    rng = np.random.default_rng(seed)
+    total = rng.exponential(5_000_000, size=(n, t))
+    # SMOLT_DOMAIN_FRACTIONS: ops=70%, bio=22%, struct=5%, env=3%
+    ops_sub  = {"biofilter": 0.35, "oxygen": 0.25, "power": 0.20, "general_ops": 0.20}
+    bio_sub  = {"water_quality": 0.60, "biosecurity": 0.40}
+    struct_s = {"building": 0.60, "equipment_damage": 0.40}
+    env_sub  = {"flood": 0.50, "utility_failure": 0.50}
+    return DomainLossBreakdown(
+        biological   ={k: total * 0.22 * v for k, v in bio_sub.items()},
+        structural   ={k: total * 0.05 * v for k, v in struct_s.items()},
+        environmental={k: total * 0.03 * v for k, v in env_sub.items()},
+        operational  ={k: total * 0.70 * v for k, v in ops_sub.items()},
+        operational_model_type="smolt_stub",
+    ), total
+
+
+class TestSmoltDomainMapping:
+
+    def test_smolt_domain_mapping_covers_all_smolt_risk_types(self):
+        """All targeted_risk_types in 12 smolt actions are in SMOLT_DOMAIN_MAPPING."""
+        for action in _smolt_actions():
+            for rt in action.targeted_risk_types:
+                assert rt in SMOLT_DOMAIN_MAPPING, (
+                    f"{action.name}: '{rt}' not in SMOLT_DOMAIN_MAPPING"
+                )
+
+    def test_smolt_ras_backup_oxygen_targets_ras_domain(self):
+        """smolt_oxygen_backup maps to oxygen_event, NOT to sea domains."""
+        action = PREDEFINED_MITIGATIONS["smolt_oxygen_backup"]
+        sea_domains = {"hab", "lice", "jellyfish", "pathogen"}
+        for rt in action.targeted_risk_types:
+            category = SMOLT_DOMAIN_MAPPING.get(rt, rt)
+            assert category not in sea_domains, (
+                f"'{rt}' maps to '{category}' which is a sea domain"
+            )
+        # Specifically verifies it maps to a smolt oxygen category
+        mapped = {SMOLT_DOMAIN_MAPPING.get(rt) for rt in action.targeted_risk_types}
+        assert "oxygen_event" in mapped
+
+    def test_smolt_ups_aggregat_targets_power_domain(self):
+        """smolt_backup_power maps to power_outage, NOT to environmental."""
+        action = PREDEFINED_MITIGATIONS["smolt_backup_power"]
+        for rt in action.targeted_risk_types:
+            category = SMOLT_DOMAIN_MAPPING.get(rt, rt)
+            assert category != "environmental", (
+                f"'{rt}' should not map to environmental"
+            )
+        mapped = {SMOLT_DOMAIN_MAPPING.get(rt) for rt in action.targeted_risk_types}
+        assert "power_outage" in mapped
+
+    def test_no_userwarning_for_any_smolt_mitigation(self):
+        """Running all 12 smolt actions through compare() triggers no UserWarning."""
+        domain_bd, total = _make_smolt_domain_bd()
+        sim = MagicMock()
+        sim.annual_losses = total
+        sim.mean_annual_loss = float(total.mean())
+        sim.var_995 = float(np.percentile(total.flatten(), 99.5))
+        analyzer = MitigationAnalyzer(sim)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            for action in _smolt_actions():
+                # Should raise no UserWarning
+                analyzer.compare([action], domain_loss_breakdown=domain_bd)
+
+    def test_sea_mitigations_unaffected_by_smolt_mapping(self):
+        """Sea mitigations still affect correct sea sub-types after smolt mapping added."""
+        sim, bio_bd = _make_sim_with_bio()
+        analyzer = MitigationAnalyzer(sim)
+
+        jelly = analyzer.compare(
+            [PREDEFINED_MITIGATIONS["jellyfish_mitigation"]],
+            bio_loss_breakdown=bio_bd,
+        )
+        assert "jellyfish" in jelly.affected_risk_types
+        assert "lice" not in jelly.affected_risk_types
+
+        lice = analyzer.compare(
+            [PREDEFINED_MITIGATIONS["lice_barriers"]],
+            bio_loss_breakdown=bio_bd,
+        )
+        assert "lice" in lice.affected_risk_types
+        assert "jellyfish" not in lice.affected_risk_types
+
+    def test_smolt_library_returns_exactly_12_for_smolt_query(self):
+        """GET /api/mitigation/library?facility_type=smolt returns exactly 12 actions."""
+        from fastapi.testclient import TestClient
+        from backend.main import app
+        client = TestClient(app)
+        resp = client.get("/api/mitigation/library?facility_type=smolt")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 12, f"Expected 12 smolt actions, got {len(data)}"
+        for item in data:
+            assert item["facility_type"] == "smolt"
+
+    def test_sea_library_returns_zero_smolt_for_sea_query(self):
+        """GET /api/mitigation/library?facility_type=sea returns no smolt actions."""
+        from fastapi.testclient import TestClient
+        from backend.main import app
+        client = TestClient(app)
+        resp = client.get("/api/mitigation/library?facility_type=sea")
+        assert resp.status_code == 200
+        data = resp.json()
+        smolt_in_sea = [a for a in data if a.get("facility_type") == "smolt"]
+        assert len(smolt_in_sea) == 0, "Sea library must not contain smolt actions"

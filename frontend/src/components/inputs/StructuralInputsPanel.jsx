@@ -1,12 +1,7 @@
 import React, { useState } from 'react'
 import InputSourceBadge from './InputSourceBadge.jsx'
 import { MOCK_STRUCTURAL_INPUTS, STRUCTURAL_SITE_IDS } from '../../data/mockMultiDomainData.js'
-
-const SITE_NAMES = {
-  DEMO_OP_S01: 'Frohavet North',
-  DEMO_OP_S02: 'Sunndalsfjord',
-  DEMO_OP_S03: 'Storfjorden South',
-}
+import { SITE_REGISTRY } from '../../data/mockInputsData.js'
 
 function deltaClass(current, baseline, adverse) {
   if (adverse) return 'delta-bad'
@@ -36,7 +31,7 @@ export default function StructuralInputsPanel() {
             className={`bio-site-btn ${activeSite === sid ? 'active' : ''}`}
             onClick={() => setActiveSite(sid)}
           >
-            {SITE_NAMES[sid]}
+            {SITE_REGISTRY[sid] || sid}
           </button>
         ))}
       </div>

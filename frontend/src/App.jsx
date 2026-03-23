@@ -14,12 +14,15 @@ import OverviewPage from './components/OverviewPage.jsx'
 import StrategyComparisonPage from './components/StrategyComparisonPage.jsx'
 import LearningPage from './components/LearningPage.jsx'
 import ReportsPage from './components/ReportsPage.jsx'
-import { fetchMitigationLibrary, fetchExample, runFeasibility, fetchSmoltExample, runSmoltFeasibility } from './api/client.js'
+import DashboardPage from './components/DashboardPage.jsx'
+import { fetchMitigationLibrary, fetchExample, runFeasibility, fetchSmoltExample, runSmoltFeasibility, runC5AI, fetchC5AIStatus, notifyInputsUpdated } from './api/client.js'
+import C5AIStatusBar from './components/C5AIStatusBar.jsx'
 import { C5AI_MOCK } from './data/c5ai_mock.js'
 import { MOCK_ALERTS } from './data/mockAlertsData.js'
 import { AGAQUA_EXAMPLE } from './data/agaquaExample.js'
 import { OperatorTypeSelector } from './components/InputForm/OperatorTypeSelector.jsx'
 import { SmoltTIVPanel } from './components/InputForm/SmoltTIVPanel.jsx'
+import ConfirmStaleC5AIModal from './components/ConfirmStaleC5AIModal.jsx'
 
 // ── Derivation constants (calibrated against Nordic Aqua example) ────────────
 const REVENUE_MULTIPLIER = 1.35
@@ -92,6 +95,7 @@ const DEFAULT_SMOLT_FINANCIALS = {
   operator_name: '',
   org_number: '',
   annual_revenue_nok: null,
+  ebitda_nok: null,
   equity_nok: null,
   operating_cf_nok: null,
   liquidity_nok: null,
@@ -100,20 +104,47 @@ const DEFAULT_SMOLT_FINANCIALS = {
   current_market_premium_nok: null,
 }
 
-// ── Navigation items ──────────────────────────────────────────────────────────
-// Pages that show the left accordion panel (feasibility inputs)
-const FEASIBILITY_PAGES = new Set(['feasibility', 'strategy'])
-
-const NAV_ITEMS = [
-  { id: 'overview',   label: 'Overview'               },
-  { id: 'inputs',     label: 'Inputs'                 },
-  { id: 'c5ai',       label: 'C5AI+ Risk Intelligence'},
-  { id: 'alerts',     label: 'Alerts'                 },
-  { id: 'feasibility',label: 'PCC Feasibility'        },
-  { id: 'strategy',   label: 'Strategy Comparison'    },
-  { id: 'learning',   label: 'Learning'               },
-  { id: 'reports',    label: 'Reports'                },
+// ── Navigation structure ──────────────────────────────────────────────────────
+const L1_NAV = [
+  { id: 'dashboard',    label: 'Dashboard'            },
+  { id: 'risk',         label: 'Risk Intelligence'    },
+  { id: 'feasibility',  label: 'PCC Feasibility'      },
 ]
+
+const L2_RISK_NAV = [
+  { id: 'oversikt',  label: 'Oversikt'  },
+  { id: 'maaling',   label: 'Målinger'  },
+  { id: 'risiko',    label: 'Risiko'    },
+  { id: 'varsler',   label: 'Varsler'   },
+  { id: 'laering',   label: 'Læring'    },
+]
+
+const L2_FEASIBILITY_NAV = [
+  { id: 'oversikt',     label: 'Oversikt'     },
+  { id: 'tapsanalyse',  label: 'Tapsanalyse'  },
+  { id: 'tiltak',       label: 'Tiltak'       },
+  { id: 'strategi',     label: 'Strategi'     },
+  { id: 'rapporter',    label: 'Rapporter'    },
+]
+
+// Maps feasibility sub-tab → ResultPanel internal tab name
+const FEASIBILITY_TO_RESULT_TAB = {
+  oversikt:    'Summary',
+  tapsanalyse: 'Tapsanalyse',
+  tiltak:      'Mitigation',
+}
+
+// Legacy page IDs (from OverviewPage.onNavigate calls) → new section/tab
+const LEGACY_PAGE_MAP = {
+  alerts:      ['risk',        'varsler'    ],
+  c5ai:        ['risk',        'risiko'     ],
+  inputs:      ['risk',        'maaling'    ],
+  overview:    ['risk',        'oversikt'   ],
+  feasibility: ['feasibility', 'oversikt'   ],
+  strategy:    ['feasibility', 'strategi'   ],
+  learning:    ['risk',        'laering'    ],
+  reports:     ['feasibility', 'rapporter'  ],
+}
 
 export default function App() {
   const [operator, setOperator]                 = useState(DEFAULT_OPERATOR)
@@ -127,14 +158,52 @@ export default function App() {
   const [step, setStep]                         = useState(0)
   const [error, setError]                       = useState(null)
   const [result, setResult]                     = useState(null)
-  const [activePage, setActivePage]             = useState('overview')
+  const [activeMainSection, setActiveMainSection] = useState('dashboard')
+  const [activeRiskTab, setActiveRiskTab]         = useState('oversikt')
+  const [activeFeasibilityTab, setActiveFeasibilityTab] = useState('oversikt')
   const [operatorType, setOperatorType]         = useState('sea')
   const [smoltFacilities, setSmoltFacilities]   = useState([{ ...DEFAULT_SMOLT_FACILITY }])
   const [smoltFinancials, setSmoltFinancials]   = useState({ ...DEFAULT_SMOLT_FINANCIALS })
+  const [c5aiStatus, setC5aiStatus]             = useState(null)
+  const [c5aiLoading, setC5aiLoading]           = useState(false)
+  const [showStaleModal, setShowStaleModal]     = useState(false)
 
   useEffect(() => {
-    fetchMitigationLibrary().then(setLibrary).catch(() => {})
+    const ft = operatorType === 'smolt' ? 'smolt' : 'sea'
+    fetchMitigationLibrary(ft).then(setLibrary).catch(() => {})
+  }, [operatorType])
+
+  useEffect(() => {
+    fetchC5AIStatus().then(setC5aiStatus).catch(() => {})
   }, [])
+
+  async function handleC5AIRun() {
+    setC5aiLoading(true)
+    try {
+      await runC5AI()
+      const s = await fetchC5AIStatus()
+      setC5aiStatus(s)
+    } catch {
+      // best-effort — status may still update
+      fetchC5AIStatus().then(setC5aiStatus).catch(() => {})
+    } finally {
+      setC5aiLoading(false)
+    }
+  }
+
+  // Central navigation — accepts (section, tab) or legacy single-string page ID
+  function navigateTo(sectionOrLegacy, tab) {
+    if (tab === undefined && LEGACY_PAGE_MAP[sectionOrLegacy]) {
+      const [sec, t] = LEGACY_PAGE_MAP[sectionOrLegacy]
+      setActiveMainSection(sec)
+      if (sec === 'risk') setActiveRiskTab(t)
+      else if (sec === 'feasibility') setActiveFeasibilityTab(t)
+      return
+    }
+    setActiveMainSection(sectionOrLegacy)
+    if (sectionOrLegacy === 'risk') setActiveRiskTab(tab || 'oversikt')
+    else if (sectionOrLegacy === 'feasibility') setActiveFeasibilityTab(tab || 'oversikt')
+  }
 
   function handleOperatorChange(next) {
     const prev = operator
@@ -198,7 +267,8 @@ export default function App() {
       if (ex.strategy_settings) setStrategy(ex.strategy_settings)
       if (ex.mitigation?.selected_actions) setSelectedMitigations(ex.mitigation.selected_actions)
       setOpen({ Operator: true, Model: false, Strategy: false, Mitigation: true })
-      setActivePage('feasibility')
+      navigateTo('feasibility', 'oversikt')
+      notifyInputsUpdated().then(() => fetchC5AIStatus().then(setC5aiStatus).catch(() => {})).catch(() => {})
     } catch (e) {
       setError(`Failed to load example: ${e.message}`)
     }
@@ -223,6 +293,7 @@ export default function App() {
       operator_name:             AGAQUA_EXAMPLE.operator_name,
       org_number:                AGAQUA_EXAMPLE.org_number,
       annual_revenue_nok:        AGAQUA_EXAMPLE.annual_revenue_nok,
+      ebitda_nok:                AGAQUA_EXAMPLE.ebitda_nok,
       equity_nok:                AGAQUA_EXAMPLE.equity_nok,
       operating_cf_nok:          AGAQUA_EXAMPLE.operating_cf_nok,
       liquidity_nok:             AGAQUA_EXAMPLE.liquidity_nok,
@@ -231,7 +302,8 @@ export default function App() {
       current_market_premium_nok: AGAQUA_EXAMPLE.current_market_premium_nok,
     })
     setOperatorType('smolt')
-    setActivePage('feasibility')
+    navigateTo('feasibility', 'oversikt')
+    notifyInputsUpdated().then(() => fetchC5AIStatus().then(setC5aiStatus).catch(() => {})).catch(() => {})
   }
 
   function buildSmoltPayload() {
@@ -240,18 +312,34 @@ export default function App() {
       org_number:                smoltFinancials.org_number    || null,
       facilities:                smoltFacilities,
       annual_revenue_nok:        smoltFinancials.annual_revenue_nok        || null,
+      ebitda_nok:                smoltFinancials.ebitda_nok                || null,
       equity_nok:                smoltFinancials.equity_nok                || null,
       operating_cf_nok:          smoltFinancials.operating_cf_nok          || null,
       liquidity_nok:             smoltFinancials.liquidity_nok             || null,
       claims_history_years:      smoltFinancials.claims_history_years      || 0,
       total_claims_paid_nok:     smoltFinancials.total_claims_paid_nok     || 0,
       current_market_premium_nok: smoltFinancials.current_market_premium_nok || null,
-      model: { n_simulations: model.n_simulations, generate_pdf: model.generate_pdf },
+      model: {
+        n_simulations:          model.n_simulations,
+        generate_pdf:           model.generate_pdf,
+        domain_correlation:     model.domain_correlation,
+        use_history_calibration: model.use_history_calibration,
+      },
       generate_pdf: model.generate_pdf,
+      mitigation: { selected_actions: selectedMitigations },
     }
   }
 
-  async function handleRun() {
+  function handleRun() {
+    const freshness = c5aiStatus?.freshness
+    if (freshness === 'missing' || freshness === 'stale') {
+      setShowStaleModal(true)
+      return
+    }
+    _doRun()
+  }
+
+  async function _doRun() {
     setLoading(true)
     setError(null)
     setResult(null)
@@ -286,11 +374,13 @@ export default function App() {
     }
   }
 
-  // Determine whether to show the left accordion (only for feasibility-related pages)
-  const showLeftPanel = FEASIBILITY_PAGES.has(activePage)
+  const showLeftPanel = activeMainSection === 'feasibility'
+
+  // Feasibility sub-tabs that render ResultPanel (vs. standalone pages)
+  const feasibilityUsesResultPanel = activeFeasibilityTab in FEASIBILITY_TO_RESULT_TAB
 
   return (
-    <div>
+    <div className="app-shell">
       {/* ── App header ───────────────────────────────────────────────────── */}
       <header className="app-header">
         <div>
@@ -299,21 +389,50 @@ export default function App() {
         </div>
       </header>
 
-      {/* ── Secondary navigation bar ─────────────────────────────────────── */}
+      {/* ── Level-1 main navigation ───────────────────────────────────────── */}
       <nav className="main-nav">
-        {NAV_ITEMS.map(item => (
+        {L1_NAV.map(item => (
           <button
             key={item.id}
-            className={`main-nav-btn ${activePage === item.id ? 'active' : ''}`}
-            onClick={() => setActivePage(item.id)}
+            className={`main-nav-btn ${activeMainSection === item.id ? 'active' : ''}`}
+            onClick={() => setActiveMainSection(item.id)}
           >
             {item.label}
           </button>
         ))}
       </nav>
 
+      {/* ── Level-2 sub-navigation ───────────────────────────────────────── */}
+      {activeMainSection === 'risk' && (
+        <nav className="sub-nav">
+          {L2_RISK_NAV.map(item => (
+            <button
+              key={item.id}
+              className={`sub-nav-btn ${activeRiskTab === item.id ? 'active' : ''}`}
+              onClick={() => setActiveRiskTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
+      {activeMainSection === 'feasibility' && (
+        <nav className="sub-nav">
+          {L2_FEASIBILITY_NAV.map(item => (
+            <button
+              key={item.id}
+              className={`sub-nav-btn ${activeFeasibilityTab === item.id ? 'active' : ''}`}
+              onClick={() => setActiveFeasibilityTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      )}
+
       {/* ── App body ─────────────────────────────────────────────────────── */}
       <div className={`app-body ${showLeftPanel ? '' : 'no-left-panel'}`}>
+
         {/* ── Left panel (feasibility inputs only) ────────────────────── */}
         {showLeftPanel && (
           <div className="left-panel">
@@ -328,6 +447,29 @@ export default function App() {
                     onChange={e => setSmoltFinancials(f => ({ ...f, operator_name: e.target.value }))}
                     className="smolt-input"
                     placeholder="Agaqua AS"
+                  />
+                </div>
+                <div className="smolt-field-row">
+                  <label style={{ fontSize: 12 }}>Skadefri historikk (år)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="30"
+                    value={smoltFinancials.claims_history_years || ''}
+                    onChange={e => setSmoltFinancials(f => ({ ...f, claims_history_years: parseInt(e.target.value) || 0 }))}
+                    className="smolt-input"
+                    placeholder="0"
+                  />
+                </div>
+                <div className="smolt-field-row">
+                  <label style={{ fontSize: 12 }}>Total krav utbetalt (NOK)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={smoltFinancials.total_claims_paid_nok || ''}
+                    onChange={e => setSmoltFinancials(f => ({ ...f, total_claims_paid_nok: parseFloat(e.target.value) || 0 }))}
+                    className="smolt-input"
+                    placeholder="0"
                   />
                 </div>
                 <button
@@ -369,6 +511,7 @@ export default function App() {
                         library={library}
                         selected={selectedMitigations}
                         onToggle={toggleMitigation}
+                        operatorType={operatorType}
                       />
                     )}
                     {section === 'Pooling' && (
@@ -380,11 +523,17 @@ export default function App() {
             ))}
 
             <div style={{ flex: 1 }} />
+            <C5AIStatusBar
+              status={c5aiStatus}
+              loading={c5aiLoading}
+              onRun={handleC5AIRun}
+            />
             <RunControls
               onRun={handleRun}
               onExample={handleExample}
               onReset={handleReset}
               loading={loading}
+              c5aiStatus={c5aiStatus}
             />
             <StatusBar loading={loading} currentStep={step} error={error} />
           </div>
@@ -392,42 +541,63 @@ export default function App() {
 
         {/* ── Right / main panel ──────────────────────────────────────── */}
         <div className="right-panel">
-          {activePage === 'overview' && (
-            <OverviewPage onNavigate={setActivePage} />
+
+          {/* Dashboard */}
+          {activeMainSection === 'dashboard' && (
+            <DashboardPage onNavigate={navigateTo} />
           )}
-          {activePage === 'inputs' && (
-            <InputsPage />
+
+          {/* Risk Intelligence sub-tabs */}
+          {activeMainSection === 'risk' && activeRiskTab === 'oversikt' && (
+            <OverviewPage onNavigate={navigateTo} />
           )}
-          {activePage === 'c5ai' && (
+          {activeMainSection === 'risk' && activeRiskTab === 'maaling' && (
+            <InputsPage operatorType={operatorType} operator={operator} />
+          )}
+          {activeMainSection === 'risk' && activeRiskTab === 'risiko' && (
             <C5AIModule
               c5aiData={C5AI_MOCK}
               feasibilityResult={result}
               operator={operator}
             />
           )}
-          {activePage === 'alerts' && (
+          {activeMainSection === 'risk' && activeRiskTab === 'varsler' && (
             <AlertsPage alertsData={MOCK_ALERTS} />
           )}
-          {activePage === 'feasibility' && (
+          {activeMainSection === 'risk' && activeRiskTab === 'laering' && (
+            <LearningPage />
+          )}
+
+          {/* PCC Feasibility sub-tabs — ResultPanel */}
+          {activeMainSection === 'feasibility' && feasibilityUsesResultPanel && (
             <ResultPanel
               result={result}
               selectedMitigations={selectedMitigations}
               library={library}
               operatorType={operatorType}
               smoltFacilities={smoltFacilities}
+              initialTab={FEASIBILITY_TO_RESULT_TAB[activeFeasibilityTab]}
+              onNavigate={navigateTo}
             />
           )}
-          {activePage === 'strategy' && (
+
+          {/* PCC Feasibility sub-tabs — standalone pages */}
+          {activeMainSection === 'feasibility' && activeFeasibilityTab === 'strategi' && (
             <StrategyComparisonPage result={result} />
           )}
-          {activePage === 'learning' && (
-            <LearningPage />
-          )}
-          {activePage === 'reports' && (
+          {activeMainSection === 'feasibility' && activeFeasibilityTab === 'rapporter' && (
             <ReportsPage />
           )}
         </div>
       </div>
+      {showStaleModal && (
+        <ConfirmStaleC5AIModal
+          freshness={c5aiStatus?.freshness}
+          onUpdateFirst={() => { setShowStaleModal(false); handleC5AIRun() }}
+          onRunAnyway={() => { setShowStaleModal(false); _doRun() }}
+          onCancel={() => setShowStaleModal(false)}
+        />
+      )}
     </div>
   )
 }

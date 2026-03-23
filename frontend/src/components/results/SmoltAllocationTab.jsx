@@ -83,18 +83,17 @@ export default function SmoltAllocationTab({ allocationSummary, facilities }) {
     )
   }
 
-  const {
-    total_tiv_nok,
-    biomass_share,
-    property_share,
-    bi_share,
-    machinery_share,
-    building_share,
-    n_facilities,
-    facility_names,
-    scr_capacity_ratio,
-    liquidity_post_scr_nok,
-  } = allocationSummary
+  // AllocationSummary from backend: smolt fields are in financial_ratios + user_exposure_nok
+  const fr = allocationSummary.financial_ratios || {}
+  const total_tiv_nok        = fr.total_tiv_nok        ?? allocationSummary.user_exposure_nok
+  const biomass_share        = fr.biomass_share        ?? null
+  const property_share       = fr.property_share       ?? null
+  const bi_share             = fr.bi_share             ?? null
+  const machinery_share      = fr.machinery_share      ?? null
+  const building_share       = fr.building_share       ?? null
+  const scr_capacity_ratio   = fr.scr_capacity_ratio   ?? null
+  const n_facilities         = fr.n_facilities         ?? (allocationSummary.sites?.length || null)
+  const liquidity_post_scr_nok = fr.liquidity_post_scr_nok ?? null
 
   // Shares for donut — fall back to zeros if not available
   const shares = {

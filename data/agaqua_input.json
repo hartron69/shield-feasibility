@@ -1,0 +1,262 @@
+{
+  "operator_name": "Agaqua AS",
+  "org_number": "930529591",
+  "facilities": [
+    {
+      "facility_name": "Villa Smolt AS",
+      "facility_type": "smolt_ras",
+      "building_components": [
+        {
+          "name": "Hall over fish tanks",
+          "area_sqm": 1370.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "RAS 1-2",
+          "area_sqm": 530.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "RAS 3-4",
+          "area_sqm": 610.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Gamledelen",
+          "area_sqm": 1393.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Forlager",
+          "area_sqm": 275.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        }
+      ],
+      "site_clearance_nok": 20000000.0,
+      "machinery_nok": 200000000.0,
+      "avg_biomass_insured_value_nok": 39680409.0,
+      "bi_sum_insured_nok": 243200000.0,
+      "bi_indemnity_months": 24,
+      "latitude": 62.29425,
+      "longitude": 5.62739,
+      "municipality": "Herøy"
+    },
+    {
+      "facility_name": "Olden Oppdrettsanlegg AS",
+      "facility_type": "smolt_flow",
+      "building_components": [
+        {
+          "name": "Påvekstavdeling",
+          "area_sqm": 2204.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Yngel",
+          "area_sqm": 899.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Klekkeri/startforing",
+          "area_sqm": 221.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Teknisk/vannbehandling",
+          "area_sqm": 77.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        }
+      ],
+      "site_clearance_nok": 20000000.0,
+      "machinery_nok": 120000000.0,
+      "avg_biomass_insured_value_nok": 18260208.0,
+      "bi_sum_insured_nok": 102000000.0,
+      "bi_indemnity_months": 24,
+      "latitude": 63.87241,
+      "longitude": 9.93298,
+      "municipality": "Ørland"
+    },
+    {
+      "facility_name": "Setran Settefisk AS",
+      "facility_type": "smolt_flow",
+      "building_components": [
+        {
+          "name": "Hall A",
+          "area_sqm": 280.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Vannbehandling",
+          "area_sqm": 170.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Hall B",
+          "area_sqm": 715.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        },
+        {
+          "name": "Hall C",
+          "area_sqm": 979.0,
+          "value_per_sqm_nok": 27000.0,
+          "notes": null
+        }
+      ],
+      "site_clearance_nok": 15000000.0,
+      "machinery_nok": 45000000.0,
+      "avg_biomass_insured_value_nok": 13287917.0,
+      "bi_sum_insured_nok": 85100000.0,
+      "bi_indemnity_months": 24,
+      "latitude": 64.27887,
+      "longitude": 10.45008,
+      "municipality": "Osen"
+    }
+  ],
+  "annual_revenue_nok": 232248232.0,
+  "ebitda_nok": 70116262.0,
+  "equity_nok": 39978809.0,
+  "operating_cf_nok": 46510739.0,
+  "liquidity_nok": 55454950.0,
+  "claims_history_years": 10,
+  "total_claims_paid_nok": 0.0,
+  "current_market_premium_nok": null,
+  "current_insurer": null,
+  "current_bi_indemnity_months": null,
+  "model": {
+    "n_simulations": 5000,
+    "domain_correlation": "expert_default",
+    "generate_pdf": true,
+    "use_history_calibration": true,
+    "calibration_source": "internal_logs",
+    "reported_claims_nok": 0,
+    "self_handled_losses_nok": 240300,
+    "loss_ratio_to_insurer_pct": 0.0
+  },
+  "generate_pdf": true,
+  "historical_losses": [
+    {
+      "year": 2015,
+      "total_loss_nok": 18500,
+      "n_events": 1,
+      "domains": {
+        "operational": 18500
+      },
+      "notes": "Villa Smolt: Feilinnstilling føringsautomat — smolttap 1 avdeling",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2016,
+      "total_loss_nok": 0,
+      "n_events": 0,
+      "domains": {},
+      "notes": "Skadefri — ingen hendelser registrert",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2017,
+      "total_loss_nok": 34200,
+      "n_events": 2,
+      "domains": {
+        "ras_failure": 22000,
+        "biological": 12200
+      },
+      "notes": "Villa Smolt: Kortvarig biofilterreduksjon (NOK 22k). Setran: Forhøyet dødelighet én generasjon (NOK 12.2k)",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2018,
+      "total_loss_nok": 27800,
+      "n_events": 1,
+      "domains": {
+        "oxygen_event": 27800
+      },
+      "notes": "Villa Smolt: O₂-fall i RAS 3 ved strømbortfall 40 min — backup aktivert, begrenset tap",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2019,
+      "total_loss_nok": 41500,
+      "n_events": 2,
+      "domains": {
+        "ras_failure": 31500,
+        "operational": 10000
+      },
+      "notes": "Villa Smolt: Pumpehavari sekundærpumpe (NOK 31.5k reparasjon + smolttap). Olden: Feil dosering desinfeksjonsmiddel (NOK 10k)",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2020,
+      "total_loss_nok": 8900,
+      "n_events": 1,
+      "domains": {
+        "biological": 8900
+      },
+      "notes": "Setran: Sporadisk forhøyet dødelighet én avdeling — årsak uklar, begrenset omfang. If-saken åpnet (kontraktstvist, ikke forsikringsskade)",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2021,
+      "total_loss_nok": 19300,
+      "n_events": 1,
+      "domains": {
+        "water_source": 19300
+      },
+      "notes": "Villa Smolt: Kortvarig turbiditetsstigning i inntaksvann — produksjonsstopp 6 timer, smolttap",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2022,
+      "total_loss_nok": 38600,
+      "n_events": 2,
+      "domains": {
+        "power_outage": 24000,
+        "biological": 14600
+      },
+      "notes": "Villa Smolt: Strømbortfall 2 timer — aggregat startet men O₂ midlertidig lav (NOK 24k tap). Olden: Forhøyet katarakt én generasjon (NOK 14.6k)",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2023,
+      "total_loss_nok": 29100,
+      "n_events": 2,
+      "domains": {
+        "ras_failure": 17500,
+        "operational": 11600
+      },
+      "notes": "Villa Smolt: Nitrittoppsving biofilter etter rengjøring (NOK 17.5k). Setran: Overbefolkning én avdeling — stress og økt FCR (NOK 11.6k). If-rettstvist pågår.",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    },
+    {
+      "year": 2024,
+      "total_loss_nok": 22400,
+      "n_events": 1,
+      "domains": {
+        "oxygen_event": 22400
+      },
+      "notes": "Olden: O₂-sensor sviktet — manuell overvåking iverksatt, begrenset smolttap før korrigering",
+      "reported_to_insurer": false,
+      "data_source": "Intern driftslogg"
+    }
+  ],
+  "loss_calibration_note": "Historikk over innrapporterte forsikringsskader er NOK 0 (loss ratio 0% mot markedet). Beløpene ovenfor representerer selvhåndterte hendelser under egenandel — aldri innrapportert til assuråndør. Brukes utelukkende til intern MC-kalibrering. Samlet selvhåndtert tap 10 år: NOK 240 300."
+}

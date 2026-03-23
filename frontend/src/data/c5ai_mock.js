@@ -35,7 +35,7 @@ export const C5AI_MOCK = {
   sites: [
     {
       site_id:       'DEMO_OP_S01',
-      name:          'Frohavet North',
+      site_name:     'Frohavet North',
       biomass_tonnes: 3200,
       biomass_value_nok: 207_360_000,
       fjord_exposure: 'open_coast',
@@ -44,7 +44,7 @@ export const C5AI_MOCK = {
     },
     {
       site_id:       'DEMO_OP_S02',
-      name:          'Sunndalsfjord',
+      site_name:     'Sunndalsfjord',
       biomass_tonnes: 3500,
       biomass_value_nok: 226_800_000,
       fjord_exposure: 'semi_exposed',
@@ -53,7 +53,7 @@ export const C5AI_MOCK = {
     },
     {
       site_id:       'DEMO_OP_S03',
-      name:          'Storfjorden South',
+      site_name:     'Storfjorden South',
       biomass_tonnes: 2500,
       biomass_value_nok: 162_000_000,
       fjord_exposure: 'sheltered',

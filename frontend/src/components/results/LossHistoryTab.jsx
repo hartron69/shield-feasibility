@@ -63,12 +63,55 @@ export default function LossHistoryTab({ history }) {
     calibration_active, calibration_source, calibration_mode,
     calibrated_parameters = {},
     records = [],
+    reported_total_nok = null,
+    self_handled_total_nok = null,
   } = history
 
-  if (!history_loaded || record_count === 0) {
+  const hasSelfHandledSplit = self_handled_total_nok != null && (self_handled_total_nok > 0 || reported_total_nok === 0)
+
+  if (!history_loaded) {
     return (
       <div className="tab-content" style={{ color: '#888', padding: 24 }}>
-        No historical loss records found in the template.
+        Ingen tapshistorikk tilgjengelig.
+      </div>
+    )
+  }
+
+  if (record_count === 0) {
+    const yearSpan0 = years_covered.length > 0
+      ? `${years_covered[0]}–${years_covered[years_covered.length - 1]}`
+      : null
+    return (
+      <div className="tab-content">
+        <div className="kpi-grid" style={{ marginBottom: 20 }}>
+          <div className="kpi-card" style={{ borderColor: '#1B8A7A', background: '#f0faf8' }}>
+            <div className="kpi-label">Observasjonsvindu</div>
+            <div className="kpi-value" style={{ fontSize: 22 }}>
+              {n_years_observed} år
+            </div>
+            <div className="kpi-sub">{yearSpan0 || 'Skadefri periode'}</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Registrerte hendelser</div>
+            <div className="kpi-value" style={{ fontSize: 22, color: '#1B8A7A' }}>0</div>
+            <div className="kpi-sub">Skadefri historikk</div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-label">Total tap</div>
+            <div className="kpi-value" style={{ fontSize: 22 }}>NOK 0</div>
+            <div className="kpi-sub">Ingen utbetalte krav</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 12, color: '#555', background: '#f9fafb', borderRadius: 6, padding: '10px 14px', border: '1px solid #e5e7eb' }}>
+          <strong>Kilde:</strong> {history_source === 'smolt_operator_declared'
+            ? 'Operatøroppgitt skadefri historikk'
+            : history_source}
+          {n_years_observed >= 7 && (
+            <span style={{ marginLeft: 10, color: '#1B8A7A', fontWeight: 600 }}>
+              — Gir frekvensrabatt i risikomodellen
+            </span>
+          )}
+        </div>
       </div>
     )
   }
@@ -79,6 +122,35 @@ export default function LossHistoryTab({ history }) {
 
   return (
     <div className="tab-content">
+
+      {/* ── Innrapportert vs selvhåndtert split ──────────────────── */}
+      {hasSelfHandledSplit && (
+        <div style={{ marginBottom: 20 }}>
+          <div className="kpi-grid">
+            <div className="kpi-card" style={{ borderColor: '#1B8A7A', background: '#f0faf8' }}>
+              <div className="kpi-label">Innrapporterte skader (loss ratio)</div>
+              <div className="kpi-value" style={{ fontSize: 20, color: '#1B8A7A' }}>
+                {reported_total_nok != null ? `NOK ${reported_total_nok.toLocaleString('nb-NO')}` : 'NOK 0'}
+              </div>
+              <div className="kpi-sub">Sendt til Howden · brukes i loss ratio</div>
+            </div>
+            <div className="kpi-card" style={{ borderColor: '#E67E22', background: '#fff8f0' }}>
+              <div className="kpi-label">Selvhåndtert tap (intern kalibrering)</div>
+              <div className="kpi-value" style={{ fontSize: 20, color: '#E67E22' }}>
+                {self_handled_total_nok != null ? `NOK ${self_handled_total_nok.toLocaleString('nb-NO')}` : '—'}
+              </div>
+              <div className="kpi-sub">Under egenandel · MC-kalibrering</div>
+            </div>
+          </div>
+          <div style={{
+            fontSize: 11, color: '#666', background: '#f9fafb', borderRadius: 6,
+            padding: '7px 12px', border: '1px solid #e5e7eb', marginTop: 8,
+          }}>
+            Selvhåndterte tap sendes ikke til forsikringsmarkedet og påvirker ikke loss ratio.
+            Brukes utelukkende til intern MC-kalibrering av frekvens og alvorlighetsgrad per domene.
+          </div>
+        </div>
+      )}
 
       {/* ── Mapping warnings ──────────────────────────────────────── */}
       {mapping_warnings.length > 0 && (

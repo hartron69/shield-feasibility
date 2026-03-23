@@ -47,10 +47,17 @@ async def run_smolt_feasibility(req: SmoltOperatorRequest) -> FeasibilityRespons
     if not req.generate_pdf:
         model = model.model_copy(update={"generate_pdf": False})
 
+    selected = req.mitigation.selected_actions if req.mitigation else []
+
     return run_feasibility_analysis(
         op_input=op_input,
         model_settings=model,
         allocation_summary=alloc_summary,
+        selected_actions=selected,
+        claims_history_years=req.claims_history_years,
+        total_claims_paid_nok=req.total_claims_paid_nok,
+        historical_losses=req.historical_losses,
+        use_history_calibration=model.use_history_calibration,
     )
 
 

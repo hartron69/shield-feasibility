@@ -20,6 +20,8 @@ export const MOCK_SITE_PROFILES = [
     exposure_factor:     1.40,   // 1.0=sheltered, 1.5=open coast
     operational_factor:  1.10,   // 1.0=standard, higher = stressed operations
     fjord_exposure:      'open_coast',
+    lice_pressure_factor: 1.40,
+    hab_risk_factor:     1.25,
     years_in_operation:  7,
     license_number:      'NOR-MR-1842',
     nis_certification:   true,
@@ -38,6 +40,8 @@ export const MOCK_SITE_PROFILES = [
     exposure_factor:     1.15,
     operational_factor:  1.00,
     fjord_exposure:      'semi_exposed',
+    lice_pressure_factor: 1.10,
+    hab_risk_factor:     0.90,
     years_in_operation:  11,
     license_number:      'NOR-MR-2201',
     nis_certification:   true,
@@ -56,6 +60,8 @@ export const MOCK_SITE_PROFILES = [
     exposure_factor:     0.85,
     operational_factor:  0.95,
     fjord_exposure:      'sheltered',
+    lice_pressure_factor: 0.85,
+    hab_risk_factor:     0.70,
     years_in_operation:  12,
     license_number:      'NOR-MR-2398',
     nis_certification:   true,
@@ -173,18 +179,42 @@ export const MOCK_ALERT_SIGNALS = [
     signal_name:'lice_warm_water',    current_value:11.2, baseline_value:10.0, delta:1.2, threshold:10.0, unit:'°C',      triggered:false },
 ]
 
-// ── 4. Data Quality ───────────────────────────────────────────────────────────
+// ── 4. Data Quality — all four domains ───────────────────────────────────────
+// Risk type keys match c5ai_mock.js exactly:
+//   biological:    hab, lice, jellyfish, pathogen
+//   structural:    mooring_failure, net_integrity, cage_structural, deformation, anchor_deterioration
+//   environmental: oxygen_stress, temperature_extreme, current_storm, ice, exposure_anomaly
+//   operational:   human_error, procedure_failure, equipment_failure, incident, maintenance_backlog
 export const MOCK_DATA_QUALITY = [
   {
     site_id:    'DEMO_OP_S01',
     site_name:  'Frohavet North',
-    overall_completeness: 0.68,
+    overall_completeness: 0.61,
     overall_confidence:   'medium',
     risk_types: {
-      hab:       { source:'simulated', completeness:0.72, confidence:'medium',  flag:'LIMITED',    n_obs:12, missing_fields:['chlorophyll_history','algae_species'] },
-      lice:      { source:'simulated', completeness:0.85, confidence:'high',    flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
-      jellyfish: { source:'simulated', completeness:0.45, confidence:'low',     flag:'POOR',       n_obs: 8, missing_fields:['current_data','bloom_index','species_id'] },
-      pathogen:  { source:'simulated', completeness:0.61, confidence:'medium',  flag:'LIMITED',    n_obs:11, missing_fields:['pcr_results','mortality_records'] },
+      // Biological
+      hab:                   { source:'simulated', completeness:0.72, confidence:'medium', flag:'LIMITED',    n_obs:12, missing_fields:['chlorophyll_history','algae_species'] },
+      lice:                  { source:'simulated', completeness:0.85, confidence:'high',   flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
+      jellyfish:             { source:'simulated', completeness:0.45, confidence:'low',    flag:'POOR',       n_obs: 8, missing_fields:['current_data','bloom_index','species_id'] },
+      pathogen:              { source:'simulated', completeness:0.61, confidence:'medium', flag:'LIMITED',    n_obs:11, missing_fields:['pcr_results','mortality_records'] },
+      // Structural
+      mooring_failure:       { source:'real',      completeness:0.58, confidence:'medium', flag:'LIMITED',    n_obs: 9, missing_fields:['anchor_tensile_test','corrosion_survey'] },
+      net_integrity:         { source:'real',      completeness:0.80, confidence:'high',   flag:'SUFFICIENT', n_obs:14, missing_fields:[] },
+      cage_structural:       { source:'estimated', completeness:0.42, confidence:'low',    flag:'POOR',       n_obs: 6, missing_fields:['deformation_log','load_cell_data'] },
+      deformation:           { source:'estimated', completeness:0.45, confidence:'low',    flag:'POOR',       n_obs: 7, missing_fields:['load_cell_data','deformation_log'] },
+      anchor_deterioration:  { source:'real',      completeness:0.55, confidence:'medium', flag:'LIMITED',    n_obs: 8, missing_fields:['tensile_test'] },
+      // Environmental
+      oxygen_stress:         { source:'real',      completeness:0.78, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      temperature_extreme:   { source:'simulated', completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:20, missing_fields:[] },
+      current_storm:         { source:'real',      completeness:0.65, confidence:'medium', flag:'LIMITED',    n_obs:10, missing_fields:['wave_buoy_data'] },
+      ice:                   { source:'estimated', completeness:0.40, confidence:'low',    flag:'POOR',       n_obs: 5, missing_fields:['sea_level_gauge','ice_forecast'] },
+      exposure_anomaly:      { source:'estimated', completeness:0.38, confidence:'low',    flag:'POOR',       n_obs: 4, missing_fields:['current_meter','exposure_model'] },
+      // Operational
+      human_error:           { source:'estimated', completeness:0.45, confidence:'low',    flag:'POOR',       n_obs: 5, missing_fields:['incident_reports','training_records'] },
+      procedure_failure:     { source:'estimated', completeness:0.50, confidence:'medium', flag:'LIMITED',    n_obs: 7, missing_fields:['procedure_audit_log'] },
+      equipment_failure:     { source:'estimated', completeness:0.55, confidence:'medium', flag:'LIMITED',    n_obs: 8, missing_fields:['maintenance_log','failure_history'] },
+      incident:              { source:'estimated', completeness:0.52, confidence:'medium', flag:'LIMITED',    n_obs: 8, missing_fields:['near_miss_reports'] },
+      maintenance_backlog:   { source:'real',      completeness:0.72, confidence:'medium', flag:'SUFFICIENT', n_obs:12, missing_fields:[] },
     },
   },
   {
@@ -193,22 +223,60 @@ export const MOCK_DATA_QUALITY = [
     overall_completeness: 0.74,
     overall_confidence:   'medium',
     risk_types: {
-      hab:       { source:'simulated', completeness:0.78, confidence:'high',    flag:'SUFFICIENT', n_obs:14, missing_fields:['algae_species'] },
-      lice:      { source:'simulated', completeness:0.88, confidence:'high',    flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
-      jellyfish: { source:'simulated', completeness:0.42, confidence:'low',     flag:'POOR',       n_obs: 7, missing_fields:['current_data','bloom_index','species_id'] },
-      pathogen:  { source:'simulated', completeness:0.65, confidence:'medium',  flag:'LIMITED',    n_obs:12, missing_fields:['pcr_results'] },
+      // Biological
+      hab:                   { source:'simulated', completeness:0.78, confidence:'high',   flag:'SUFFICIENT', n_obs:14, missing_fields:['algae_species'] },
+      lice:                  { source:'simulated', completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
+      jellyfish:             { source:'simulated', completeness:0.42, confidence:'low',    flag:'POOR',       n_obs: 7, missing_fields:['current_data','bloom_index','species_id'] },
+      pathogen:              { source:'simulated', completeness:0.65, confidence:'medium', flag:'LIMITED',    n_obs:12, missing_fields:['pcr_results'] },
+      // Structural
+      mooring_failure:       { source:'real',      completeness:0.78, confidence:'high',   flag:'SUFFICIENT', n_obs:14, missing_fields:[] },
+      net_integrity:         { source:'real',      completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      cage_structural:       { source:'real',      completeness:0.72, confidence:'medium', flag:'SUFFICIENT', n_obs:12, missing_fields:['load_cell_data'] },
+      deformation:           { source:'real',      completeness:0.75, confidence:'high',   flag:'SUFFICIENT', n_obs:13, missing_fields:[] },
+      anchor_deterioration:  { source:'real',      completeness:0.80, confidence:'high',   flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
+      // Environmental
+      oxygen_stress:         { source:'simulated', completeness:0.82, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      temperature_extreme:   { source:'simulated', completeness:0.85, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      current_storm:         { source:'simulated', completeness:0.70, confidence:'medium', flag:'SUFFICIENT', n_obs:12, missing_fields:[] },
+      ice:                   { source:'estimated', completeness:0.62, confidence:'medium', flag:'LIMITED',    n_obs: 9, missing_fields:['ice_forecast'] },
+      exposure_anomaly:      { source:'estimated', completeness:0.58, confidence:'medium', flag:'LIMITED',    n_obs: 8, missing_fields:['current_meter'] },
+      // Operational
+      human_error:           { source:'real',      completeness:0.75, confidence:'medium', flag:'SUFFICIENT', n_obs:13, missing_fields:['training_records'] },
+      procedure_failure:     { source:'real',      completeness:0.78, confidence:'high',   flag:'SUFFICIENT', n_obs:14, missing_fields:[] },
+      equipment_failure:     { source:'real',      completeness:0.80, confidence:'high',   flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
+      incident:              { source:'real',      completeness:0.78, confidence:'high',   flag:'SUFFICIENT', n_obs:14, missing_fields:[] },
+      maintenance_backlog:   { source:'real',      completeness:0.82, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
     },
   },
   {
     site_id:    'DEMO_OP_S03',
     site_name:  'Storfjorden South',
-    overall_completeness: 0.78,
-    overall_confidence:   'medium',
+    overall_completeness: 0.83,
+    overall_confidence:   'high',
     risk_types: {
-      hab:       { source:'simulated', completeness:0.82, confidence:'high',    flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
-      lice:      { source:'simulated', completeness:0.90, confidence:'high',    flag:'SUFFICIENT', n_obs:17, missing_fields:[] },
-      jellyfish: { source:'simulated', completeness:0.48, confidence:'low',     flag:'POOR',       n_obs: 9, missing_fields:['bloom_index','species_id'] },
-      pathogen:  { source:'simulated', completeness:0.70, confidence:'medium',  flag:'LIMITED',    n_obs:13, missing_fields:['pcr_results'] },
+      // Biological
+      hab:                   { source:'simulated', completeness:0.82, confidence:'high',   flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
+      lice:                  { source:'simulated', completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:17, missing_fields:[] },
+      jellyfish:             { source:'simulated', completeness:0.48, confidence:'low',    flag:'POOR',       n_obs: 9, missing_fields:['bloom_index','species_id'] },
+      pathogen:              { source:'simulated', completeness:0.70, confidence:'medium', flag:'LIMITED',    n_obs:13, missing_fields:['pcr_results'] },
+      // Structural
+      mooring_failure:       { source:'real',      completeness:0.92, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      net_integrity:         { source:'real',      completeness:0.95, confidence:'high',   flag:'SUFFICIENT', n_obs:20, missing_fields:[] },
+      cage_structural:       { source:'real',      completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
+      deformation:           { source:'real',      completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
+      anchor_deterioration:  { source:'real',      completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      // Environmental
+      oxygen_stress:         { source:'real',      completeness:0.92, confidence:'high',   flag:'SUFFICIENT', n_obs:22, missing_fields:[] },
+      temperature_extreme:   { source:'real',      completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:22, missing_fields:[] },
+      current_storm:         { source:'real',      completeness:0.80, confidence:'high',   flag:'SUFFICIENT', n_obs:15, missing_fields:[] },
+      ice:                   { source:'estimated', completeness:0.72, confidence:'medium', flag:'SUFFICIENT', n_obs:12, missing_fields:[] },
+      exposure_anomaly:      { source:'estimated', completeness:0.68, confidence:'medium', flag:'LIMITED',    n_obs:10, missing_fields:['current_meter'] },
+      // Operational
+      human_error:           { source:'real',      completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
+      procedure_failure:     { source:'real',      completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      equipment_failure:     { source:'real',      completeness:0.92, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
+      incident:              { source:'real',      completeness:0.88, confidence:'high',   flag:'SUFFICIENT', n_obs:16, missing_fields:[] },
+      maintenance_backlog:   { source:'real',      completeness:0.90, confidence:'high',   flag:'SUFFICIENT', n_obs:18, missing_fields:[] },
     },
   },
 ]
@@ -249,3 +317,40 @@ export const SCENARIO_PRESETS = [
     overrides: { exposure_factor: 1.60, operational_factor: 1.40 },
   },
 ]
+
+// ── 6. Shared site registry ───────────────────────────────────────────────────
+// Single source of truth for site_id → display name mapping.
+// Import this instead of hardcoding SITE_NAMES in individual panels.
+export const SITE_REGISTRY = Object.fromEntries(
+  MOCK_SITE_PROFILES.map(s => [s.site_id, s.site_name])
+)
+// e.g. { DEMO_OP_S01: 'Frohavet North', DEMO_OP_S02: 'Sunndalsfjord', ... }
+
+// ── 7. Canonical risk-type → domain mapping ───────────────────────────────────
+// Single source of truth used by alerts, forecasts, data-quality and overview
+// widgets. Keep in sync with RISK_TYPE_DOMAIN in alert_models.py.
+export const RISK_TYPE_TO_DOMAIN = {
+  // biological
+  hab:                'biological',
+  lice:               'biological',
+  jellyfish:          'biological',
+  pathogen:           'biological',
+  // structural
+  mooring_failure:    'structural',
+  net_integrity:      'structural',
+  cage_structural:    'structural',
+  deformation:        'structural',
+  anchor_deterioration: 'structural',
+  // environmental
+  oxygen_stress:      'environmental',
+  temperature_extreme: 'environmental',
+  current_storm:      'environmental',
+  ice:                'environmental',
+  exposure_anomaly:   'environmental',
+  // operational
+  human_error:        'operational',
+  procedure_failure:  'operational',
+  equipment_failure:  'operational',
+  incident:           'operational',
+  maintenance_backlog: 'operational',
+}

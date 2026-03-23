@@ -7,6 +7,7 @@ import OperationalForecastTab from './OperationalForecastTab.jsx'
 import LearningStatusTab from './LearningStatusTab.jsx'
 import AlertTable from '../alerts/AlertTable.jsx'
 import AlertDetailPanel from '../alerts/AlertDetailPanel.jsx'
+import SmoltSiteRiskTab from '../smolt/SmoltSiteRiskTab.jsx'
 import { MOCK_ALERTS } from '../../data/mockAlertsData.js'
 
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'operational',   label: 'Operational' },
   { id: 'learning',      label: 'Learning Status' },
   { id: 'alerts',        label: 'Alerts' },
+  { id: 'sites',         label: 'Anlegg' },
 ]
 
 export default function C5AIModule({ c5aiData, feasibilityResult, operator }) {
@@ -104,6 +106,9 @@ export default function C5AIModule({ c5aiData, feasibilityResult, operator }) {
             />
           )}
         </div>
+      )}
+      {activeTab === 'sites' && (
+        <SmoltSiteRiskTab />
       )}
     </div>
   )

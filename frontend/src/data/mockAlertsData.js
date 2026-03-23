@@ -7,7 +7,7 @@ export const MOCK_ALERTS = [
   // ── CRITICAL ───────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60001',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'jellyfish',
     alert_type: 'composite',
     alert_level: 'CRITICAL',
@@ -35,7 +35,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60002',
-    site_id: 'DEMO_S02',
+    site_id: 'DEMO_OP_S02',
     risk_type: 'hab',
     alert_type: 'composite',
     alert_level: 'CRITICAL',
@@ -65,7 +65,7 @@ export const MOCK_ALERTS = [
   // ── WARNING ────────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60003',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'hab',
     alert_type: 'composite',
     alert_level: 'WARNING',
@@ -91,7 +91,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60004',
-    site_id: 'DEMO_S03',
+    site_id: 'DEMO_OP_S03',
     risk_type: 'pathogen',
     alert_type: 'pattern',
     alert_level: 'WARNING',
@@ -116,7 +116,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60005',
-    site_id: 'DEMO_S02',
+    site_id: 'DEMO_OP_S02',
     risk_type: 'lice',
     alert_type: 'composite',
     alert_level: 'WARNING',
@@ -143,7 +143,7 @@ export const MOCK_ALERTS = [
   // ── WATCH ──────────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60006',
-    site_id: 'DEMO_S02',
+    site_id: 'DEMO_OP_S02',
     risk_type: 'lice',
     alert_type: 'pattern',
     alert_level: 'WATCH',
@@ -166,7 +166,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60007',
-    site_id: 'DEMO_S03',
+    site_id: 'DEMO_OP_S03',
     risk_type: 'jellyfish',
     alert_type: 'pattern',
     alert_level: 'WATCH',
@@ -189,7 +189,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60008',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'pathogen',
     alert_type: 'probability_shift',
     alert_level: 'WATCH',
@@ -212,7 +212,7 @@ export const MOCK_ALERTS = [
   // ── NORMAL ─────────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60009',
-    site_id: 'DEMO_S03',
+    site_id: 'DEMO_OP_S03',
     risk_type: 'lice',
     alert_type: 'probability_shift',
     alert_level: 'NORMAL',
@@ -232,7 +232,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60010',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'lice',
     alert_type: 'pattern',
     alert_level: 'NORMAL',
@@ -254,7 +254,7 @@ export const MOCK_ALERTS = [
   // ── STRUCTURAL ─────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60011',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'net_integrity',
     domain: 'structural',
     alert_type: 'pattern',
@@ -283,7 +283,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60012',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'mooring_failure',
     domain: 'structural',
     alert_type: 'composite',
@@ -311,7 +311,7 @@ export const MOCK_ALERTS = [
   // ── ENVIRONMENTAL ──────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60013',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'current_storm',
     domain: 'environmental',
     alert_type: 'composite',
@@ -340,7 +340,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60014',
-    site_id: 'DEMO_S01',
+    site_id: 'DEMO_OP_S01',
     risk_type: 'oxygen_stress',
     domain: 'environmental',
     alert_type: 'pattern',
@@ -366,7 +366,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60015',
-    site_id: 'DEMO_S02',
+    site_id: 'DEMO_OP_S02',
     risk_type: 'temperature_extreme',
     domain: 'environmental',
     alert_type: 'probability_shift',
@@ -390,7 +390,7 @@ export const MOCK_ALERTS = [
   // ── OPERATIONAL ────────────────────────────────────────────────────────────
   {
     alert_id: 'a1b2c3d4e5f60016',
-    site_id: 'DEMO_S02',
+    site_id: 'DEMO_OP_S02',
     risk_type: 'human_error',
     domain: 'operational',
     alert_type: 'composite',
@@ -416,7 +416,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60017',
-    site_id: 'DEMO_S03',
+    site_id: 'DEMO_OP_S03',
     risk_type: 'equipment_failure',
     domain: 'operational',
     alert_type: 'pattern',
@@ -440,7 +440,7 @@ export const MOCK_ALERTS = [
   },
   {
     alert_id: 'a1b2c3d4e5f60018',
-    site_id: 'DEMO_S03',
+    site_id: 'DEMO_OP_S03',
     risk_type: 'maintenance_backlog',
     domain: 'operational',
     alert_type: 'pattern',
@@ -466,7 +466,7 @@ export const MOCK_ALERTS = [
 ]
 
 export const MOCK_ALERT_SUMMARY = [
-  { site_id: 'DEMO_S01', total_alerts: 4, critical_alerts: 1, warning_alerts: 1, top_risk_type: 'jellyfish', latest_alert_at: '2026-03-10T07:15:00+00:00' },
-  { site_id: 'DEMO_S02', total_alerts: 3, critical_alerts: 1, warning_alerts: 1, top_risk_type: 'hab',       latest_alert_at: '2026-03-10T07:14:00+00:00' },
-  { site_id: 'DEMO_S03', total_alerts: 3, critical_alerts: 0, warning_alerts: 1, top_risk_type: 'pathogen',  latest_alert_at: '2026-03-10T05:45:00+00:00' },
+  { site_id: 'DEMO_OP_S01', total_alerts: 8, critical_alerts: 3, warning_alerts: 3, top_risk_type: 'current_storm', latest_alert_at: '2026-03-10T07:15:00+00:00' },
+  { site_id: 'DEMO_OP_S02', total_alerts: 5, critical_alerts: 1, warning_alerts: 2, top_risk_type: 'hab',           latest_alert_at: '2026-03-10T07:14:00+00:00' },
+  { site_id: 'DEMO_OP_S03', total_alerts: 5, critical_alerts: 0, warning_alerts: 2, top_risk_type: 'pathogen',      latest_alert_at: '2026-03-10T05:45:00+00:00' },
 ]

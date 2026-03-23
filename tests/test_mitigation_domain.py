@@ -232,14 +232,16 @@ class TestDomainVsBioPath:
 
 class TestAllPredefinedDomain:
     def test_no_warnings_with_full_domain_bd(self):
-        """No structural/operational UserWarning when domain_loss_breakdown covers all."""
+        """Sea actions should not UserWarning when sea domain_loss_breakdown covers all."""
         sim = _make_sim()
         dbd = _make_domain_bd_prior(sim)
         analyzer = MitigationAnalyzer(sim)
+        sea_actions = [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == "sea"]
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            scenarios = analyzer.compare_all_predefined(domain_loss_breakdown=dbd)
+            for action in sea_actions:
+                analyzer.compare([action], domain_loss_breakdown=dbd)
 
         user_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
         assert user_warnings == [], (
@@ -397,15 +399,20 @@ class TestCapitalAnalyzerDomain:
         sim = _make_sim()
         dbd = _make_domain_bd_prior(sim)
         ca = MitigationCapitalAnalyzer(sim)
+        sea_actions = [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == "sea"]
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            impacts = ca.analyze_all_predefined(domain_loss_breakdown=dbd)
+            # Only sea actions should route cleanly against a sea domain_loss_breakdown
+            for action in sea_actions:
+                ca.analyze([action], domain_loss_breakdown=dbd)
 
         user_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
         assert user_warnings == [], (
             f"Unexpected UserWarnings: {[str(w.message) for w in user_warnings]}"
         )
+        # Full suite (all 24) still works — smolt actions fall back to portfolio scaling
+        impacts = ca.analyze_all_predefined(domain_loss_breakdown=dbd)
         assert len(impacts) == len(PREDEFINED_MITIGATIONS) + 1
 
     def test_rank_by_tcor_with_domain_bd(self):

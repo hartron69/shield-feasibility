@@ -294,10 +294,18 @@ class TestNoCrossDomainEffect:
 class TestAllPredefined10Actions:
     """compare_all_predefined returns n+1 scenarios (n actions + bundle)."""
 
-    def test_predefined_mitigations_has_12_keys(self):
-        assert len(PREDEFINED_MITIGATIONS) == 12
+    def test_predefined_mitigations_has_24_keys(self):
+        assert len(PREDEFINED_MITIGATIONS) == 24
 
-    def test_all_expected_keys_present(self):
+    def test_sea_mitigations_has_12_keys(self):
+        sea_keys = {k for k, a in PREDEFINED_MITIGATIONS.items() if a.facility_type == "sea"}
+        assert len(sea_keys) == 12
+
+    def test_smolt_mitigations_has_12_keys(self):
+        smolt_keys = {k for k, a in PREDEFINED_MITIGATIONS.items() if a.facility_type == "smolt"}
+        assert len(smolt_keys) == 12
+
+    def test_all_expected_sea_keys_present(self):
         expected = {
             "stronger_nets", "stronger_anchors", "stronger_moorings",
             "lice_barriers", "jellyfish_mitigation", "environmental_sensors",
@@ -305,25 +313,28 @@ class TestAllPredefined10Actions:
             "risk_manager_hire", "emergency_response_plan",
             "deformation_monitoring", "ai_early_warning",
         }
-        assert expected == set(PREDEFINED_MITIGATIONS.keys())
+        sea_keys = {k for k, a in PREDEFINED_MITIGATIONS.items() if a.facility_type == "sea"}
+        assert expected == sea_keys
 
-    def test_compare_all_predefined_returns_13_scenarios(self):
+    def test_compare_all_predefined_returns_25_scenarios(self):
         sim = _make_sim()
         dbd = _make_domain_bd_prior(sim)
         analyzer = MitigationAnalyzer(sim)
         scenarios = analyzer.compare_all_predefined(domain_loss_breakdown=dbd)
-        # 12 predefined + 1 bundle
-        assert len(scenarios) == 13
+        # 24 predefined + 1 bundle
+        assert len(scenarios) == 25
 
-    def test_no_user_warnings_with_full_domain_bd(self):
-        """All 10 actions should route cleanly when domain_bd is provided."""
+    def test_no_user_warnings_for_sea_actions_with_full_domain_bd(self):
+        """Sea actions should route cleanly when sea domain_bd is provided."""
         sim = _make_sim()
         dbd = _make_domain_bd_bio_modelled(sim)
         analyzer = MitigationAnalyzer(sim)
+        sea_actions = [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == "sea"]
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            analyzer.compare_all_predefined(domain_loss_breakdown=dbd)
+            for action in sea_actions:
+                analyzer.compare([action], domain_loss_breakdown=dbd)
 
         user_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
         assert user_warnings == [], (

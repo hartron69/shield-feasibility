@@ -42,6 +42,7 @@ class OperatorProfileInput(BaseModel):
     )
     annual_revenue_nok: float = Field(default=897_000_000.0, gt=0)
     annual_premium_nok: float = Field(default=19_500_000.0, gt=0)
+    sites: Optional[List["SiteProfileInput"]] = None
 
 
 class ModelSettingsInput(BaseModel):
@@ -125,6 +126,10 @@ class ComparisonBlock(BaseModel):
     annual_cost_saving: float
     top_benefit_domains: List[str]
     narrative: str
+    composite_score_delta: float = 0.0   # points gained (positive = improvement)
+    # Per-criterion breakdown: [{name, baseline_raw, mitigated_raw, delta_weighted}]
+    criterion_deltas: List[Dict] = Field(default_factory=list)
+    mitigation_score_note: str = ""      # plain-language explanation of score change
 
 
 class ReportBlock(BaseModel):
@@ -232,6 +237,11 @@ class HistoricalLossSummary(BaseModel):
     calibration_mode: str            # "none" | "portfolio" | "domain"
     calibrated_parameters: Dict[str, float] = Field(default_factory=dict)
 
+    # ── Self-handled vs reported split (smolt internal calibration) ──────────
+    reported_total_nok: float = 0.0       # losses reported to insurer (loss ratio)
+    self_handled_total_nok: float = 0.0   # losses below deductible (MC calibration only)
+    domain_frequencies: Dict[str, float] = Field(default_factory=dict)  # domain → events/yr
+
     # ── Raw records (with domain field) ──────────────────────────────────────
     records: List[HistoryEventRow]
 
@@ -290,6 +300,139 @@ class PoolingResult(BaseModel):
     known_simplifications: List[str] = Field(default_factory=list)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Loss Analysis response models (Tapsanalyse tab)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class LossAnalysisSite(BaseModel):
+    site_id: str
+    site_name: str
+    expected_annual_loss_nok: float
+    var95_nok: float = 0.0
+    scr_contribution_nok: float = 0.0
+    scr_share_pct: float = 0.0
+    dominant_domain: str = "biological"
+    domain_breakdown: Dict[str, float] = Field(default_factory=dict)
+
+
+class LossAnalysisMitigatedSite(BaseModel):
+    site_id: str
+    site_name: str
+    expected_annual_loss_nok: float
+    dominant_domain: str = "biological"
+    domain_breakdown: Dict[str, float] = Field(default_factory=dict)
+
+
+class LossAnalysisMitigated(BaseModel):
+    per_site: List[LossAnalysisMitigatedSite] = Field(default_factory=list)
+    per_domain: Dict[str, float] = Field(default_factory=dict)
+    delta_total_eal_nok: float = 0.0
+    delta_total_scr_nok: float = 0.0
+
+
+class LossAnalysisDriver(BaseModel):
+    label: str
+    risk_type: str = ""
+    domain: str
+    impact_nok: float
+    impact_share_pct: float = 0.0
+
+
+class LossAnalysisBlock(BaseModel):
+    per_site: List[LossAnalysisSite] = Field(default_factory=list)
+    per_domain: Dict[str, float] = Field(default_factory=dict)
+    top_drivers: List[LossAnalysisDriver] = Field(default_factory=list)
+    mitigated: Optional[LossAnalysisMitigated] = None
+    method_note: str = ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Traceability block (C5AI+ → Feasibility data lineage)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TraceabilitySiteTrace(BaseModel):
+    site_id: str
+    site_name: str
+    eal_nok: float = 0.0
+    scr_contribution_nok: float = 0.0
+    top_domains: List[str] = Field(default_factory=list)
+
+
+class TraceabilityBlock(BaseModel):
+    analysis_id: str = ""
+    generated_at: str = ""
+    source: str = "static_model"        # "static_model" | "c5ai_plus" | "c5ai_plus_mitigated"
+    c5ai_enriched: bool = False
+    c5ai_scale_factor: Optional[float] = None
+    site_count: int = 0
+    domain_count: int = 0
+    risk_type_count: int = 0
+    site_ids: List[str] = Field(default_factory=list)
+    domains_used: List[str] = Field(default_factory=list)
+    risk_types_used: List[str] = Field(default_factory=list)
+    data_mode: str = "static_model"     # "static_model" | "c5ai_forecast" | "c5ai_forecast_mitigated"
+    mitigated_forecast_used: bool = False
+    applied_mitigations: List[str] = Field(default_factory=list)
+    mapping_note: str = ""
+    site_trace: List[TraceabilitySiteTrace] = Field(default_factory=list)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# C5AI+ gate / freshness response models
+# ─────────────────────────────────────────────────────────────────────────────
+
+class C5AIRunResponse(BaseModel):
+    run_id: str
+    generated_at: str
+    status: str = "ok"          # "ok" | "stub"
+    site_count: int = 0
+    domain_count: int = 4
+    risk_type_count: int = 0
+    pipeline_ran: bool = False
+    message: str = ""
+    freshness: str = "fresh"    # "fresh" | "stale" | "missing"
+
+
+class C5AIStatusResponse(BaseModel):
+    run_id: Optional[str] = None
+    c5ai_last_run_at: Optional[str] = None
+    inputs_last_updated_at: Optional[str] = None
+    is_fresh: bool = False
+    freshness: str = "missing"  # "fresh" | "stale" | "missing"
+
+
+class C5AISiteTrace(BaseModel):
+    site_id: str
+    site_name: str
+    expected_annual_loss_nok: float = 0.0
+    scr_contribution_nok: float = 0.0
+    dominant_domain: str = ""
+    top_risk_types: List[str] = Field(default_factory=list)
+    # Transparency fields — populated by _build_c5ai_meta()
+    # domain_sources: per-domain source label ("c5ai_plus" | "estimated")
+    domain_sources: Dict[str, str] = Field(default_factory=dict)
+    # confidence_score: 0.0–1.0 heuristic reflecting data quality for this site
+    confidence_score: float = 0.0
+    # confidence_label: human-readable summary in Norwegian
+    confidence_label: str = "Lav"
+
+
+class C5AIRunMeta(BaseModel):
+    """Snapshot of C5AI+ run state attached to each FeasibilityResponse."""
+    run_id: Optional[str] = None
+    generated_at: Optional[str] = None
+    is_fresh: bool = False
+    freshness: str = "missing"  # "fresh" | "stale" | "missing"
+    site_count: int = 0
+    site_ids: List[str] = Field(default_factory=list)
+    site_names: List[str] = Field(default_factory=list)
+    data_mode: str = "simulated"
+    domains_used: List[str] = Field(default_factory=list)
+    risk_type_count: int = 0
+    source_labels: List[str] = Field(default_factory=list)
+    site_trace: List[C5AISiteTrace] = Field(default_factory=list)
+
+
 class FeasibilityResponse(BaseModel):
     baseline: ScenarioBlock
     mitigated: Optional[ScenarioBlock] = None
@@ -299,6 +442,9 @@ class FeasibilityResponse(BaseModel):
     allocation: Optional[AllocationSummary] = None
     history: Optional[HistoricalLossSummary] = None
     pooling: Optional[PoolingResult] = None
+    loss_analysis: Optional[LossAnalysisBlock] = None
+    traceability: Optional[TraceabilityBlock] = None
+    c5ai_meta: Optional[C5AIRunMeta] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -315,6 +461,21 @@ class MitigationActionInfo(BaseModel):
     annual_cost_nok: float
     capex_nok: float
     targeted_risk_types: List[str]
+    facility_type: str = "sea"
+
+
+class SiteProfileInput(BaseModel):
+    site_id: str
+    site_name: str
+    biomass_value_nok: float = Field(gt=0)
+    fjord_exposure: str = "semi_exposed"
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    municipality: Optional[str] = None
+    licence_count: int = 1
+    lice_pressure_factor: float = Field(default=1.0, ge=0.1, le=5.0)
+    hab_risk_factor: float = Field(default=1.0, ge=0.1, le=5.0)
+    mooring_age_years: Optional[int] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -364,6 +525,58 @@ class SmoltOperatorRequest(BaseModel):
     current_insurer: Optional[str] = None
     current_bi_indemnity_months: Optional[int] = None
 
+    # Tiltak (mitigations) — optional; same structure as sea-based route
+    mitigation: Optional[MitigationInput] = None
+
+    # Detailed loss history (self-handled internal records, not reported to insurer)
+    historical_losses: Optional[List[dict]] = Field(default=None)
+    loss_calibration_note: Optional[str] = None
+
     # Model settings (reuses existing schema)
     model: ModelSettingsInput = Field(default_factory=ModelSettingsInput)
     generate_pdf: bool = True
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scenario request / response — Sprint S6
+# ─────────────────────────────────────────────────────────────────────────────
+
+class ScenarioRequest(BaseModel):
+    facility_type: str = "sea"
+    preset_id: Optional[str] = None
+    operator: Optional[OperatorProfileInput] = None
+    smolt_operator: Optional[SmoltOperatorRequest] = None
+    # Sea parameters (from existing sliders)
+    total_biomass_override: Optional[float] = None
+    dissolved_oxygen_mg_l: Optional[float] = None
+    nitrate_umol_l: Optional[float] = None
+    lice_pressure_index: Optional[float] = None
+    exposure_factor: Optional[float] = None
+    operational_factor: Optional[float] = None
+    # Smolt / RAS parameters (new)
+    ras_failure_multiplier: Optional[float] = None
+    power_backup_hours: Optional[float] = None
+    oxygen_level_mg_l: Optional[float] = None
+    affected_facility_index: Optional[int] = None
+
+
+class ScenarioFacilityResultResponse(BaseModel):
+    facility_name: str
+    baseline_expected_loss: float
+    scenario_expected_loss: float
+    change_pct: float
+    var_99_5_baseline: float
+    var_99_5_scenario: float
+    highest_risk_driver: str
+    loss_by_category: Dict[str, float]
+
+
+class ScenarioResponse(BaseModel):
+    preset_id: str
+    facility_type: str
+    baseline_total_loss: float
+    scenario_total_loss: float
+    total_change_pct: float
+    facility_results: List[ScenarioFacilityResultResponse]
+    highest_risk_driver: str
+    narrative: str

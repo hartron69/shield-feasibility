@@ -196,6 +196,156 @@ def compute_domain_calibration_params(
     return params
 
 
+# ── Smolt self-handled history ────────────────────────────────────────────────
+
+def build_smolt_self_handled_summary(
+    raw_records: List[dict],
+    use_history_calibration: bool = True,
+) -> "HistoricalLossSummary":
+    """Build a HistoricalLossSummary from smolt internal-log history records.
+
+    These records use the agaqua format:
+        {year, total_loss_nok, n_events, domains: {domain: nok, ...},
+         reported_to_insurer: bool, notes, data_source}
+
+    Returns a HistoricalLossSummary with:
+    - reported_total_nok:    sum of losses where reported_to_insurer=True
+    - self_handled_total_nok: sum where reported_to_insurer=False
+    - domain_frequencies:    domain → events_per_year (across all self-handled records)
+    - calibration_active:    True when use_history_calibration=True and self-handled losses exist
+    - calibration_mode:      "domain" when ≥3 self-handled events with domain breakdown, else "portfolio"
+    """
+    from backend.schemas import (
+        HistoricalLossSummary,
+        HistoryEventRow,
+        HistoricalDomainSummary,
+    )
+
+    if not raw_records:
+        return HistoricalLossSummary(
+            history_loaded=False, history_source="internal_logs",
+            record_count=0, years_covered=[], n_years_observed=0,
+            portfolio_total_gross=0.0, portfolio_total_insured=0.0,
+            portfolio_total_retained=0.0, portfolio_mean_severity=0.0,
+            portfolio_events_per_year=0.0, domain_summaries=[], records=[],
+            calibration_active=False, calibration_source="none",
+            calibration_mode="none", calibrated_parameters={},
+        )
+
+    years_covered = sorted(set(r["year"] for r in raw_records))
+    n_years = len(years_covered)
+
+    reported_total = 0.0
+    self_handled_total = 0.0
+    domain_nok: Dict[str, float] = defaultdict(float)
+    domain_events: Dict[str, int] = defaultdict(int)
+    total_events = 0
+    total_loss = 0.0
+
+    rows: List[HistoryEventRow] = []
+
+    for r in raw_records:
+        loss = float(r.get("total_loss_nok", 0))
+        is_reported = bool(r.get("reported_to_insurer", False))
+        if is_reported:
+            reported_total += loss
+        else:
+            self_handled_total += loss
+
+        domains: dict = r.get("domains", {})
+        n_ev = int(r.get("n_events", 1 if loss > 0 else 0))
+        total_events += n_ev
+        total_loss += loss
+
+        for domain, amount in domains.items():
+            domain_nok[domain] += float(amount)
+            domain_events[domain] += 1
+
+        # Build a HistoryEventRow per year (aggregate, domain = dominant)
+        dominant_domain = max(domains, key=lambda k: domains[k]) if domains else "operational"
+        rows.append(
+            HistoryEventRow(
+                year=r["year"],
+                event_type="smolt_self_handled",
+                domain=dominant_domain,
+                gross_loss=loss,
+                insured_loss=0.0,   # not reported
+                retained_loss=loss, # operator absorbed all
+            )
+        )
+
+    # domain_frequencies = events / n_years for each domain (from self-handled only)
+    domain_frequencies = {
+        d: round(cnt / n_years, 4) for d, cnt in domain_events.items()
+    }
+
+    # Calibration: active when self-handled losses exist and use_history_calibration=True
+    n_self_handled = sum(1 for r in raw_records if not r.get("reported_to_insurer", False) and r.get("total_loss_nok", 0) > 0)
+    calibration_active = use_history_calibration and n_self_handled >= 1
+    calibration_mode = "domain" if n_self_handled >= 3 and len(domain_events) > 1 else (
+        "portfolio" if n_self_handled >= 1 else "none"
+    )
+
+    calibrated_params: Dict[str, float] = {}
+    if calibration_active and n_years > 0:
+        calibrated_params["self_handled_events_per_year"] = round(total_events / n_years, 4)
+        if total_events > 0:
+            calibrated_params["self_handled_mean_severity"] = round(self_handled_total / total_events)
+        for d, nok in domain_nok.items():
+            calibrated_params[f"{d}_annual_loss_mean"] = round(nok / n_years)
+
+    # Build domain summaries from the smolt domain breakdown
+    portfolio_gross = total_loss
+    domain_summaries: List[HistoricalDomainSummary] = []
+    for domain, nok in sorted(domain_nok.items(), key=lambda x: -x[1]):
+        ev_count = domain_events[domain]
+        domain_summaries.append(HistoricalDomainSummary(
+            domain=domain,
+            event_count=ev_count,
+            total_gross_loss=nok,
+            total_insured_loss=0.0,
+            total_retained_loss=nok,
+            mean_severity=nok / ev_count,
+            events_per_year=round(ev_count / n_years, 4),
+            loss_share_pct=(nok / portfolio_gross * 100) if portfolio_gross > 0 else 0.0,
+            years_with_events=sorted(
+                set(r["year"] for r in raw_records if domain in r.get("domains", {}))
+            ),
+        ))
+
+    cal_source = {
+        "domain":    "historical_domain_calibration",
+        "portfolio": "historical_loss_records",
+        "none":      "none",
+    }.get(calibration_mode, "none")
+
+    mean_sev = portfolio_gross / total_events if total_events > 0 else 0.0
+    events_per_yr = total_events / n_years if n_years > 0 else 0.0
+
+    return HistoricalLossSummary(
+        history_loaded=True,
+        history_source="internal_logs",
+        record_count=len(rows),
+        years_covered=years_covered,
+        n_years_observed=n_years,
+        portfolio_total_gross=portfolio_gross,
+        portfolio_total_insured=0.0,
+        portfolio_total_retained=self_handled_total,
+        portfolio_mean_severity=mean_sev,
+        portfolio_events_per_year=events_per_yr,
+        domain_summaries=domain_summaries,
+        mapping_warnings=[],
+        calibration_active=calibration_active,
+        calibration_source=cal_source,
+        calibration_mode=calibration_mode,
+        calibrated_parameters=calibrated_params,
+        records=rows,
+        reported_total_nok=reported_total,
+        self_handled_total_nok=self_handled_total,
+        domain_frequencies=domain_frequencies,
+    )
+
+
 # ── Main factory ──────────────────────────────────────────────────────────────
 
 def build_historical_loss_summary(

@@ -53,14 +53,32 @@ class TestMitigationAction:
 
 class TestPredefinedMitigations:
     def test_all_predefined_present(self):
-        expected_keys = {
+        expected_sea_keys = {
             "stronger_nets", "stronger_anchors", "stronger_moorings", "lice_barriers",
             "jellyfish_mitigation", "environmental_sensors",
             "storm_contingency_plan", "staff_training_program",
             "risk_manager_hire", "emergency_response_plan",
             "deformation_monitoring", "ai_early_warning",
         }
-        assert expected_keys == set(PREDEFINED_MITIGATIONS.keys())
+        expected_smolt_keys = {
+            "smolt_oxygen_backup", "smolt_temperature_control", "smolt_co2_stripping",
+            "smolt_ph_dosing", "smolt_biofilter_monitoring", "smolt_uv_sterilization",
+            "smolt_backup_power", "smolt_fish_health_program", "smolt_biosecurity",
+            "smolt_alarm_system", "smolt_staff_training", "smolt_emergency_plan",
+        }
+        assert expected_sea_keys | expected_smolt_keys == set(PREDEFINED_MITIGATIONS.keys())
+
+    def test_facility_type_field_present(self):
+        for key, action in PREDEFINED_MITIGATIONS.items():
+            assert action.facility_type in ("sea", "smolt"), f"{key} has unexpected facility_type"
+
+    def test_sea_mitigations_count(self):
+        sea = [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == "sea"]
+        assert len(sea) == 12
+
+    def test_smolt_mitigations_count(self):
+        smolt = [a for a in PREDEFINED_MITIGATIONS.values() if a.facility_type == "smolt"]
+        assert len(smolt) == 12
 
     def test_all_have_positive_cost(self):
         for key, action in PREDEFINED_MITIGATIONS.items():

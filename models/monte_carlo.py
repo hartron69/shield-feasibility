@@ -36,7 +36,7 @@ from models.loss_model import LossView, compute_loss_view
 from models.correlation import RiskCorrelationMatrix
 from models.regime_model import RegimeModel
 from models.domain_correlation import DomainCorrelationMatrix
-from models.domain_loss_breakdown import build_domain_loss_breakdown
+from models.domain_loss_breakdown import build_domain_loss_breakdown, build_smolt_domain_loss_breakdown
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -290,12 +290,20 @@ class MonteCarloEngine:
         # ── Step 8: domain loss breakdown (Sprint 7, optional) ───────────────
         domain_breakdown = None
         if self.domain_correlation is not None:
-            domain_breakdown = build_domain_loss_breakdown(
-                annual_losses=annual_losses,
-                bio_breakdown=bio_breakdown if bio_breakdown else None,
-                domain_correlation=self.domain_correlation,
-                rng=self.rng,
-            )
+            is_smolt = getattr(self.operator, "facility_type", "") == "smolt"
+            if is_smolt:
+                domain_breakdown = build_smolt_domain_loss_breakdown(
+                    annual_losses=annual_losses,
+                    domain_correlation=self.domain_correlation,
+                    rng=self.rng,
+                )
+            else:
+                domain_breakdown = build_domain_loss_breakdown(
+                    annual_losses=annual_losses,
+                    bio_breakdown=bio_breakdown if bio_breakdown else None,
+                    domain_correlation=self.domain_correlation,
+                    rng=self.rng,
+                )
 
         return SimulationResults(
             annual_losses=annual_losses,

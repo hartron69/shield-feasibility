@@ -58,6 +58,7 @@ export const AGAQUA_EXAMPLE = {
     },
   ],
   annual_revenue_nok:    232_248_232,
+  ebitda_nok:             70_116_262,
   equity_nok:             39_978_809,
   operating_cf_nok:       46_510_739,
   liquidity_nok:          55_454_950,

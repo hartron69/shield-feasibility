@@ -384,3 +384,53 @@ class TestSeaPipelineUnaffected:
         from backend.schemas import OperatorProfileInput
         op, _ = build_operator_input(OperatorProfileInput())
         assert op.facility_type == "sea_based"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Self-handled history tests — Sprint (agaqua internal logs)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestAgaquaSelfHandledHistory:
+    """Tests for the internal self-handled loss history in data/agaqua_input.json."""
+
+    @pytest.fixture(autouse=True)
+    def load_agaqua(self):
+        import json, pathlib
+        path = pathlib.Path("data/agaqua_input.json")
+        with open(path, encoding="utf-8") as f:
+            self.raw = json.load(f)
+        self.hist = self.raw.get("historical_losses", [])
+
+    def test_agaqua_self_handled_losses_sum(self):
+        """Sum of all historical_losses.total_loss_nok must equal NOK 240 300."""
+        total = sum(r["total_loss_nok"] for r in self.hist)
+        assert total == 240_300
+
+    def test_agaqua_reported_losses_zero(self):
+        """All historical_losses entries must have reported_to_insurer=False."""
+        for r in self.hist:
+            assert r.get("reported_to_insurer") is False, (
+                f"Year {r['year']} has reported_to_insurer={r.get('reported_to_insurer')}"
+            )
+
+    def test_history_analytics_separates_reported_vs_self_handled(self):
+        """build_smolt_self_handled_summary produces correct domain split."""
+        from backend.services.history_analytics import build_smolt_self_handled_summary
+        summary = build_smolt_self_handled_summary(self.hist, use_history_calibration=True)
+        assert summary.reported_total_nok == pytest.approx(0.0)
+        assert summary.self_handled_total_nok == pytest.approx(240_300.0)
+        assert summary.calibration_mode == "domain"
+        assert "ras_failure" in summary.domain_frequencies
+        assert summary.domain_frequencies["ras_failure"] > 0
+        assert "oxygen_event" in summary.domain_frequencies
+        assert summary.domain_frequencies["oxygen_event"] > 0
+        assert "biological" in summary.domain_frequencies
+        assert summary.domain_frequencies["biological"] > 0
+
+    def test_agaqua_calibration_activates_with_self_handled(self):
+        """With use_history_calibration=True and 10 records, calibration_active=True."""
+        from backend.services.history_analytics import build_smolt_self_handled_summary
+        summary = build_smolt_self_handled_summary(self.hist, use_history_calibration=True)
+        assert summary.calibration_active is True
+        # calibration_mode is "domain" since >3 self-handled events with multiple domains
+        assert summary.calibration_mode in ("domain", "portfolio")

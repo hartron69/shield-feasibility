@@ -13,8 +13,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from backend.api.c5ai import router as c5ai_router
 from backend.api.feasibility import router as feasibility_router
+from backend.api.inputs_audit import router as inputs_audit_router
 from backend.api.mitigation import router as mitigation_router
+from backend.api.scenario import router as scenario_router
 from backend.api.smolt_feasibility import router as smolt_router
 
 # Ensure the reports directory exists at startup
@@ -41,8 +44,11 @@ app.mount(
     name="static",
 )
 
+app.include_router(c5ai_router)
 app.include_router(feasibility_router, prefix="/api/feasibility", tags=["feasibility"])
+app.include_router(inputs_audit_router)
 app.include_router(mitigation_router, prefix="/api/mitigation", tags=["mitigation"])
+app.include_router(scenario_router)
 app.include_router(smolt_router)
 
 

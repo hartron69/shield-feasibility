@@ -31,6 +31,19 @@ class SiteProfile:
     annual_revenue: float                 # $ – site revenue
     site_type: str = "production"         # production | processing | hatchery | land_based | support
 
+    # ── Sea-site specific fields (Sprint S7) ─────────────────────────────────
+    fjord_exposure: str = "semi_exposed"     # open_coast | semi_exposed | sheltered
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    municipality: Optional[str] = None
+    licence_count: int = 1
+    max_biomass_tonnes: Optional[float] = None
+    # Risk adjustment factors per site
+    lice_pressure_factor: float = 1.0        # >1 = higher lice pressure
+    hab_risk_factor: float = 1.0             # >1 = higher HAB risk
+    mooring_age_years: Optional[int] = None
+    net_integrity_score: Optional[float] = None  # 0–1
+
     @property
     def is_biomass_site(self) -> bool:
         """True for site types that carry standing biomass risk."""
@@ -40,6 +53,29 @@ class SiteProfile:
     def is_revenue_site(self) -> bool:
         """True for site types that generate direct revenue."""
         return self.site_type in {"production", "processing", "hatchery"}
+
+    @property
+    def exposure_category(self) -> str:
+        """Normalise fjord_exposure to one of three canonical categories."""
+        val = self.fjord_exposure.lower()
+        if "open" in val:     return "open_coast"
+        if "shelter" in val:  return "sheltered"
+        return "semi_exposed"
+
+    @property
+    def base_loss_frequency(self) -> float:
+        """Site-level annual loss frequency based on exposure and risk factors."""
+        base = {"open_coast": 0.22, "semi_exposed": 0.15, "sheltered": 0.09}
+        freq = base.get(self.exposure_category, 0.15)
+        freq *= self.lice_pressure_factor
+        freq *= self.hab_risk_factor
+        return freq
+
+    @property
+    def base_severity_nok(self) -> float:
+        """Expected loss magnitude per event (18 % of biomass value)."""
+        biomass_value_nok = self.biomass_tonnes * self.biomass_value_per_tonne
+        return biomass_value_nok * 0.18
 
     @property
     def total_insured_value(self) -> float:
@@ -55,6 +91,7 @@ class HistoricalLossRecord:
     gross_loss: float     # $ – total economic loss before insurance recovery
     insured_loss: float   # $ – amount paid by insurer
     retained_loss: float  # $ – operator self-absorbed
+    reported_to_insurer: bool = False  # False = self-handled under deductible (internal calibration only)
 
 
 @dataclass
@@ -209,7 +246,15 @@ def validate_input(raw: dict) -> OperatorInput:
         return SiteProfile(**kwargs)
 
     def _loss_record(d: dict) -> HistoricalLossRecord:
-        return HistoricalLossRecord(**{k: d[k] for k in HistoricalLossRecord.__dataclass_fields__})
+        fields = HistoricalLossRecord.__dataclass_fields__
+        kwargs = {}
+        for k, f in fields.items():
+            if k in d:
+                kwargs[k] = d[k]
+            elif f.default is not _dc.MISSING:
+                kwargs[k] = f.default
+            # else: required field missing — will raise TypeError below
+        return HistoricalLossRecord(**kwargs)
 
     def _insurance(d: dict) -> CurrentInsuranceProgram:
         return CurrentInsuranceProgram(**{k: d[k] for k in CurrentInsuranceProgram.__dataclass_fields__})

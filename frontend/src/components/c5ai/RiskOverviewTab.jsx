@@ -126,7 +126,7 @@ export default function RiskOverviewTab({ data, feasibilityResult }) {
               return (
                 <tr key={site.site_id}>
                   <td style={{ color: 'var(--dark-grey)', fontWeight: 600 }}>{i + 1}</td>
-                  <td style={{ fontWeight: 600 }}>{site.name}</td>
+                  <td style={{ fontWeight: 600 }}>{site.site_name}</td>
                   <td>{EXPOSURE_LABELS[site.fjord_exposure] || site.fjord_exposure}</td>
                   <td>{site.biomass_tonnes.toLocaleString()} t</td>
                   <td>

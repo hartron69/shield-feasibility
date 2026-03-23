@@ -4,6 +4,62 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Input Data Audit Report (2026-03-23)
+**Tests after:** 1 533 passed, 0 failed (+18 new) | Frontend build: 0 errors, 100 modules
+**Artifacts:** `docs/sprints/sprint_input_audit/` (pending)
+**Summary:** Delivered the Input Data Audit Report as a live, downloadable JSON report. Backend: new `backend/api/inputs_audit.py` — `GET /api/inputs/audit` returns an `InputsAuditReport` with Pydantic models `RiskTypeAudit`, `SiteAudit`, `DomainCoverage`, `AuditSummary`, `C5AIStatusSnap`. Per-site quality data for all three demo sites (DEMO_OP_S01–S03, 19 risk types each) mirrors `mockInputsData.js MOCK_DATA_QUALITY` for frontend/backend consistency. Domain coverage is live: biological is `c5ai_plus` when C5AI+ is fresh, falls back to `estimated` when missing; structural/environmental/operational are always `estimated`. Model limitations documented in Norwegian (6 items). Router registered in `backend/main.py`. Frontend: `ReportsPage.jsx` rewritten with `useState` — `input_audit` status changed from `planned` to `available`; "Last ned rapport (JSON)" button fetches `/api/inputs/audit`, triggers JSON file download, and renders inline `AuditSummaryPanel` showing C5AI+ freshness badge, 6 KPI cards, domain coverage badges, per-site completeness bars, and model limitations list. `fetchInputsAudit()` added to `client.js`. CSS appended to `App.css`. Tests: `tests/test_inputs_audit.py` — 18 tests across 3 classes (endpoint shape, data correctness, live C5AI+ state reflection).
+
+---
+
+## Sprint – C5AI+ Traceability Refinement (2026-03-23)
+**Tests after:** 1 508 passed, 0 failed (+5 new) | Frontend build: 0 errors, 100 modules
+**Artifacts:** `docs/sprints/sprint_c5ai_traceability_refinement/`
+**Summary:** Strengthened trust, traceability, and site-level visibility between C5AI+ and PCC Feasibility. Part 1 — Extended `C5AIRunMeta` with 8 new optional fields: `site_count`, `site_ids`, `site_names`, `data_mode` (simulated/real/mixed), `domains_used`, `risk_type_count`, `source_labels`, `site_trace` (per-site EAL+SCR from loss analysis). `c5ai_state.py` gains `store_run_extra()` / `get_run_extra()` to persist run-time metadata. `_build_c5ai_meta()` now accepts `loss_analysis` and `traceability` arguments and builds a full `site_trace`. Part 2 — `ResultPanel.jsx` meta bar replaced with a richer `c5ai-trace-strip` showing freshness badge, run ID, timestamp, and chips for site count / data mode / domains. New `C5AISiteTracePanel.jsx` is a collapsible table beneath the strip showing per-site: dominant domain pill, EAL, SCR contribution, with "Se anlegg i C5AI+ Risiko →" deep-link. Part 3 — New `ConfirmStaleC5AIModal.jsx` intercepts "Kjør Feasibility" when C5AI+ is stale (offers "Oppdater C5AI+ først" / "Kjør likevel") or missing (blocks with only "Oppdater" option). `App.jsx` `handleRun()` checks freshness and shows modal; original run logic renamed to `_doRun()`.
+
+---
+
+## Sprint – C5AI+ Activation and Freshness Gate (2026-03-22)
+**Tests after:** 1 503 passed, 0 failed (+19 new) | Frontend build: 0 errors, 98 modules
+**Artifacts:** `docs/sprints/sprint_c5ai_gate/`
+**Summary:** Implemented a gate requiring users to explicitly run C5AI+ before feasibility analysis. Backend: new `backend/services/c5ai_state.py` — thread-safe in-memory singleton tracking `_c5ai_last_run_at` and `_inputs_last_updated_at`; freshness rules: `missing` (never run), `stale` (inputs changed after last run), `fresh` (run is up to date). New `backend/api/c5ai.py` — `POST /api/c5ai/run` (triggers `MultiDomainEngine`, stubs on failure), `GET /api/c5ai/status`, `POST /api/c5ai/inputs/updated`. `backend/schemas.py` gains `C5AIRunResponse`, `C5AIStatusResponse`, `C5AIRunMeta`; `FeasibilityResponse` gains `c5ai_meta` field so every feasibility result carries its C5AI+ lineage metadata. Frontend: new `C5AIStatusBar.jsx` (green/yellow/red dot, timestamp, "Oppdater C5AI+" button with spinner). `RunControls.jsx` accepts `c5aiStatus` and shows yellow warning banner when stale/missing; labels translated to Norwegian. `App.jsx` gains `c5aiStatus`/`c5aiLoading` state, `handleC5AIRun()`, on-mount status fetch, and `notifyInputsUpdated()` calls after example loads. `ResultPanel.jsx` shows a colour-coded "Basert på C5AI+ kjøring…" meta bar above the tab strip.
+
+---
+
+## Sprint – C5AI+ → Feasibility Traceability (2026-03-22)
+**Tests after:** 1 484 passed, 0 failed (+19 new) | Frontend build: 0 errors, 97 modules
+**Artifacts:** `docs/sprints/sprint_traceability_c5ai_feasibility/`
+**Summary:** Introduced full data lineage between the C5AI+ risk intelligence module and the PCC feasibility analysis. Added `TraceabilitySiteTrace` and `TraceabilityBlock` Pydantic models to `backend/schemas.py`, with `traceability: Optional[TraceabilityBlock]` as the last field on `FeasibilityResponse` (backward-compatible, defaults to `null`). New `backend/services/traceability.py` builds the block from simulation results — capturing `source` (`static_model`/`c5ai_plus`/`c5ai_plus_mitigated`), `c5ai_scale_factor`, active domains and risk types from `DomainLossBreakdown`, per-site EAL and SCR from `LossAnalysisBlock`, and a Norwegian method note explaining model assumptions. Both `run_feasibility_analysis` and `run_feasibility_service` now populate `traceability`. Frontend: new `TraceabilityPanel.jsx` renders pipeline flow diagram, KPI cards, site trace table, domain pills, risk type chips, and collapsible method note. `ResultPanel.jsx` extended with 10th tab "Datagrunnlag". `App.jsx` passes `onNavigate={navigateTo}` to `ResultPanel` for cross-navigation to C5AI+ Risk from within the Datagrunnlag tab.
+
+---
+
+## Sprint – Dashboard-First Navigation (2026-03-22)
+**Tests after:** 1 465 passed, 0 failed (unchanged — frontend-only) | Frontend build: 0 errors, 96 modules
+**Artifacts:** `docs/sprints/sprint_dashboard_navigation/`
+**Summary:** Replaced the 8-item flat top navigation bar with a 2-level structure and a new `DashboardPage` as the default landing page. Level 1 (navy bar): Dashboard | Risk Intelligence | PCC Feasibility. Level 2 (light grey sub-nav): conditional per section — Risk: Oversikt/Målinger/Risiko/Varsler/Læring; Feasibility: Oversikt/Tapsanalyse/Tiltak/Strategi/Rapporter. New `DashboardPage.jsx` shows hero banner, 4 KPI cards, two workflow cards (C5AI+ and PCC), and 7 quick-link pills. `App.jsx` refactored: `activePage` replaced by `activeMainSection`/`activeRiskTab`/`activeFeasibilityTab`; `navigateTo()` function handles both new-style `(section, tab)` and legacy string IDs for backward compat with `OverviewPage.onNavigate`. `ResultPanel` gains `initialTab` prop for deep-linking from feasibility sub-nav. CSS layout switched from `calc(100vh - 56px)` to proper `app-shell` flexbox to correctly account for both nav bars.
+
+---
+
+## Sprint – Tapsanalyse: Real Loss Analysis (2026-03-22)
+**Tests after:** 1 465 passed, 0 failed (+30 new) | Frontend build: 0 errors, 95 modules
+**Artifacts:** `docs/sprints/sprint_loss_analysis/`
+**Summary:** Replaced empty "Ingen per-lokalitet tapsdata tilgjengelig" placeholder in Tapsanalyse tab with real structured loss analysis. Root cause: `FeasibilityResponse` had no loss_analysis field; ResultPanel read `result.facility_results` which was always undefined; `sim.site_loss_distribution` was populated but never extracted. Fix: new `backend/services/loss_analysis.py` derives per-site EAL (exact, from Monte Carlo site distribution), SCR contribution (proportional tail method), per-site domain breakdown (proportional approximation), and top risk drivers (from DomainLossBreakdown subtypes). New `LossAnalysisBlock` Pydantic model added to `FeasibilityResponse`. Full `SeaSiteLossTable.jsx` rewrite shows KPI row, domain bar, per-site expandable table, top drivers, and method note. Mitigated deltas shown when mitigation is active.
+
+---
+
+## Sprint – Smolt Mitigation Composite Score Fix (2026-03-22)
+**Tests after:** 1 435 passed, 0 failed (+22 new) | Frontend build: 0 errors, 95 modules
+**Artifacts:** `docs/sprints/sprint_smolt_mitigation_score_fix/`
+**Summary:** Fixed bug where smolt operator mitigation produced a negative composite score delta despite improving loss/SCR. Root cause: `estimate_mitigated_score()` used aggregate simulated CV (≈2.1 due to compound-Poisson zero-inflation) to recompute Loss Stability for smolt, whereas `assess()` correctly uses per-event `cv_loss_severity=0.65`. Fix carries Loss Stability forward unchanged for smolt. Added `_SMOLT_READINESS_UPLIFTS` for bounded additive score improvements when smolt operational actions (`smolt_staff_training`, `smolt_emergency_plan`, `smolt_alarm_system`) are selected. API `ComparisonBlock` extended with `composite_score_delta`, `criterion_deltas`, and `mitigation_score_note`. MitigationTab now shows per-criterion before/after table and note banner.
+
+---
+
+## Sprint – Site Risk GUI: Smolt / RAS Site-Level Risk (2026-03-22)
+**Tests after:** 1 413 passed, 0 failed (unchanged — frontend-only) | Frontend build: 0 errors, 95 modules
+**Artifacts:** `docs/sprints/sprint_site_risk_gui/`
+**Summary:** Made individual smolt/RAS facility risk visible in the existing GUI. New mock data for 5 demo facilities (`mockSmoltSiteRiskData.js`). New component package `components/smolt/`: `SiteRiskSummaryCards`, `TopRiskSitesTable`, `SiteEALChart`, `SiteSCRContributionChart`, `SiteRiskDetailPanel`, `SmoltSiteRiskTab`. OverviewPage gains "Topp risikoanlegg" section (top-3 cards + inline detail panel). C5AIModule gains 8th tab "Anlegg" with table/charts toggle, portfolio KPIs, and full site ranking. All charts are pure SVG. Backward compatible — sea-site operators unaffected.
+
+---
+
 ## Sprint – Multi-Domain C5AI+ Extension (2026-03-10)
 **Tests after:** 1155 passed, 0 failed | Frontend build: 0 errors, 82 modules
 **Artifacts:** `docs/sprints/sprint_multidomain_c5ai/`

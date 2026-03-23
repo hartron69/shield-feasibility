@@ -36,7 +36,7 @@ const TAB_DESCRIPTIONS = {
   scenario:      'Override baseline inputs to explore alternative risk scenarios.',
 }
 
-export default function InputsPage() {
+export default function InputsPage({ operatorType = 'sea', operator }) {
   const [activeTab, setActiveTab] = useState('site')
 
   return (
@@ -70,7 +70,7 @@ export default function InputsPage() {
         {activeTab === 'operational'   && <OperationalInputsPanel />}
         {activeTab === 'signals'       && <AlertSignalsPanel     signals={MOCK_ALERT_SIGNALS} />}
         {activeTab === 'quality'       && <DataQualityPanel      qualityData={MOCK_DATA_QUALITY} />}
-        {activeTab === 'scenario'      && <ScenarioOverridePanel />}
+        {activeTab === 'scenario'      && <ScenarioOverridePanel operatorType={operatorType} operator={operator} />}
       </div>
     </div>
   )

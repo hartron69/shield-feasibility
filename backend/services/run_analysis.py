@@ -43,10 +43,106 @@ def _charts_to_b64(charts: Dict[str, io.BytesIO]) -> Dict[str, str]:
     return {k: _buf_to_b64(v) for k, v in charts.items()}
 
 
+def _build_smolt_history_summary(
+    claims_history_years: int,
+    total_claims_paid_nok: float,
+    historical_losses: list | None = None,
+    use_history_calibration: bool = False,
+) -> "HistoricalLossSummary":
+    """Build a HistoricalLossSummary from operator-declared smolt claims data.
+
+    For claims-free operators (total_claims_paid_nok == 0) the observation
+    window is preserved so the LossHistoryTab can show years monitored / events.
+    When claims exist they are recorded as a single aggregate mortality event.
+    """
+    from backend.schemas import HistoricalLossSummary, HistoryEventRow, HistoricalDomainSummary
+    from backend.services.history_analytics import build_smolt_self_handled_summary
+
+    # When detailed self-handled logs are provided, delegate to the richer analytics
+    if historical_losses:
+        return build_smolt_self_handled_summary(
+            historical_losses,
+            use_history_calibration=use_history_calibration,
+        )
+
+    if claims_history_years <= 0:
+        # No observation window — return completely empty summary
+        return HistoricalLossSummary(
+            history_loaded=False, history_source="smolt_operator_declared",
+            record_count=0, years_covered=[], n_years_observed=0,
+            portfolio_total_gross=0.0, portfolio_total_insured=0.0,
+            portfolio_total_retained=0.0, portfolio_mean_severity=0.0,
+            portfolio_events_per_year=0.0, domain_summaries=[], records=[],
+            calibration_active=False, calibration_source="none",
+            calibration_mode="none", calibrated_parameters={},
+        )
+
+    current_year = 2026
+    first_year   = current_year - claims_history_years
+    years_covered = list(range(first_year + 1, current_year + 1))
+
+    if total_claims_paid_nok <= 0:
+        # Claims-free: observation window with zero events
+        return HistoricalLossSummary(
+            history_loaded=True, history_source="smolt_operator_declared",
+            record_count=0, years_covered=years_covered,
+            n_years_observed=claims_history_years,
+            portfolio_total_gross=0.0, portfolio_total_insured=0.0,
+            portfolio_total_retained=0.0, portfolio_mean_severity=0.0,
+            portfolio_events_per_year=0.0, domain_summaries=[], records=[],
+            calibration_active=False, calibration_source="none",
+            calibration_mode="none", calibrated_parameters={},
+        )
+
+    # Claims exist: one aggregate biological event at mid-window
+    mid_year     = first_year + claims_history_years // 2
+    insured_loss = total_claims_paid_nok               # declared = insured
+    retained     = insured_loss * 0.10                 # assume 10% deductible
+
+    row = HistoryEventRow(
+        year=mid_year,
+        event_type="mortality",
+        domain="biological",
+        gross_loss=insured_loss,
+        insured_loss=insured_loss,
+        retained_loss=retained,
+    )
+    domain_summary = HistoricalDomainSummary(
+        domain="biological",
+        event_count=1,
+        total_gross_loss=insured_loss,
+        total_insured_loss=insured_loss,
+        total_retained_loss=retained,
+        mean_severity=insured_loss,
+        events_per_year=1.0 / claims_history_years,
+        loss_share_pct=100.0,
+        years_with_events=[mid_year],
+    )
+    return HistoricalLossSummary(
+        history_loaded=True, history_source="smolt_operator_declared",
+        record_count=1, years_covered=years_covered,
+        n_years_observed=claims_history_years,
+        portfolio_total_gross=insured_loss,
+        portfolio_total_insured=insured_loss,
+        portfolio_total_retained=retained,
+        portfolio_mean_severity=insured_loss,
+        portfolio_events_per_year=1.0 / claims_history_years,
+        domain_summaries=[domain_summary],
+        records=[row],
+        calibration_active=False, calibration_source="none",
+        calibration_mode="none", calibrated_parameters={},
+    )
+
+
 def run_feasibility_analysis(
     op_input: OperatorInput,
     model_settings: "ModelSettingsInput",
     allocation_summary: Optional[AllocationSummary] = None,
+    selected_actions: Optional[List[str]] = None,
+    claims_history_years: int = 0,
+    total_claims_paid_nok: float = 0.0,
+    historical_losses: list | None = None,
+    use_history_calibration: bool = False,
 ) -> FeasibilityResponse:
     """
     Run PCC pipeline steps 2–9 on a pre-built OperatorInput.
@@ -79,11 +175,27 @@ def run_feasibility_analysis(
     from models.strategies.hybrid import HybridStrategy
     from models.strategies.pcc_captive import PCCCaptiveStrategy
     from models.strategies.self_insurance import SelfInsuranceStrategy
+    from models.pcc_economics import PCCAssumptions
+
+    # Smolt: pure captive structure (no RI layer) — land-based RAS with claims-free history.
+    # Low formation/admin fees reflect simplified regulatory structure vs. marine operations.
+    # Expected losses are low (claims-free discount applied), so RI burning cost ≈ 0;
+    # savings come primarily from the 22% premium discount and investment income on reserves.
+    smolt_assump = (
+        PCCAssumptions(
+            ri_loading_factor=1.75,
+            premium_discount_pct=0.22,
+            reinsurance_limit_nok=0.0,   # pure captive — no external RI layer
+            formation_cost_nok=500_000,  # simpler land-based structure
+            admin_fee_nok=350_000,       # lean captive admin for single-operator cell
+        )
+        if getattr(op_input, "facility_type", None) == "smolt" else None
+    )
 
     strategies = {
         "Full Insurance":   FullInsuranceStrategy(op_input, sim),
         "Hybrid":           HybridStrategy(op_input, sim),
-        "PCC Captive Cell": PCCCaptiveStrategy(op_input, sim),
+        "PCC Captive Cell": PCCCaptiveStrategy(op_input, sim, pcc_assumptions=smolt_assump),
         "Self-Insurance":   SelfInsuranceStrategy(op_input, sim),
     }
     strategy_results = {name: s.calculate() for name, s in strategies.items()}
@@ -97,7 +209,8 @@ def run_feasibility_analysis(
     scr_results    = SCRCalculator(sim, strategy_results).calculate_all()
     cost_analysis  = CostAnalyzer(op_input, strategy_results).analyze()
     vol_metrics    = VolatilityAnalyzer(sim, strategy_results).analyze()
-    recommendation = SuitabilityEngine(op_input, sim, strategy_results, cost_analysis).assess()
+    suitability    = SuitabilityEngine(op_input, sim, strategy_results, cost_analysis)
+    recommendation = suitability.assess()
 
     # Step 6: Charts
     from reporting.chart_generator import generate_all_charts
@@ -174,28 +287,286 @@ def run_feasibility_analysis(
         except Exception:
             pdf_available = False
 
-    # Empty history summary — smolt has no template history
-    hist_summary = build_historical_loss_summary(
-        raw_records=[],
-        calibration_active=False,
-        calibration_mode="none",
-        alloc_calibrated_params={},
-        history_source="template",
+    # ── Mitigation (optional) ─────────────────────────────────────────────────
+    mitigated_block: Optional[ScenarioBlock] = None
+    comparison_block: Optional[ComparisonBlock] = None
+    _la_mit_losses_1d: Optional["np.ndarray"] = None
+    _la_mit_e_loss: Optional[float] = None
+    _la_mit_scr: Optional[float] = None
+
+    if selected_actions:
+        from analysis.mitigation import PREDEFINED_MITIGATIONS, MitigationAnalyzer
+
+        actions = [PREDEFINED_MITIGATIONS[k] for k in selected_actions if k in PREDEFINED_MITIGATIONS]
+        if actions:
+            analyzer = MitigationAnalyzer(sim)
+            mit_scenario = analyzer.compare(
+                actions,
+                domain_loss_breakdown=sim.domain_loss_breakdown,
+            )
+
+            mit_losses = mit_scenario.mitigated_annual_losses
+            mit_losses_1d = None
+            if mit_losses is not None:
+                mit_losses_1d = mit_losses if mit_losses.ndim == 1 else mit_losses.sum(axis=1) / mit_losses.shape[1]
+                mit_e_loss = float(mit_losses_1d.mean())
+                mit_p95    = float(np.percentile(mit_losses_1d, 95))
+                mit_p99    = float(np.percentile(mit_losses_1d, 99))
+            else:
+                ratio      = 1.0 - mit_scenario.delta_vs_baseline_pct / 100
+                mit_e_loss = baseline_e_loss * ratio
+                mit_p95    = baseline_p95 * ratio
+                mit_p99    = baseline_p99 * ratio
+
+            mit_scr = baseline_scr * (mit_e_loss / baseline_e_loss) if baseline_e_loss > 0 else baseline_scr
+            _la_mit_losses_1d = mit_losses_1d
+            _la_mit_e_loss    = mit_e_loss
+            _la_mit_scr       = mit_scr
+
+            # Recompute suitability score for the mitigated scenario
+            mit_composite, mit_verdict, mit_criteria = suitability.estimate_mitigated_score(
+                recommendation, mit_e_loss, mit_scr,
+                selected_action_ids=selected_actions,
+            )
+
+            mit_criterion_scores = [
+                {
+                    "name": c.name,
+                    "weight": c.weight,
+                    "raw_score": c.raw_score,
+                    "weighted_score": c.weighted_score,
+                    "finding": c.finding,
+                }
+                for c in mit_criteria
+            ]
+            mit_kpi = KPISummary(
+                expected_annual_loss=mit_e_loss,
+                p95_loss=mit_p95,
+                p99_loss=mit_p99,
+                scr=mit_scr,
+                recommended_strategy=mit_verdict,
+                verdict=mit_verdict,
+                composite_score=mit_composite,
+                confidence_level=recommendation.confidence_level,
+            )
+            mitigated_block = ScenarioBlock(
+                summary=mit_kpi,
+                charts={},
+                criterion_scores=mit_criterion_scores,
+            )
+
+            domain_counts: Dict[str, float] = {}
+            for a in actions:
+                for d in a.applies_to_domains:
+                    domain_counts[d] = domain_counts.get(d, 0) + a.combined_loss_reduction
+            top_domains = sorted(domain_counts, key=lambda x: domain_counts[x], reverse=True)[:3]
+
+            annual_cost_saving = baseline_e_loss - mit_e_loss - sum(a.annual_cost_nok for a in actions)
+            delta_pct = (mit_e_loss - baseline_e_loss) / baseline_e_loss * 100 if baseline_e_loss > 0 else 0.0
+            score_delta = mit_composite - recommendation.composite_score
+
+            # Build per-criterion delta table for frontend display
+            crit_deltas = []
+            base_crit_map = {c["name"]: c for c in criterion_scores}
+            for mc in mit_criterion_scores:
+                bc = base_crit_map.get(mc["name"], {})
+                crit_deltas.append({
+                    "name":           mc["name"],
+                    "baseline_raw":   bc.get("raw_score", 0),
+                    "mitigated_raw":  mc["raw_score"],
+                    "delta_weighted": round(mc["weighted_score"] - bc.get("weighted_score", 0), 3),
+                    "finding":        mc["finding"],
+                })
+
+            # Explain the score change in plain language
+            improved = [d for d in crit_deltas if d["delta_weighted"] > 0.05]
+            worsened = [d for d in crit_deltas if d["delta_weighted"] < -0.05]
+            if score_delta >= 0:
+                note = (
+                    f"Score improves by {score_delta:+.1f} pts. "
+                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}." if improved else "")
+                )
+            else:
+                note = (
+                    f"Score changes by {score_delta:+.1f} pts. "
+                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}. " if improved else "")
+                    + (f"Criteria unchanged or lower: {', '.join(d['name'] for d in worsened)}." if worsened else "")
+                )
+
+            comparison_block = ComparisonBlock(
+                expected_loss_delta=mit_e_loss - baseline_e_loss,
+                expected_loss_delta_pct=delta_pct,
+                p95_delta=mit_p95 - baseline_p95,
+                p99_delta=mit_p99 - baseline_p99,
+                scr_delta=mit_scr - baseline_scr,
+                annual_cost_saving=annual_cost_saving,
+                top_benefit_domains=top_domains,
+                narrative=(
+                    f"{len(actions)} tiltak reduserer forventet arlig tap med "
+                    f"{abs(delta_pct):.1f} %. Beste risikodomener: {', '.join(top_domains)}."
+                ),
+                composite_score_delta=score_delta,
+                criterion_deltas=crit_deltas,
+                mitigation_score_note=note,
+            )
+
+    # ── History — build from operator-declared claims window ──────────────────
+    hist_summary = _build_smolt_history_summary(
+        claims_history_years, total_claims_paid_nok,
+        historical_losses=historical_losses,
+        use_history_calibration=use_history_calibration,
     )
+
+    # ── Loss analysis (Tapsanalyse tab) ──────────────────────────────────────
+    from backend.services.loss_analysis import compute_loss_analysis
+    from backend.schemas import LossAnalysisBlock, LossAnalysisSite, LossAnalysisDriver, LossAnalysisMitigated, LossAnalysisMitigatedSite
+    try:
+        _la_raw = compute_loss_analysis(
+            sim, op_input, baseline_scr,
+            mit_losses_1d=_la_mit_losses_1d,
+            mit_e_loss=_la_mit_e_loss,
+            mit_scr=_la_mit_scr,
+        )
+        _la_block = LossAnalysisBlock(
+            per_site=[LossAnalysisSite(**s) for s in _la_raw["per_site"]],
+            per_domain=_la_raw["per_domain"],
+            top_drivers=[LossAnalysisDriver(**d) for d in _la_raw["top_drivers"]],
+            mitigated=LossAnalysisMitigated(
+                per_site=[LossAnalysisMitigatedSite(**s) for s in _la_raw["mitigated"]["per_site"]],
+                per_domain=_la_raw["mitigated"]["per_domain"],
+                delta_total_eal_nok=_la_raw["mitigated"]["delta_total_eal_nok"],
+                delta_total_scr_nok=_la_raw["mitigated"]["delta_total_scr_nok"],
+            ) if _la_raw.get("mitigated") else None,
+            method_note=_la_raw["method_note"],
+        )
+    except Exception:
+        _la_block = None
+
+    # ── Traceability block ────────────────────────────────────────────────────
+    from backend.services.traceability import build_traceability_block
+    try:
+        _traceability = build_traceability_block(
+            sim, op_input, selected_actions or [], _la_block
+        )
+    except Exception:
+        _traceability = None
 
     return FeasibilityResponse(
         baseline=baseline_block,
-        mitigated=None,
-        comparison=None,
+        mitigated=mitigated_block,
+        comparison=comparison_block,
         report=ReportBlock(available=pdf_available, pdf_url=pdf_url),
         metadata=MetadataBlock(
             domain_correlation_active=(domain_corr is not None),
-            mitigation_active=False,
+            mitigation_active=bool(selected_actions and mitigated_block),
             n_simulations=model.n_simulations,
         ),
         allocation=allocation_summary,
         history=hist_summary,
         pooling=None,
+        loss_analysis=_la_block,
+        traceability=_traceability,
+        c5ai_meta=_build_c5ai_meta(_la_block, _traceability),
+    )
+
+
+def _build_c5ai_meta(loss_analysis=None, traceability=None):
+    """Read current C5AI+ state and return a C5AIRunMeta instance."""
+    from backend.services import c5ai_state as _c5ai_state
+    from backend.services.c5ai_state import get_run_extra
+    from backend.schemas import C5AIRunMeta, C5AISiteTrace
+    s = _c5ai_state.get_status()
+    extra = get_run_extra()
+
+    # Whether the C5AI+ biological forecast was actually wired into Monte Carlo
+    c5ai_enriched: bool = bool(getattr(traceability, "c5ai_enriched", False))
+
+    # Domain-source map: only biological can ever be c5ai_plus (all others are stub priors)
+    _ALL_DOMAINS = ["biological", "structural", "environmental", "operational"]
+
+    def _domain_sources(c5ai_enriched: bool) -> dict:
+        return {
+            d: ("c5ai_plus" if (d == "biological" and c5ai_enriched) else "estimated")
+            for d in _ALL_DOMAINS
+        }
+
+    def _confidence(c5ai_enriched: bool, has_site_data: bool) -> tuple:
+        """
+        Heuristic confidence score for per-site domain breakdown.
+
+        Hard cap at 0.55 (Middels) because structural/environmental/operational
+        are always stub-estimated, and domain breakdown is portfolio-proportional
+        (not site-specific). A score of 1.0 would require per-site data for all
+        four domains — not possible with the current model.
+
+        Score components:
+          0.25  base (template-scaled Monte Carlo always runs)
+          +0.10 if site-level EAL data is available (loss_analysis populated)
+          +0.20 if biological domain is C5AI+-informed
+          ────
+          max:  0.55 (Middels)
+        """
+        score = 0.25
+        if has_site_data:
+            score += 0.10
+        if c5ai_enriched:
+            score += 0.20
+        # Never "Høy" — non-bio domains are always estimated
+        score = min(score, 0.55)
+        if score >= 0.50:
+            label = "Middels"
+        elif score >= 0.35:
+            label = "Lav–Middels"
+        else:
+            label = "Lav"
+        return round(score, 2), label
+
+    has_site_data = (loss_analysis is not None and
+                     len(getattr(loss_analysis, "per_site", [])) > 0)
+    conf_score, conf_label = _confidence(c5ai_enriched, has_site_data)
+    dom_sources = _domain_sources(c5ai_enriched)
+
+    # Build site_trace from loss_analysis.per_site if available
+    site_trace = []
+    if loss_analysis is not None:
+        for st in getattr(loss_analysis, "per_site", []):
+            top_risk_types = sorted(
+                getattr(st, "domain_breakdown", {}).keys(),
+                key=lambda d: getattr(st, "domain_breakdown", {}).get(d, 0),
+                reverse=True,
+            )[:2]
+            site_trace.append(C5AISiteTrace(
+                site_id=st.site_id,
+                site_name=st.site_name,
+                expected_annual_loss_nok=float(st.expected_annual_loss_nok),
+                scr_contribution_nok=float(st.scr_contribution_nok),
+                dominant_domain=getattr(st, "dominant_domain", ""),
+                top_risk_types=list(top_risk_types),
+                domain_sources=dom_sources,
+                confidence_score=conf_score,
+                confidence_label=conf_label,
+            ))
+
+    domains_used = extra.get("domains_used", []) or (
+        list(getattr(traceability, "domains_used", [])) if traceability else []
+    )
+    risk_type_count = extra.get("risk_type_count", 0) or (
+        getattr(traceability, "risk_type_count", 0) if traceability else 0
+    )
+
+    return C5AIRunMeta(
+        run_id=s.get("run_id"),
+        generated_at=s.get("c5ai_last_run_at"),
+        is_fresh=s.get("is_fresh", False),
+        freshness=s.get("freshness", "missing"),
+        site_count=len(extra.get("site_ids", [])),
+        site_ids=extra.get("site_ids", []),
+        site_names=extra.get("site_names", []),
+        data_mode=extra.get("data_mode", "simulated"),
+        domains_used=domains_used,
+        risk_type_count=risk_type_count,
+        source_labels=extra.get("source_labels", []),
+        site_trace=site_trace,
     )
 
 
@@ -324,6 +695,9 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
     # ── 8. Mitigation (optional) ──────────────────────────────────────────────
     mitigated_block: Optional[ScenarioBlock] = None
     comparison_block: Optional[ComparisonBlock] = None
+    _la_mit_losses_1d2: Optional["np.ndarray"] = None
+    _la_mit_e_loss2: Optional[float] = None
+    _la_mit_scr2: Optional[float] = None
 
     selected = mitigation.selected_actions if mitigation else []
     if selected:
@@ -338,6 +712,7 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
             )
 
             mit_losses = mit_scenario.mitigated_annual_losses
+            mit_losses_1d = None
             if mit_losses is not None:
                 mit_losses_1d = mit_losses if mit_losses.ndim == 1 else mit_losses.sum(axis=1) / mit_losses.shape[1]
                 mit_e_loss = float(mit_losses_1d.mean())
@@ -351,21 +726,40 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
 
             # Approximate mitigated SCR proportionally
             mit_scr = baseline_scr * (mit_e_loss / baseline_e_loss) if baseline_e_loss > 0 else baseline_scr
+            _la_mit_losses_1d2 = mit_losses_1d
+            _la_mit_e_loss2    = mit_e_loss
+            _la_mit_scr2       = mit_scr
 
+            # Recompute suitability score for the mitigated scenario
+            mit_composite, mit_verdict, mit_criteria = suitability.estimate_mitigated_score(
+                recommendation, mit_e_loss, mit_scr,
+                selected_action_ids=selected,
+            )
+
+            mit_criterion_scores = [
+                {
+                    "name": c.name,
+                    "weight": c.weight,
+                    "raw_score": c.raw_score,
+                    "weighted_score": c.weighted_score,
+                    "finding": c.finding,
+                }
+                for c in mit_criteria
+            ]
             mit_kpi = KPISummary(
                 expected_annual_loss=mit_e_loss,
                 p95_loss=mit_p95,
                 p99_loss=mit_p99,
                 scr=mit_scr,
-                recommended_strategy=recommendation.verdict,
-                verdict=recommendation.verdict,
-                composite_score=recommendation.composite_score,
+                recommended_strategy=mit_verdict,
+                verdict=mit_verdict,
+                composite_score=mit_composite,
                 confidence_level=recommendation.confidence_level,
             )
             mitigated_block = ScenarioBlock(
                 summary=mit_kpi,
                 charts={},  # reuse baseline charts
-                criterion_scores=criterion_scores,
+                criterion_scores=mit_criterion_scores,
             )
 
             # Identify top benefit domains from selected actions
@@ -378,6 +772,34 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
 
             annual_cost_saving = baseline_e_loss - mit_e_loss - sum(a.annual_cost_nok for a in actions)
             delta_pct = (mit_e_loss - baseline_e_loss) / baseline_e_loss * 100 if baseline_e_loss > 0 else 0.0
+            score_delta = mit_composite - recommendation.composite_score
+
+            # Build per-criterion delta table
+            crit_deltas = []
+            base_crit_map = {c["name"]: c for c in criterion_scores}
+            for mc in mit_criterion_scores:
+                bc = base_crit_map.get(mc["name"], {})
+                crit_deltas.append({
+                    "name":           mc["name"],
+                    "baseline_raw":   bc.get("raw_score", 0),
+                    "mitigated_raw":  mc["raw_score"],
+                    "delta_weighted": round(mc["weighted_score"] - bc.get("weighted_score", 0), 3),
+                    "finding":        mc["finding"],
+                })
+
+            improved = [d for d in crit_deltas if d["delta_weighted"] > 0.05]
+            worsened = [d for d in crit_deltas if d["delta_weighted"] < -0.05]
+            if score_delta >= 0:
+                note = (
+                    f"Score improves by {score_delta:+.1f} pts. "
+                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}." if improved else "")
+                )
+            else:
+                note = (
+                    f"Score changes by {score_delta:+.1f} pts. "
+                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}. " if improved else "")
+                    + (f"Criteria unchanged or lower: {', '.join(d['name'] for d in worsened)}." if worsened else "")
+                )
 
             comparison_block = ComparisonBlock(
                 expected_loss_delta=mit_e_loss - baseline_e_loss,
@@ -391,6 +813,9 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
                     f"Applying {len(actions)} mitigation action(s) reduces expected annual loss "
                     f"by {abs(delta_pct):.1f}%. Top benefiting domains: {', '.join(top_domains)}."
                 ),
+                composite_score_delta=score_delta,
+                criterion_deltas=crit_deltas,
+                mitigation_score_note=note,
             )
 
     # ── 8b. Pooled PCC (optional) ────────────────────────────────────────────
@@ -544,6 +969,40 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
         history_source="template",
     )
 
+    # ── Loss analysis (Tapsanalyse tab) ──────────────────────────────────────
+    from backend.services.loss_analysis import compute_loss_analysis
+    from backend.schemas import LossAnalysisBlock, LossAnalysisSite, LossAnalysisDriver, LossAnalysisMitigated, LossAnalysisMitigatedSite
+    try:
+        _la_raw2 = compute_loss_analysis(
+            sim, operator, baseline_scr,
+            mit_losses_1d=_la_mit_losses_1d2,
+            mit_e_loss=_la_mit_e_loss2,
+            mit_scr=_la_mit_scr2,
+        )
+        _la_block2 = LossAnalysisBlock(
+            per_site=[LossAnalysisSite(**s) for s in _la_raw2["per_site"]],
+            per_domain=_la_raw2["per_domain"],
+            top_drivers=[LossAnalysisDriver(**d) for d in _la_raw2["top_drivers"]],
+            mitigated=LossAnalysisMitigated(
+                per_site=[LossAnalysisMitigatedSite(**s) for s in _la_raw2["mitigated"]["per_site"]],
+                per_domain=_la_raw2["mitigated"]["per_domain"],
+                delta_total_eal_nok=_la_raw2["mitigated"]["delta_total_eal_nok"],
+                delta_total_scr_nok=_la_raw2["mitigated"]["delta_total_scr_nok"],
+            ) if _la_raw2.get("mitigated") else None,
+            method_note=_la_raw2["method_note"],
+        )
+    except Exception:
+        _la_block2 = None
+
+    # ── Traceability block ────────────────────────────────────────────────────
+    from backend.services.traceability import build_traceability_block
+    try:
+        _traceability2 = build_traceability_block(
+            sim, operator, selected or [], _la_block2
+        )
+    except Exception:
+        _traceability2 = None
+
     return FeasibilityResponse(
         baseline=baseline_block,
         mitigated=mitigated_block,
@@ -557,4 +1016,7 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
         allocation=alloc_summary,
         history=hist_summary,
         pooling=pooling_response,
+        loss_analysis=_la_block2,
+        traceability=_traceability2,
+        c5ai_meta=_build_c5ai_meta(_la_block2, _traceability2),
     )

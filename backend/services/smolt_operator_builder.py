@@ -61,12 +61,15 @@ class SmoltAllocationSummary:
             risk_severity_scaled=risk_severity_scaled,
             risk_events_scaled=risk_events_scaled,
             financial_ratios={
-                "biomass_share":  round(self.biomass_share, 4),
-                "property_share": round(self.property_share, 4),
-                "bi_share":       round(self.bi_share, 4),
-                "machinery_share": round(self.machinery_share, 4),
-                "building_share": round(self.building_share, 4),
-                "scr_capacity_ratio": round(self.scr_capacity_ratio, 4),
+                "biomass_share":        round(self.biomass_share, 4),
+                "property_share":       round(self.property_share, 4),
+                "bi_share":             round(self.bi_share, 4),
+                "machinery_share":      round(self.machinery_share, 4),
+                "building_share":       round(self.building_share, 4),
+                "scr_capacity_ratio":   round(self.scr_capacity_ratio, 4),
+                "n_facilities":         self.n_facilities,
+                "liquidity_post_scr_nok": round(self.liquidity_post_scr_nok, 0),
+                "total_tiv_nok":        round(self.total_tiv_nok, 0),
             },
             sites=[
                 SiteAllocationRow(
@@ -202,8 +205,15 @@ class SmoltOperatorBuilder:
             })
         tmpl["sites"] = sites
 
+        # Governance — smolt land-based operators have mature risk management
+        tmpl["has_risk_manager"]            = True
+        tmpl["governance_maturity"]         = "mature"
+        tmpl["management_commitment_years"] = max(smolt_input.claims_history_years, 10)
+        tmpl["willing_to_provide_capital"]  = True
+
         op_input = validate_input(tmpl)
-        op_input.facility_type = "smolt"  # mark as smolt
+        op_input.facility_type = "smolt"                                   # mark as smolt
+        op_input.claims_history_years = smolt_input.claims_history_years   # for suitability scoring
 
         # ── SCR capacity analysis ─────────────────────────────────────────
         est_scr  = tiv * 0.015   # rough estimate: 1.5% of TIV
@@ -225,6 +235,37 @@ class SmoltOperatorBuilder:
         )
 
         return op_input, alloc
+
+    def build_per_facility(
+        self,
+        smolt_input: SmoltOperatorInput,
+        estimated_market_premium_nok: Optional[float] = None,
+    ) -> List[OperatorInput]:
+        """
+        Build one OperatorInput per facility, each representing one facility's
+        individual risk contribution.  Risk parameters are scaled to 1/N of
+        the group so that summing across facilities gives the group total.
+        """
+        results = []
+        n = smolt_input.n_facilities or 1
+        for i, fac in enumerate(smolt_input.facilities):
+            # Build a single-facility SmoltOperatorInput
+            single = SmoltOperatorInput(
+                operator_name       = fac.facility_name,
+                facilities          = [fac],
+                annual_revenue_nok  = (smolt_input.annual_revenue_nok or 0) / n,
+                ebitda_nok          = (smolt_input.ebitda_nok or 0) / n if smolt_input.ebitda_nok else None,
+                equity_nok          = (smolt_input.equity_nok or 0) / n if smolt_input.equity_nok else None,
+                operating_cf_nok    = (smolt_input.operating_cf_nok or 0) / n if smolt_input.operating_cf_nok else None,
+                liquidity_nok       = (smolt_input.liquidity_nok or 0) / n if smolt_input.liquidity_nok else None,
+                claims_history_years = smolt_input.claims_history_years,
+                total_claims_paid_nok = smolt_input.total_claims_paid_nok,
+            )
+            fac_premium = (estimated_market_premium_nok / n
+                           if estimated_market_premium_nok else None)
+            op_input, _ = self.build(single, fac_premium)
+            results.append(op_input)
+        return results
 
     # ──────────────────────────────────────────────────────────────────────────
     @staticmethod

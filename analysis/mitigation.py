@@ -56,6 +56,53 @@ from models.domain_loss_breakdown import (
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Smolt domain mapping
+# ─────────────────────────────────────────────────────────────────────────────
+
+SMOLT_DOMAIN_MAPPING: Dict[str, str | None] = {
+    # RAS water quality / biofilter failures
+    "water_quality":              "ras_failure",
+    "ras_failure":                "ras_failure",
+    "ras_water_quality":          "ras_failure",
+    "biofilter_failure":          "ras_failure",
+    "biofilter":                  "ras_failure",
+    "pump_failure":               "ras_failure",
+    # Oxygen events
+    "oxygen_collapse":            "oxygen_event",
+    "oxygen_event":               "oxygen_event",
+    "oxygen":                     "oxygen_event",
+    # Power
+    "power_outage":               "power_outage",
+    "power_supply":               "power_outage",
+    "power":                      "power_outage",
+    # Water source / biosecurity
+    "water_source_contamination": "water_source",
+    "biosecurity":                "water_source",
+    # Biological domain
+    "smolt_health":               "biological",
+    "pathogen":                   "biological",
+    "biological":                 "biological",
+    # Operational domain
+    "human_error":                "operational",
+    "procedure_failure":          "operational",
+    "general_ops":                "operational",
+    "operational":                "operational",
+    # Portfolio-wide
+    "all":                        None,
+}
+
+# Maps smolt category names to the actual sub-type keys in DomainLossBreakdown
+_SMOLT_CATEGORY_TO_SUBTYPES: Dict[str, list | str] = {
+    "ras_failure":  ["biofilter", "water_quality"],
+    "oxygen_event": ["oxygen"],
+    "power_outage": ["power"],
+    "water_source": ["biosecurity"],
+    "biological":   "DOMAIN",   # resolve via domain_subtypes["biological"]
+    "operational":  "DOMAIN",   # resolve via domain_subtypes["operational"]
+}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # MitigationAction
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -112,6 +159,9 @@ class MitigationAction:
     target_level: str = "portfolio"      # "risk_type" | "domain" | "portfolio"
     effectiveness_alpha: float = 8.0
     effectiveness_beta: float = 2.0
+
+    # Smolt sprint: facility applicability
+    facility_type: str = "sea"           # "sea" | "smolt"
 
     @property
     def combined_loss_reduction(self) -> float:
@@ -173,11 +223,10 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         severity_reduction=0.15,
         annual_cost_nok=500_000,
         capex_nok=3_000_000,
-        # Sprint 5: explicit sub-type targeting (net_integrity primary,
-        # cage_structural secondary — stronger nets reduce cage stress)
         targeted_risk_types=["net_integrity", "cage_structural"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "stronger_anchors": MitigationAction(
         name="stronger_anchors",
@@ -189,13 +238,13 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         ),
         applies_to_domains=["structural"],
         probability_reduction=0.35,
-        severity_reduction=0.05,   # minimal — once anchor drags, loss is similar
-        annual_cost_nok=150_000,   # periodic inspection and maintenance
+        severity_reduction=0.05,
+        annual_cost_nok=150_000,
         capex_nok=2_500_000,
-        # Sprint 5: targets mooring_failure only — anchor holding capacity
         targeted_risk_types=["mooring_failure"],
-        mitigation_mode="probability",   # primary effect is on event frequency
+        mitigation_mode="probability",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "stronger_moorings": MitigationAction(
         name="stronger_moorings",
@@ -210,11 +259,10 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         severity_reduction=0.20,
         annual_cost_nok=200_000,
         capex_nok=4_500_000,
-        # Sprint 5: mooring_failure primary, cage_structural secondary
-        # (better mooring geometry reduces cage frame stress)
         targeted_risk_types=["mooring_failure", "cage_structural"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "lice_barriers": MitigationAction(
         name="lice_barriers",
@@ -227,6 +275,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["lice"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "jellyfish_mitigation": MitigationAction(
         name="jellyfish_mitigation",
@@ -239,6 +288,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["jellyfish"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "environmental_sensors": MitigationAction(
         name="environmental_sensors",
@@ -251,6 +301,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["hab", "oxygen_stress", "temperature_extreme"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "storm_contingency_plan": MitigationAction(
         name="storm_contingency_plan",
@@ -263,6 +314,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["current_storm", "ice"],
         mitigation_mode="severity",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "staff_training_program": MitigationAction(
         name="staff_training_program",
@@ -275,6 +327,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["human_error", "procedure_failure"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "deformation_monitoring": MitigationAction(
         name="deformation_monitoring",
@@ -290,6 +343,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["net_integrity", "mooring_failure", "cage_structural"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "ai_early_warning": MitigationAction(
         name="ai_early_warning",
@@ -305,6 +359,7 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         targeted_risk_types=["hab", "oxygen_stress", "temperature_extreme", "net_integrity"],
         mitigation_mode="both",
         target_level="risk_type",
+        facility_type="sea",
     ),
     "risk_manager_hire": MitigationAction(
         name="risk_manager_hire",
@@ -314,9 +369,10 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         severity_reduction=0.10,
         annual_cost_nok=1_200_000,
         capex_nok=0,
-        targeted_risk_types=[],        # portfolio-wide
+        targeted_risk_types=[],
         mitigation_mode="severity",
         target_level="portfolio",
+        facility_type="sea",
     ),
     "emergency_response_plan": MitigationAction(
         name="emergency_response_plan",
@@ -326,9 +382,205 @@ PREDEFINED_MITIGATIONS: Dict[str, MitigationAction] = {
         severity_reduction=0.20,
         annual_cost_nok=150_000,
         capex_nok=300_000,
-        targeted_risk_types=[],        # portfolio-wide
+        targeted_risk_types=[],
         mitigation_mode="severity",
         target_level="portfolio",
+        facility_type="sea",
+    ),
+
+    # ── Smolt / RAS mitigations ───────────────────────────────────────────────
+
+    "smolt_oxygen_backup": MitigationAction(
+        name="smolt_oxygen_backup",
+        description=(
+            "Redundant liquid-oxygen supply and automatic dosing system.  "
+            "Prevents oxygen collapse when primary aeration fails."
+        ),
+        applies_to_domains=["environmental", "biological"],
+        probability_reduction=0.50,
+        severity_reduction=0.40,
+        annual_cost_nok=350_000,
+        capex_nok=2_000_000,
+        targeted_risk_types=["oxygen"],          # smolt sub-type (was: oxygen_collapse)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_temperature_control": MitigationAction(
+        name="smolt_temperature_control",
+        description=(
+            "Redundant heat-exchanger capacity and automated temperature alarms.  "
+            "Stabilises thermal regime and prevents chronic stress in RAS tanks."
+        ),
+        applies_to_domains=["environmental"],
+        probability_reduction=0.30,
+        severity_reduction=0.25,
+        annual_cost_nok=200_000,
+        capex_nok=1_200_000,
+        targeted_risk_types=["ras_failure", "oxygen_event"],
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_co2_stripping": MitigationAction(
+        name="smolt_co2_stripping",
+        description=(
+            "Dedicated CO₂ stripping columns with online gas sensors.  "
+            "Removes dissolved CO₂ before it reaches narcotic levels."
+        ),
+        applies_to_domains=["environmental", "biological"],
+        probability_reduction=0.35,
+        severity_reduction=0.30,
+        annual_cost_nok=250_000,
+        capex_nok=1_500_000,
+        targeted_risk_types=["water_quality"],
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_ph_dosing": MitigationAction(
+        name="smolt_ph_dosing",
+        description=(
+            "Automated pH dosing (NaOH / CO₂ injection) with redundant probes.  "
+            "Maintains pH 6.8–7.4 at all times in recirculating loops."
+        ),
+        applies_to_domains=["environmental"],
+        probability_reduction=0.30,
+        severity_reduction=0.20,
+        annual_cost_nok=150_000,
+        capex_nok=800_000,
+        targeted_risk_types=["water_quality"],
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_biofilter_monitoring": MitigationAction(
+        name="smolt_biofilter_monitoring",
+        description=(
+            "Continuous ammonia/nitrite sensors and biofilter performance dashboards.  "
+            "Enables early intervention before nitrification capacity collapses."
+        ),
+        applies_to_domains=["biological", "environmental"],
+        probability_reduction=0.40,
+        severity_reduction=0.35,
+        annual_cost_nok=300_000,
+        capex_nok=1_800_000,
+        targeted_risk_types=["biofilter"],        # smolt sub-type (was: biofilter_failure)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_uv_sterilization": MitigationAction(
+        name="smolt_uv_sterilization",
+        description=(
+            "High-intensity UV sterilisation on all make-up water lines.  "
+            "Eliminates pathogens and prevents water-source contamination events."
+        ),
+        applies_to_domains=["biological"],
+        probability_reduction=0.45,
+        severity_reduction=0.35,
+        annual_cost_nok=200_000,
+        capex_nok=1_000_000,
+        targeted_risk_types=["biosecurity"],      # smolt sub-type (was: water_source_contamination)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_backup_power": MitigationAction(
+        name="smolt_backup_power",
+        description=(
+            "Diesel generator + UPS for critical life-support loads.  "
+            "Maintains pumps, aeration, and alarms during grid outages."
+        ),
+        applies_to_domains=["structural", "environmental"],
+        probability_reduction=0.60,
+        severity_reduction=0.50,
+        annual_cost_nok=300_000,
+        capex_nok=2_500_000,
+        targeted_risk_types=["power"],             # smolt sub-type (was: power_outage, pump_failure)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_fish_health_program": MitigationAction(
+        name="smolt_fish_health_program",
+        description=(
+            "Structured fish health monitoring: weekly sampling, veterinary "
+            "oversight, and early treatment protocols to limit disease spread."
+        ),
+        applies_to_domains=["biological"],
+        probability_reduction=0.15,
+        severity_reduction=0.20,
+        annual_cost_nok=500_000,
+        capex_nok=100_000,
+        targeted_risk_types=["biological"],   # domain-level: only bio losses (not structural/env)
+        mitigation_mode="severity",
+        target_level="domain",
+        facility_type="smolt",
+    ),
+    "smolt_biosecurity": MitigationAction(
+        name="smolt_biosecurity",
+        description=(
+            "Strict biosecurity zoning, visitor protocols, disinfection airlocks, "
+            "and dedicated footwear per production zone.  Limits cross-contamination."
+        ),
+        applies_to_domains=["biological"],
+        probability_reduction=0.30,
+        severity_reduction=0.20,
+        annual_cost_nok=250_000,
+        capex_nok=400_000,
+        targeted_risk_types=["biosecurity"],      # smolt sub-type (was: water_source_contamination)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_alarm_system": MitigationAction(
+        name="smolt_alarm_system",
+        description=(
+            "24/7 real-time alarm system covering O₂, CO₂, pH, temperature, "
+            "flow rates, and power — with automated SMS/call-out to on-call staff."
+        ),
+        applies_to_domains=["operational", "environmental"],
+        probability_reduction=0.25,
+        severity_reduction=0.35,
+        annual_cost_nok=200_000,
+        capex_nok=600_000,
+        targeted_risk_types=["oxygen", "power"],  # smolt sub-types (was: oxygen_collapse, pump_failure, power_outage)
+        mitigation_mode="severity",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_staff_training": MitigationAction(
+        name="smolt_staff_training",
+        description=(
+            "RAS-specific operator certification: water chemistry, alarm response, "
+            "biofilter management, and emergency procedures."
+        ),
+        applies_to_domains=["operational"],
+        probability_reduction=0.20,
+        severity_reduction=0.15,
+        annual_cost_nok=250_000,
+        capex_nok=150_000,
+        targeted_risk_types=["operational"],       # domain-level (was: general_ops)
+        mitigation_mode="both",
+        target_level="risk_type",
+        facility_type="smolt",
+    ),
+    "smolt_emergency_plan": MitigationAction(
+        name="smolt_emergency_plan",
+        description=(
+            "Documented RAS emergency response plan with drill schedule, "
+            "spare-parts inventory, and supplier SLAs for critical components."
+        ),
+        applies_to_domains=["operational"],
+        probability_reduction=0.05,
+        severity_reduction=0.15,
+        annual_cost_nok=100_000,
+        capex_nok=200_000,
+        targeted_risk_types=["operational"],  # domain-level: only operational losses
+        mitigation_mode="severity",
+        target_level="domain",
+        facility_type="smolt",
     ),
 }
 
@@ -593,16 +845,23 @@ class MitigationAnalyzer:
                 # Portfolio-wide: no match or empty targeted_risk_types
                 portfolio_multiplier *= (1.0 - eff_red)
                 if action.targeted_risk_types:
-                    # Action had targets but none matched – note fallback
-                    any_fallback = True
-                    warnings.warn(
-                        f"MitigationAction '{action.name}': targeted_risk_types "
-                        f"{action.targeted_risk_types} not found in bio_loss_breakdown "
-                        f"({list(adjusted_slices.keys())}). Falling back to "
-                        f"portfolio-wide scaling for this action.",
-                        UserWarning,
-                        stacklevel=4,
+                    # Smolt actions that hit SMOLT_DOMAIN_MAPPING are expected
+                    # to fall back here when only bio breakdown is available —
+                    # they operate on DomainLossBreakdown, not bio-only slices.
+                    is_smolt = getattr(action, 'facility_type', 'sea') == 'smolt'
+                    all_in_map = all(
+                        rt in SMOLT_DOMAIN_MAPPING for rt in action.targeted_risk_types
                     )
+                    if not (is_smolt and all_in_map):
+                        any_fallback = True
+                        warnings.warn(
+                            f"MitigationAction '{action.name}': targeted_risk_types "
+                            f"{action.targeted_risk_types} not found in bio_loss_breakdown "
+                            f"({list(adjusted_slices.keys())}). Falling back to "
+                            f"portfolio-wide scaling for this action.",
+                            UserWarning,
+                            stacklevel=4,
+                        )
 
         # Rebuild and apply portfolio multiplier
         rebuilt = np.maximum(
@@ -679,14 +938,31 @@ class MitigationAnalyzer:
 
         for action, eff_red in zip(actions, eff_reductions):
             matched: List[tuple] = []  # list of (target_key, [subtype_keys])
+            is_smolt = getattr(action, 'facility_type', 'sea') == 'smolt'
 
             for rt in action.targeted_risk_types:
                 if rt in adjusted:
-                    # Direct sub-type match (e.g. "jellyfish", "hab")
+                    # Direct sub-type match (e.g. "jellyfish", "hab", "oxygen")
                     matched.append((rt, [rt]))
                 elif rt in domain_subtypes and domain_subtypes[rt]:
-                    # Domain-level match (e.g. "structural") → all sub-types
+                    # Domain-level match (e.g. "structural", "operational") → all sub-types
                     matched.append((rt, domain_subtypes[rt]))
+                elif is_smolt and rt in SMOLT_DOMAIN_MAPPING:
+                    # Smolt category key (e.g. "ras_failure", "oxygen_event")
+                    category = SMOLT_DOMAIN_MAPPING[rt]
+                    if category is None:
+                        # "all" → portfolio-wide; clear matched to signal fall-through
+                        matched = []
+                        break
+                    resolution = _SMOLT_CATEGORY_TO_SUBTYPES.get(category)
+                    if resolution == "DOMAIN":
+                        dom_subs = domain_subtypes.get(category, [])
+                        if dom_subs:
+                            matched.append((category, dom_subs))
+                    elif resolution:
+                        resolved = [st for st in resolution if st in adjusted]
+                        if resolved:
+                            matched.append((category, resolved))
 
             if matched:
                 for target_key, subtypes in matched:
@@ -697,15 +973,21 @@ class MitigationAnalyzer:
             else:
                 portfolio_multiplier *= (1.0 - eff_red)
                 if action.targeted_risk_types:
-                    any_fallback = True
-                    warnings.warn(
-                        f"MitigationAction '{action.name}': targeted_risk_types "
-                        f"{action.targeted_risk_types} not found in "
-                        f"domain_loss_breakdown. Falling back to portfolio-wide "
-                        f"scaling for this action.",
-                        UserWarning,
-                        stacklevel=4,
+                    # Smolt actions with valid SMOLT_DOMAIN_MAPPING entries are
+                    # expected to be handled above; warn only for sea actions.
+                    all_in_map = is_smolt and all(
+                        rt in SMOLT_DOMAIN_MAPPING for rt in action.targeted_risk_types
                     )
+                    if not all_in_map:
+                        any_fallback = True
+                        warnings.warn(
+                            f"MitigationAction '{action.name}': targeted_risk_types "
+                            f"{action.targeted_risk_types} not found in "
+                            f"domain_loss_breakdown. Falling back to portfolio-wide "
+                            f"scaling for this action.",
+                            UserWarning,
+                            stacklevel=4,
+                        )
 
         # Sprint 5: apply structural sub-type caps to prevent unrealistic
         # combined reductions (e.g. stronger_anchors + stronger_moorings on
