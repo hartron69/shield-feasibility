@@ -527,6 +527,7 @@ def _build_c5ai_meta(loss_analysis=None, traceability=None):
     dom_sources = _domain_sources(c5ai_enriched)
 
     # Build site_trace from loss_analysis.per_site if available
+    from backend.services.site_registry import get_site_by_site_id as _get_site
     site_trace = []
     if loss_analysis is not None:
         for st in getattr(loss_analysis, "per_site", []):
@@ -535,6 +536,7 @@ def _build_c5ai_meta(loss_analysis=None, traceability=None):
                 key=lambda d: getattr(st, "domain_breakdown", {}).get(d, 0),
                 reverse=True,
             )[:2]
+            _reg = _get_site(st.site_id)
             site_trace.append(C5AISiteTrace(
                 site_id=st.site_id,
                 site_name=st.site_name,
@@ -545,6 +547,7 @@ def _build_c5ai_meta(loss_analysis=None, traceability=None):
                 domain_sources=dom_sources,
                 confidence_score=conf_score,
                 confidence_label=conf_label,
+                locality_no=_reg.locality_no if _reg is not None else None,
             ))
 
     domains_used = extra.get("domains_used", []) or (
@@ -553,6 +556,9 @@ def _build_c5ai_meta(loss_analysis=None, traceability=None):
     risk_type_count = extra.get("risk_type_count", 0) or (
         getattr(traceability, "risk_type_count", 0) if traceability else 0
     )
+
+    ratio = extra.get("c5ai_vs_static_ratio")
+    c5ai_vs_static_ratio = float(ratio) if ratio is not None else None
 
     return C5AIRunMeta(
         run_id=s.get("run_id"),
@@ -567,6 +573,7 @@ def _build_c5ai_meta(loss_analysis=None, traceability=None):
         risk_type_count=risk_type_count,
         source_labels=extra.get("source_labels", []),
         site_trace=site_trace,
+        c5ai_vs_static_ratio=c5ai_vs_static_ratio,
     )
 
 

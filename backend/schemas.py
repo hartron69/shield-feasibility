@@ -356,6 +356,7 @@ class TraceabilitySiteTrace(BaseModel):
     eal_nok: float = 0.0
     scr_contribution_nok: float = 0.0
     top_domains: List[str] = Field(default_factory=list)
+    locality_no: Optional[int] = None
 
 
 class TraceabilityBlock(BaseModel):
@@ -415,6 +416,7 @@ class C5AISiteTrace(BaseModel):
     confidence_score: float = 0.0
     # confidence_label: human-readable summary in Norwegian
     confidence_label: str = "Lav"
+    locality_no: Optional[int] = None
 
 
 class C5AIRunMeta(BaseModel):
@@ -431,6 +433,8 @@ class C5AIRunMeta(BaseModel):
     risk_type_count: int = 0
     source_labels: List[str] = Field(default_factory=list)
     site_trace: List[C5AISiteTrace] = Field(default_factory=list)
+    # Scale factor from ForecastPipeline (<1.0 = lower bio risk than static model)
+    c5ai_vs_static_ratio: Optional[float] = None
 
 
 class FeasibilityResponse(BaseModel):

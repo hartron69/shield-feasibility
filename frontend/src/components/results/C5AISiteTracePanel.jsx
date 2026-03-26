@@ -144,6 +144,9 @@ export default function C5AISiteTracePanel({ siteTrace, onNavigateToRisk }) {
                       <td>
                         <div style={{ fontWeight: 600, fontSize: 12 }}>{s.site_name}</div>
                         <div style={{ fontSize: 10, color: '#6b7280' }}>{s.site_id}</div>
+                        {s.locality_no && (
+                          <div style={{ fontSize: 9, color: '#9ca3af' }}>BW: {s.locality_no}</div>
+                        )}
                       </td>
                       <td>
                         <span className="domain-pill" style={{ background: dcfg.color }}>
@@ -183,6 +186,11 @@ export default function C5AISiteTracePanel({ siteTrace, onNavigateToRisk }) {
                               Domenevektene er porteføljens gjennomsnitt fordelt proporsjonalt til dette anlegget.
                               Anleggets faktiske eksponering kan avvike, særlig for åpen kyst vs. skjermet fjord.
                             </div>
+                            {s.locality_no && (
+                              <div style={{ marginTop: 8, fontSize: 11, color: '#475569' }}>
+                                BarentsWatch lokalitet: <code style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 5px', borderRadius: 3 }}>{s.locality_no}</code>
+                              </div>
+                            )}
                           </div>
                         </td>
                       </tr>

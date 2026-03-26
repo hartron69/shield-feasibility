@@ -99,11 +99,13 @@ def build_traceability_block(
         domains_used = ["biological", "structural", "environmental", "operational"]
 
     # Site trace from loss_analysis
+    from backend.services.site_registry import get_site_by_site_id as _get_site
     site_trace: List[TraceabilitySiteTrace] = []
     if loss_analysis_block is not None:
         for s in getattr(loss_analysis_block, "per_site", []):
             dom_bd = s.domain_breakdown if hasattr(s, "domain_breakdown") else {}
             top_domains = sorted(dom_bd.keys(), key=lambda d: dom_bd.get(d, 0), reverse=True)[:2] if dom_bd else [getattr(s, "dominant_domain", "biological")]
+            _reg = _get_site(s.site_id)
             site_trace.append(
                 TraceabilitySiteTrace(
                     site_id=s.site_id,
@@ -111,6 +113,7 @@ def build_traceability_block(
                     eal_nok=float(s.expected_annual_loss_nok),
                     scr_contribution_nok=float(s.scr_contribution_nok),
                     top_domains=top_domains,
+                    locality_no=_reg.locality_no if _reg is not None else None,
                 )
             )
 

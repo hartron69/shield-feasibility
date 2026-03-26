@@ -1,0 +1,33 @@
+{
+  "alle_tilfeller": [
+    {
+      "version": 2,
+      "name": "PANKREASSYKDOM",
+      "subType": "SAV2",
+      "status": "DIAGNOSED",
+      "closureType": null,
+      "suspicionDate": "2023-09-14T02:00:00+02:00",
+      "diagnosisDate": "2023-10-03T02:00:00+02:00",
+      "emptiedDate": "2024-04-18T02:00:00+02:00",
+      "closureDate": "2024-06-13T02:00:00+02:00"
+    },
+    {
+      "version": 2,
+      "name": "PANKREASSYKDOM",
+      "subType": "SAV2",
+      "status": "DIAGNOSED",
+      "closureType": null,
+      "suspicionDate": "2023-09-14T02:00:00+02:00",
+      "diagnosisDate": "2023-10-03T02:00:00+02:00",
+      "emptiedDate": "2024-04-18T02:00:00+02:00",
+      "closureDate": "2024-06-13T02:00:00+02:00"
+    }
+  ],
+  "aktive": [],
+  "historiske_ant": 2,
+  "sykdomsnavn": [
+    "PANKREASSYKDOM"
+  ],
+  "patogen_prior": 0.16,
+  "risiko_flagg": "HISTORISK"
+}

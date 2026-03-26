@@ -66,6 +66,24 @@ export async function fetchExample() {
   return res.json()
 }
 
+export async function triggerBWPrefetch() {
+  const res = await fetch(`${BASE}/api/c5ai/prefetch`, { method: 'POST' })
+  if (!res.ok) throw new Error(`BW prefetch failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchBWDataStatus() {
+  const res = await fetch(`${BASE}/api/c5ai/bw/data-status`)
+  if (!res.ok) throw new Error(`BW data status failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchSiteRegistry() {
+  const res = await fetch(`${BASE}/api/c5ai/site-registry`)
+  if (!res.ok) throw new Error(`Site registry fetch failed: ${res.status}`)
+  return res.json()
+}
+
 export async function fetchInputsAudit() {
   const res = await fetch(`${BASE}/api/inputs/audit`)
   if (!res.ok) throw new Error(`Inputs audit fetch failed: ${res.status}`)

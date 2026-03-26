@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "generated_at": "2026-03-23T11:46:45.942030Z",
+    "source": "Barentswatch Fiskehelse API v2/v3",
+    "model_version": "c5ai-bw-v2.0",
+    "locality_no": 12855,
+    "locality_name": "Kornstad",
+    "data_weeks": 52,
+    "reported_weeks": 17,
+    "data_quality_flag": "LIMITED"
+  },
+  "lice": {
+    "exceedance_rate_8w": 0.0,
+    "avg_adult_female_8w": null,
+    "trend": "utilstrekkelig data",
+    "threshold": 0.5,
+    "network_multiplier": 1.0
+  },
+  "hab": {
+    "sea_temperature_last": 14.6,
+    "temperature_risk_factor": 1.13,
+    "prior_annual_prob": 0.12
+  },
+  "jellyfish": {
+    "prior_annual_prob": 0.08,
+    "status": "placeholder_fase2"
+  },
+  "pathogen": {
+    "prior_annual_prob": 0.16,
+    "risiko_flagg": "HISTORISK",
+    "aktive_tilfeller": 0,
+    "historiske_tilfeller": 2,
+    "sykdomsnavn": [
+      "PANKREASSYKDOM"
+    ],
+    "status": "faktisk_data_v3"
+  },
+  "operator_aggregate": {
+    "loss_breakdown_fractions": {
+      "lice": 0.0,
+      "hab": 0.597,
+      "jellyfish": 0.101,
+      "pathogen": 0.302
+    },
+    "total_bio_risk_index": 0.0795,
+    "c5ai_vs_static_ratio": 0.5297,
+    "confidence_score": 0.45
+  }
+}

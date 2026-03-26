@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "generated_at": "2026-03-23T11:47:27.810429Z",
+    "source": "Barentswatch Fiskehelse API v2/v3",
+    "model_version": "c5ai-bw-v2.0",
+    "locality_no": 12870,
+    "locality_name": "Leite",
+    "data_weeks": 52,
+    "reported_weeks": 43,
+    "data_quality_flag": "SUFFICIENT"
+  },
+  "lice": {
+    "exceedance_rate_8w": 0.0,
+    "avg_adult_female_8w": null,
+    "trend": "utilstrekkelig data",
+    "threshold": 0.5,
+    "network_multiplier": 1.0
+  },
+  "hab": {
+    "sea_temperature_last": 7.2,
+    "temperature_risk_factor": 1.0,
+    "prior_annual_prob": 0.12
+  },
+  "jellyfish": {
+    "prior_annual_prob": 0.08,
+    "status": "placeholder_fase2"
+  },
+  "pathogen": {
+    "prior_annual_prob": 0.16,
+    "risiko_flagg": "HISTORISK",
+    "aktive_tilfeller": 0,
+    "historiske_tilfeller": 2,
+    "sykdomsnavn": [
+      "PANKREASSYKDOM"
+    ],
+    "status": "faktisk_data_v3"
+  },
+  "operator_aggregate": {
+    "loss_breakdown_fractions": {
+      "lice": 0.0,
+      "hab": 0.568,
+      "jellyfish": 0.108,
+      "pathogen": 0.324
+    },
+    "total_bio_risk_index": 0.074,
+    "c5ai_vs_static_ratio": 0.4933,
+    "confidence_score": 0.75
+  }
+}

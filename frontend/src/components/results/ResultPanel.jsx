@@ -65,6 +65,11 @@ export default function ResultPanel({ result, selectedMitigations, library, oper
               {c5aiMeta.domains_used && c5aiMeta.domains_used.length > 0 && (
                 <span className="c5ai-trace-chip">{c5aiMeta.domains_used.length} domener</span>
               )}
+              {c5aiMeta.c5ai_vs_static_ratio != null && (
+                <span className="c5ai-trace-chip" title="C5AI+ biologisk skala vs. statisk modell">
+                  Skala: {c5aiMeta.c5ai_vs_static_ratio.toFixed(2)}×
+                </span>
+              )}
             </div>
           </div>
           {(c5aiMeta.freshness === 'stale' || c5aiMeta.freshness === 'missing') && (

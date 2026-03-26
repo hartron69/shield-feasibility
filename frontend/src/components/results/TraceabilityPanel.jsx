@@ -191,6 +191,7 @@ export default function TraceabilityPanel({ traceability, onNavigateToRisk }) {
             <thead>
               <tr style={{ borderBottom: '2px solid var(--mid-grey)', textAlign: 'left' }}>
                 <th style={{ padding: '6px 10px', fontWeight: 600, color: 'var(--dark-grey)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Anlegg</th>
+                <th style={{ padding: '6px 10px', fontWeight: 600, color: 'var(--dark-grey)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px' }}>BW-lokalitet</th>
                 <th style={{ padding: '6px 10px', fontWeight: 600, color: 'var(--dark-grey)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>EAL (eksakt)</th>
                 <th style={{ padding: '6px 10px', fontWeight: 600, color: 'var(--dark-grey)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'right' }}>SCR-bidrag (tilnærmet)</th>
                 <th style={{ padding: '6px 10px', fontWeight: 600, color: 'var(--dark-grey)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Topp domener</th>
@@ -202,6 +203,12 @@ export default function TraceabilityPanel({ traceability, onNavigateToRisk }) {
                   <td style={{ padding: '8px 10px', fontWeight: 600 }}>
                     <div>{s.site_name}</div>
                     <div style={{ fontSize: 10, color: 'var(--dark-grey)', fontFamily: 'monospace' }}>{s.site_id}</div>
+                  </td>
+                  <td style={{ padding: '8px 10px' }}>
+                    {s.locality_no
+                      ? <code style={{ fontFamily: 'monospace', fontSize: 11, background: '#f1f5f9', padding: '1px 5px', borderRadius: 3 }}>{s.locality_no}</code>
+                      : <span style={{ color: 'var(--dark-grey)', fontSize: 11 }}>—</span>
+                    }
                   </td>
                   <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 600 }}>{fmtM(s.eal_nok)}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'right', color: 'var(--dark-grey)' }}>
