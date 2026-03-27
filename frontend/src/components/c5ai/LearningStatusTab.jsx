@@ -1,7 +1,12 @@
 import React from 'react'
 
 const RISK_TYPES = ['hab', 'lice', 'jellyfish', 'pathogen']
-const RISK_LABELS = { hab: 'HAB', lice: 'Lice', jellyfish: 'Jellyfish', pathogen: 'Pathogen' }
+const RISK_LABELS = {
+  hab:       'Skadelig algeblomst (HAB)',
+  lice:      'Lakselus',
+  jellyfish: 'Manetoppblomst',
+  pathogen:  'Patogen / sykdom',
+}
 
 function brierClass(v) {
   if (v == null) return ''
@@ -56,11 +61,14 @@ export default function LearningStatusTab({ data }) {
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <div className="section-title" style={{ margin: 0 }}>Learning Loop Status</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div className="section-title" style={{ margin: 0 }}>Strategiske mønstre — læringsmodell</div>
               <span className={`c5ai-status-pill c5ai-status-${status}`}>
                 {status.toUpperCase()}
               </span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--dark-grey)', marginBottom: 10, fontStyle: 'italic' }}>
+              Langsiktige mønstre i risikobildet og utvikling over tid — ikke enkelthendelser.
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
@@ -70,23 +78,23 @@ export default function LearningStatusTab({ data }) {
                 ))}
               </div>
               <span style={{ fontSize: 12, color: 'var(--dark-grey)' }}>
-                Cycle {n} of {toActive} to reach ACTIVE
+                Syklus {n} av {toActive} for å nå AKTIV status
               </span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
               <div>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Training Source</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Treningskilde</div>
                 <div style={{ fontWeight: 600, marginTop: 2 }}>
-                  {L.training_source === 'simulated' ? '⚙ Simulated data' : '✓ Operator reported'}
+                  {L.training_source === 'simulated' ? '⚙ Simulerte data' : '✓ Operatørrapportert'}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Last Retrained</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Sist oppdatert</div>
                 <div style={{ fontWeight: 600, marginTop: 2 }}>{L.last_retrain_at?.slice(0, 10) || '—'}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Cycles Completed</div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)' }}>Sykluser fullført</div>
                 <div style={{ fontWeight: 600, marginTop: 2 }}>{n}</div>
               </div>
             </div>
@@ -95,7 +103,7 @@ export default function LearningStatusTab({ data }) {
           {/* Model versions */}
           <div style={{ background: 'var(--light-grey)', borderRadius: 8, padding: 14, minWidth: 180 }}>
             <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', color: 'var(--dark-grey)', marginBottom: 8 }}>
-              Model Versions
+              Modellversjoner
             </div>
             {RISK_TYPES.map(rt => (
               <div key={rt} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, marginBottom: 4 }}>
@@ -110,26 +118,27 @@ export default function LearningStatusTab({ data }) {
 
         {L.training_source === 'simulated' && (
           <div className="warn-note" style={{ marginTop: 12, marginBottom: 0 }}>
-            <strong>Simulated training data:</strong> Models have been trained on synthetic observations generated
-            by the C5AI+ EventSimulator. Provide real operator-reported observations via the API to improve calibration.
+            <strong>Simulerte treningsdata:</strong> Modellene er trent på syntetiske observasjoner generert
+            av C5AI+ EventSimulator. Strategiske mønstre vil bli mer presise etter hvert som reelle
+            operatørrapporterte observasjoner legges inn via API-et.
           </div>
         )}
       </div>
 
       {/* ── Brier score history ──────────────────────────────────────────── */}
       <div className="card">
-        <div className="section-title">Brier Score History</div>
+        <div className="section-title">Historisk modellnøyaktighet</div>
         <div style={{ fontSize: 12, color: 'var(--dark-grey)', marginBottom: 12 }}>
-          Brier score = E[(p − y)²]. Lower is better. Reference: <strong>0.25</strong> = uninformative prior.
-          A score of <strong>0.0</strong> is perfect prediction.
+          Brier-skår = E[(p − y)²]. Lavere er bedre. Referanse: <strong>0.25</strong> = ikke-informativ prior.
+          Skår <strong>0.0</strong> = perfekt prediksjon. Viser om modellen forbedres over tid.
         </div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Cycle</th>
-              <th>Year</th>
+              <th>Syklus</th>
+              <th>År</th>
               {RISK_TYPES.map(rt => <th key={rt}>{RISK_LABELS[rt]}</th>)}
-              <th>Trend</th>
+              <th>Utvikling</th>
             </tr>
           </thead>
           <tbody>
@@ -148,8 +157,8 @@ export default function LearningStatusTab({ data }) {
                   <td>
                     {prevAvg == null ? <span style={{ color: 'var(--dark-grey)' }}>—</span> :
                       improving
-                        ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>↓ Better</span>
-                        : <span style={{ color: 'var(--danger)', fontWeight: 700 }}>↑ Worse</span>}
+                        ? <span style={{ color: 'var(--success)', fontWeight: 700 }}>↓ Bedre</span>
+                        : <span style={{ color: 'var(--danger)', fontWeight: 700 }}>↑ Svakere</span>}
                   </td>
                 </tr>
               )
@@ -160,17 +169,17 @@ export default function LearningStatusTab({ data }) {
 
       {/* ── Current evaluation metrics ───────────────────────────────────── */}
       <div className="card">
-        <div className="section-title">Current Evaluation Metrics</div>
+        <div className="section-title">Nåværende modellevaluering</div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Risk Type</th>
+              <th>Risikotype</th>
               <th>Brier</th>
-              <th>Log-Loss</th>
-              <th>Bias</th>
-              <th>Severity MAE</th>
-              <th>Cal. Slope</th>
-              <th>Samples</th>
+              <th>Log-loss</th>
+              <th>Systematisk avvik</th>
+              <th>Alvorlighets-MAE</th>
+              <th>Kalibrering</th>
+              <th>Observasjoner</th>
             </tr>
           </thead>
           <tbody>
@@ -192,21 +201,21 @@ export default function LearningStatusTab({ data }) {
           </tbody>
         </table>
         <div style={{ marginTop: 12, fontSize: 12, color: 'var(--dark-grey)', lineHeight: 1.7 }}>
-          <strong>Brier colour key:</strong>{' '}
-          <span className="brier-good">green &lt; 0.10</span> ·{' '}
-          <span className="brier-ok">amber 0.10–0.20</span> ·{' '}
-          <span className="brier-warn">red &gt; 0.20</span>
+          <strong>Fargeindikator Brier:</strong>{' '}
+          <span className="brier-good">grønn &lt; 0.10</span> ·{' '}
+          <span className="brier-ok">gul 0.10–0.20</span> ·{' '}
+          <span className="brier-warn">rød &gt; 0.20</span>
           {'  |  '}
-          <strong>Calibration slope:</strong> 1.00 = perfect · ✓ ≥ 0.90 · ≈ ≥ 0.70 · ⚠ &lt; 0.70
+          <strong>Kalibrering:</strong> 1.00 = perfekt · ✓ ≥ 0.90 · ≈ ≥ 0.70 · ⚠ &lt; 0.70
         </div>
       </div>
 
-      {/* ── What happens next ─────────────────────────────────────────────── */}
+      {/* ── Neste steg ────────────────────────────────────────────────────── */}
       <div className="info-note">
-        <strong>Next step:</strong> After {toActive - n} more observation cycle{toActive - n !== 1 ? 's' : ''},
-        the learning loop will reach <strong>ACTIVE</strong> status. At that point the RandomForest model
-        (n ≥ 20) can be promoted for risk types with sufficient data. Provide operator-reported events
-        via the learning API to accelerate convergence.
+        <strong>Neste steg:</strong> Etter {toActive - n} ytterligere observasjonssyklus{toActive - n !== 1 ? 'er' : ''},
+        vil læringsmodellen nå <strong>AKTIV</strong> status. RandomForest-modellen (n ≥ 20) kan da
+        fremmes for risikotyper med tilstrekkelig datagrunnlag. Legg inn operatørrapporterte hendelser
+        via lærings-API-et for å akselerere konvergensen og styrke de strategiske mønstrene.
       </div>
     </div>
   )

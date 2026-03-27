@@ -80,6 +80,18 @@ export default function TraceabilityPanel({ traceability, onNavigateToRisk }) {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <DataModeBadge mode={t.data_mode} />
+            {t.site_selection_mode === 'specific' && (
+              <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 4,
+                background: '#EFF6FF', color: '#1E40AF', border: '1px solid #BFDBFE' }}>
+                Spesifikke lokaliteter
+              </span>
+            )}
+            {t.site_selection_mode !== 'specific' && (
+              <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 4,
+                background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB' }}>
+                Generisk portefølje
+              </span>
+            )}
             {t.mitigated_forecast_used && (
               <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 4,
                 background: '#ECFDF5', color: '#065F46', border: '1px solid #6EE7B7' }}>

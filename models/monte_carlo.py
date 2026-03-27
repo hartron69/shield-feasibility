@@ -149,6 +149,7 @@ class MonteCarloEngine:
         regime_model: Optional[RegimeModel] = None,
         pre_loaded_forecast=None,   # Optional[RiskForecast] – avoids circular import
         domain_correlation: Optional[DomainCorrelationMatrix] = None,
+        cage_multipliers: Optional[Dict[str, float]] = None,
     ):
         self.operator = operator
         self.n_simulations = n_simulations
@@ -161,6 +162,8 @@ class MonteCarloEngine:
         self.pre_loaded_forecast = pre_loaded_forecast
         # Sprint 7 – domain-level correlation for cross-domain loss co-movement.
         self.domain_correlation = domain_correlation
+        # Cage technology domain multipliers (per-locality portfolio aggregate).
+        self.cage_multipliers = cage_multipliers
 
         rp = operator.risk_params
         self.lam = rp.expected_annual_events
@@ -289,7 +292,7 @@ class MonteCarloEngine:
 
         # ── Step 8: domain loss breakdown (Sprint 7, optional) ───────────────
         domain_breakdown = None
-        if self.domain_correlation is not None:
+        if self.domain_correlation is not None or self.cage_multipliers is not None:
             is_smolt = getattr(self.operator, "facility_type", "") == "smolt"
             if is_smolt:
                 domain_breakdown = build_smolt_domain_loss_breakdown(
@@ -303,6 +306,7 @@ class MonteCarloEngine:
                     bio_breakdown=bio_breakdown if bio_breakdown else None,
                     domain_correlation=self.domain_correlation,
                     rng=self.rng,
+                    cage_multipliers=self.cage_multipliers,
                 )
 
         return SimulationResults(

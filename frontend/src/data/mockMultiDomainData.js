@@ -1,15 +1,15 @@
 /**
  * Mock data for Structural, Environmental, and Operational input panels.
- * Three demo sites: DEMO_OP_S01 (Frohavet North), DEMO_OP_S02 (Sunndalsfjord),
- * DEMO_OP_S03 (Storfjorden South).
+ * Three demo sites: KH_S01 (Kornstad), KH_S02 (Leite),
+ * KH_S03 (Hogsnes).
  */
 
 // ── Structural ─────────────────────────────────────────────────────────────────
 
 export const MOCK_STRUCTURAL_INPUTS = {
-  DEMO_OP_S01: {
-    site_id: 'DEMO_OP_S01',
-    site_name: 'Frohavet North',
+  KH_S01: {
+    site_id: 'KH_S01',
+    site_name: 'Kornstad',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -27,9 +27,9 @@ export const MOCK_STRUCTURAL_INPUTS = {
         description: 'Days since last formal structural inspection' },
     ],
   },
-  DEMO_OP_S02: {
-    site_id: 'DEMO_OP_S02',
-    site_name: 'Sunndalsfjord',
+  KH_S02: {
+    site_id: 'KH_S02',
+    site_name: 'Leite',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -41,9 +41,9 @@ export const MOCK_STRUCTURAL_INPUTS = {
       { parameter: 'Last Inspection', value: 95, baseline: 90, unit: 'days ago', adverse: false },
     ],
   },
-  DEMO_OP_S03: {
-    site_id: 'DEMO_OP_S03',
-    site_name: 'Storfjorden South',
+  KH_S03: {
+    site_id: 'KH_S03',
+    site_name: 'Hogsnes',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -62,9 +62,9 @@ export const STRUCTURAL_SITE_IDS = Object.keys(MOCK_STRUCTURAL_INPUTS)
 // ── Environmental ──────────────────────────────────────────────────────────────
 
 export const MOCK_ENVIRONMENTAL_INPUTS = {
-  DEMO_OP_S01: {
-    site_id: 'DEMO_OP_S01',
-    site_name: 'Frohavet North',
+  KH_S01: {
+    site_id: 'KH_S01',
+    site_name: 'Kornstad',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -82,9 +82,9 @@ export const MOCK_ENVIRONMENTAL_INPUTS = {
       { parameter: 'Exposure Class', value: 'open', baseline: 'semi', unit: '', adverse: true },
     ],
   },
-  DEMO_OP_S02: {
-    site_id: 'DEMO_OP_S02',
-    site_name: 'Sunndalsfjord',
+  KH_S02: {
+    site_id: 'KH_S02',
+    site_name: 'Leite',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'simulated',
     readings: [
@@ -97,9 +97,9 @@ export const MOCK_ENVIRONMENTAL_INPUTS = {
       { parameter: 'Exposure Class', value: 'semi', baseline: 'semi', unit: '', adverse: false },
     ],
   },
-  DEMO_OP_S03: {
-    site_id: 'DEMO_OP_S03',
-    site_name: 'Storfjorden South',
+  KH_S03: {
+    site_id: 'KH_S03',
+    site_name: 'Hogsnes',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -120,9 +120,9 @@ export const ENVIRONMENTAL_SITE_IDS = Object.keys(MOCK_ENVIRONMENTAL_INPUTS)
 // ── Operational ────────────────────────────────────────────────────────────────
 
 export const MOCK_OPERATIONAL_INPUTS = {
-  DEMO_OP_S01: {
-    site_id: 'DEMO_OP_S01',
-    site_name: 'Frohavet North',
+  KH_S01: {
+    site_id: 'KH_S01',
+    site_name: 'Kornstad',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'estimated',
     readings: [
@@ -140,9 +140,9 @@ export const MOCK_OPERATIONAL_INPUTS = {
         description: 'Below operational minimum (0.70)' },
     ],
   },
-  DEMO_OP_S02: {
-    site_id: 'DEMO_OP_S02',
-    site_name: 'Sunndalsfjord',
+  KH_S02: {
+    site_id: 'KH_S02',
+    site_name: 'Leite',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [
@@ -154,9 +154,9 @@ export const MOCK_OPERATIONAL_INPUTS = {
       { parameter: 'Equipment Readiness', value: 0.82, baseline: 0.80, unit: 'score', adverse: false },
     ],
   },
-  DEMO_OP_S03: {
-    site_id: 'DEMO_OP_S03',
-    site_name: 'Storfjorden South',
+  KH_S03: {
+    site_id: 'KH_S03',
+    site_name: 'Hogsnes',
     recorded_at: '2026-03-10T06:00:00Z',
     source: 'real',
     readings: [

@@ -576,9 +576,20 @@ class SuitabilityEngine:
                     else:
                         raw = 10
 
+                    if mit_cv < 0.30:
+                        _cv_note = "øverste band nådd"
+                    elif mit_cv < 0.50:
+                        _cv_note = "terskel <0.30 for neste band"
+                    elif mit_cv < 0.75:
+                        _cv_note = "terskel <0.50 for neste band"
+                    elif mit_cv < 1.00:
+                        _cv_note = "terskel <0.75 for neste band"
+                    else:
+                        _cv_note = "høy volatilitet"
+
                     new_criteria.append(CriterionScore(
                         c.name, c.weight, raw, raw * c.weight,
-                        f"CV≈{mit_cv:.2f} (mitigated estimate)",
+                        f"CV: {base_cv:.2f} → {mit_cv:.2f} ({_cv_note})",
                         c.rationale,
                     ))
 
@@ -600,7 +611,7 @@ class SuitabilityEngine:
 
                 new_criteria.append(CriterionScore(
                     c.name, c.weight, raw, raw * c.weight,
-                    f"Capital burden = {capital_to_equity:.1%} of equity (mitigated)",
+                    f"SCR {capital_to_equity:.1%} av egenkapital (etter tiltak)",
                     c.rationale,
                 ))
 

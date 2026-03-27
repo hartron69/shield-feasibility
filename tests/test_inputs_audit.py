@@ -80,7 +80,7 @@ class TestInputsAuditContent:
     def test_site_ids_are_correct(self):
         report = self._report()
         ids = {s["site_id"] for s in report["sites"]}
-        assert ids == {"DEMO_OP_S01", "DEMO_OP_S02", "DEMO_OP_S03"}
+        assert ids == {"KH_S01", "KH_S02", "KH_S03"}
 
     def test_each_site_has_risk_types(self):
         report = self._report()

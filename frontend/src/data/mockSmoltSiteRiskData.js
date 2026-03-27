@@ -1,27 +1,28 @@
 // Mock site-level smolt / RAS risk data
-// 5 demo facilities — realistic Norwegian settefisk operators
+// 3 real Agaqua AS facilities — same names as PCC Feasibility smolt example
+// + 2 additional demo settefisk sites for portfolio context
 // All NOK values, risk scores 0–100
 
 export const SMOLT_SITE_RISK = [
   {
     site_id: 'SMOLT_S01',
-    site_name: 'Agaqua Jelsa',
-    municipality: 'Suldal',
+    site_name: 'Villa Smolt AS',
+    municipality: 'Herøy',
     production_type: 'RAS',
-    capacity_msmolt: 5.5,
-    total_risk_score: 74,
+    capacity_msmolt: 3.2,
+    total_risk_score: 68,
     dominant_domain: 'ras_failure',
-    expected_annual_loss_nok: 8_420_000,
-    scr_contribution_nok: 21_800_000,
-    scr_share_pct: 31.2,
-    alerts_open: 3,
-    alert_level: 'CRITICAL',
+    expected_annual_loss_nok: 7_240_000,
+    scr_contribution_nok: 19_100_000,
+    scr_share_pct: 28.4,
+    alerts_open: 2,
+    alert_level: 'WARNING',
     domain_breakdown: {
-      ras_failure:  0.41,
-      oxygen_event: 0.22,
-      power_outage: 0.14,
-      biological:   0.15,
-      operational:  0.08,
+      ras_failure:  0.38,
+      oxygen_event: 0.24,
+      power_outage: 0.13,
+      biological:   0.16,
+      operational:  0.09,
     },
     top_drivers: [
       {
@@ -40,27 +41,27 @@ export const SMOLT_SITE_RISK = [
         description: 'UPS-kapasitet dekker < 4 timer ved fullt anlegg',
       },
     ],
-    data_confidence: 0.72,
+    data_confidence: 0.74,
   },
   {
     site_id: 'SMOLT_S02',
-    site_name: 'Agaqua Tau',
-    municipality: 'Strand',
-    production_type: 'RAS',
-    capacity_msmolt: 4.0,
-    total_risk_score: 61,
+    site_name: 'Olden Oppdrettsanlegg AS',
+    municipality: 'Stryn',
+    production_type: 'flow-through',
+    capacity_msmolt: 1.5,
+    total_risk_score: 52,
     dominant_domain: 'oxygen_event',
-    expected_annual_loss_nok: 5_180_000,
-    scr_contribution_nok: 13_900_000,
-    scr_share_pct: 19.9,
+    expected_annual_loss_nok: 4_180_000,
+    scr_contribution_nok: 11_200_000,
+    scr_share_pct: 16.6,
     alerts_open: 1,
     alert_level: 'WARNING',
     domain_breakdown: {
-      ras_failure:  0.28,
-      oxygen_event: 0.33,
-      power_outage: 0.12,
-      biological:   0.18,
-      operational:  0.09,
+      ras_failure:  0.12,
+      oxygen_event: 0.36,
+      power_outage: 0.14,
+      biological:   0.22,
+      operational:  0.16,
     },
     top_drivers: [
       {
@@ -69,37 +70,37 @@ export const SMOLT_SITE_RISK = [
         description: 'Tre sensorer ute av kalibreringsintervall',
       },
       {
-        driver: 'Biofilter alder',
+        driver: 'Vannkildesikring',
         severity: 'medium',
-        description: 'Primærbiofilter er 7 år gammelt — anbefalt utskifting',
+        description: 'Enkelt inntakspunkt uten reserveløsning',
       },
       {
         driver: 'Ansattkompetanse',
         severity: 'low',
-        description: 'Én nøkkelperson mangler sertifisering i RAS-drift',
+        description: 'Én nøkkelperson mangler sertifisering',
       },
     ],
-    data_confidence: 0.81,
+    data_confidence: 0.80,
   },
   {
     site_id: 'SMOLT_S03',
-    site_name: 'Nordic Smolt Fjord',
-    municipality: 'Høyanger',
-    production_type: 'RAS',
-    capacity_msmolt: 6.0,
-    total_risk_score: 48,
+    site_name: 'Setran Settefisk AS',
+    municipality: 'Osen',
+    production_type: 'flow-through',
+    capacity_msmolt: 1.1,
+    total_risk_score: 44,
     dominant_domain: 'biological',
-    expected_annual_loss_nok: 3_640_000,
-    scr_contribution_nok: 9_100_000,
-    scr_share_pct: 13.0,
-    alerts_open: 1,
-    alert_level: 'WARNING',
+    expected_annual_loss_nok: 2_840_000,
+    scr_contribution_nok: 7_400_000,
+    scr_share_pct: 11.0,
+    alerts_open: 0,
+    alert_level: 'WATCH',
     domain_breakdown: {
-      ras_failure:  0.22,
-      oxygen_event: 0.16,
-      power_outage: 0.09,
-      biological:   0.37,
-      operational:  0.16,
+      ras_failure:  0.10,
+      oxygen_event: 0.15,
+      power_outage: 0.12,
+      biological:   0.38,
+      operational:  0.25,
     },
     top_drivers: [
       {
@@ -108,17 +109,12 @@ export const SMOLT_SITE_RISK = [
         description: 'Amøbisk gjellesykdom registrert i regionen',
       },
       {
-        driver: 'Vanntemperaturvariasjon',
-        severity: 'medium',
-        description: 'Variasjon ±3 °C over norm siste 30 dager',
-      },
-      {
         driver: 'Tetthetsstyring',
         severity: 'low',
         description: 'To kar over anbefalt tetthet (> 80 kg/m³)',
       },
     ],
-    data_confidence: 0.88,
+    data_confidence: 0.86,
   },
   {
     site_id: 'SMOLT_S04',
@@ -188,12 +184,14 @@ export const SMOLT_SITE_RISK = [
 export const SMOLT_SITE_RISK_SUMMARY = {
   operator_id: 'DEMO_SMOLT_OP',
   operator_name: 'Agaqua AS',
-  total_eal_nok: 20_400_000,
-  total_scr_nok: 53_840_000,
+  // First 3 sites are Agaqua AS's own facilities (Villa Smolt / Olden / Setran)
+  // — same facilities used in PCC Feasibility smolt example
+  total_eal_nok: 17_420_000,
+  total_scr_nok: 46_740_000,
   n_sites: 5,
-  n_ras: 4,
-  n_flow_through: 1,
-  critical_sites: 1,
+  n_ras: 2,
+  n_flow_through: 3,
+  critical_sites: 0,
   warning_sites: 2,
 }
 
@@ -205,3 +203,11 @@ export const SMOLT_DOMAIN_META = {
   biological:   { label: 'Biologisk',    color: '#059669' },
   operational:  { label: 'Operasjonelt', color: '#7C3AED' },
 }
+
+// Agaqua AS facilities — same 3 used in PCC Feasibility smolt example
+// Used by Risk Intelligence ↔ Feasibility cross-linking
+export const AGAQUA_FEASIBILITY_FACILITIES = [
+  { site_id: 'SMOLT_S01', site_name: 'Villa Smolt AS',            municipality: 'Herøy',  production_type: 'RAS' },
+  { site_id: 'SMOLT_S02', site_name: 'Olden Oppdrettsanlegg AS', municipality: 'Stryn',  production_type: 'flow-through' },
+  { site_id: 'SMOLT_S03', site_name: 'Setran Settefisk AS',       municipality: 'Osen',   production_type: 'flow-through' },
+]

@@ -42,6 +42,7 @@ def build_traceability_block(
     op: Any,
     selected_mitigations: List[str],
     loss_analysis_block: Optional[Any] = None,
+    site_selection_mode: str = "generic",
 ) -> TraceabilityBlock:
     """Build a TraceabilityBlock from a completed simulation run."""
 
@@ -136,4 +137,5 @@ def build_traceability_block(
         applied_mitigations=applied,
         mapping_note=mapping_note,
         site_trace=site_trace,
+        site_selection_mode=site_selection_mode,
     )

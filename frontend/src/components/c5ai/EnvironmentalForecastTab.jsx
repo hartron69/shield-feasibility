@@ -8,11 +8,11 @@ const SITE_NAMES = {
   DEMO_OP_S03: 'Storfjorden South',
 }
 const RISK_LABELS = {
-  oxygen_stress:       'Oxygen Stress',
-  temperature_extreme: 'Temperature Extreme',
-  current_storm:       'Current / Storm',
-  ice:                 'Ice Risk',
-  exposure_anomaly:    'Exposure Anomaly',
+  oxygen_stress:       'Oksygenstress',
+  temperature_extreme: 'Temperaturekstrem',
+  current_storm:       'Strøm / Storm',
+  ice:                 'Isrisiko',
+  exposure_anomaly:    'Eksponeringsanomalier',
 }
 
 function fmtM(v) {
@@ -47,27 +47,27 @@ function RiskCard({ riskType, data }) {
       </div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>Probability</div>
+          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>Sannsynlighet</div>
           <div style={{ fontWeight: 700, fontSize: 18, color: probColor(prob) }}>
             {(prob * 100).toFixed(1)}%
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>E[Loss]</div>
+          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>Forv. tap</div>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{fmtM(data.expected_loss_mean)}</div>
         </div>
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>P90 Loss</div>
+          <div style={{ fontSize: 10, color: 'var(--dark-grey)' }}>P90-tap</div>
           <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--dark-grey)' }}>{fmtM(data.expected_loss_p90)}</div>
         </div>
       </div>
       <div style={{ marginBottom: 6 }}>
-        <div style={{ fontSize: 10, color: 'var(--dark-grey)', marginBottom: 2 }}>Confidence</div>
+        <div style={{ fontSize: 10, color: 'var(--dark-grey)', marginBottom: 2 }}>Modellsikkerhet</div>
         <ConfidenceBar score={data.confidence} />
       </div>
       {data.drivers && data.drivers.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, color: 'var(--dark-grey)', marginBottom: 2 }}>Key Drivers</div>
+          <div style={{ fontSize: 10, color: 'var(--dark-grey)', marginBottom: 2 }}>Viktigste drivere</div>
           <ul style={{ margin: 0, paddingLeft: 14, fontSize: 11, color: 'var(--navy)' }}>
             {data.drivers.map((d, i) => <li key={i}>{d}</li>)}
           </ul>
@@ -85,9 +85,9 @@ export default function EnvironmentalForecastTab({ data }) {
   return (
     <div>
       <div className="domain-forecast-header" style={{ borderLeftColor: DOMAIN_COLOR }}>
-        <span style={{ fontWeight: 700, color: DOMAIN_COLOR }}>Environmental Risk Forecast</span>
+        <span style={{ fontWeight: 700, color: DOMAIN_COLOR }}>Miljørisikoprognose</span>
         <span style={{ fontSize: 12, color: 'var(--dark-grey)', marginLeft: 8 }}>
-          O2 Stress · Temperature · Storm · Ice · Exposure
+          Oksygenstress · Temperatur · Storm · Is · Eksponering
         </span>
       </div>
 
@@ -110,7 +110,7 @@ export default function EnvironmentalForecastTab({ data }) {
           ))}
         </div>
       ) : (
-        <div style={{ color: 'var(--dark-grey)', fontSize: 13 }}>No environmental forecast data available.</div>
+        <div style={{ color: 'var(--dark-grey)', fontSize: 13 }}>Ingen miljøprognosedata tilgjengelig.</div>
       )}
     </div>
   )

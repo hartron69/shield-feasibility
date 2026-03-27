@@ -148,8 +148,15 @@ export default function MitigationTab({ comparison, selected, library }) {
             <tbody>
               {comparison.criterion_deltas.map((d) => (
                 <tr key={d.name}>
-                  <td style={{ fontWeight: 600 }}>{d.name}</td>
-                  <td>{(d.weight * 100).toFixed(1)} %</td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{d.name}</div>
+                    {d.finding && (
+                      <div style={{ fontSize: 11, color: 'var(--dark-grey)', fontStyle: 'italic', marginTop: 2 }}>
+                        {d.finding}
+                      </div>
+                    )}
+                  </td>
+                  <td>{d.weight != null ? `${(d.weight * 100).toFixed(1)} %` : '—'}</td>
                   <td>{d.baseline_raw.toFixed(0)}</td>
                   <td>{d.mitigated_raw.toFixed(0)}</td>
                   <td style={{

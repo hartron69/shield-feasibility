@@ -43,6 +43,14 @@ class OperatorProfileInput(BaseModel):
     annual_revenue_nok: float = Field(default=897_000_000.0, gt=0)
     annual_premium_nok: float = Field(default=19_500_000.0, gt=0)
     sites: Optional[List["SiteProfileInput"]] = None
+    site_selection_mode: str = Field(
+        default="generic",
+        description="'generic' = n_sites allocation model; 'specific' = use selected_sites",
+    )
+    selected_sites: Optional[List["SelectedSeaSiteInput"]] = Field(
+        default=None,
+        description="Selected sea localities for specific-locality mode.",
+    )
 
 
 class ModelSettingsInput(BaseModel):
@@ -141,6 +149,9 @@ class MetadataBlock(BaseModel):
     domain_correlation_active: bool
     mitigation_active: bool
     n_simulations: int
+    site_selection_mode: str = "generic"
+    selected_site_count: int = 0
+    selected_locality_numbers: List[int] = Field(default_factory=list)
 
 
 class BiomassValuationSummary(BaseModel):
@@ -153,6 +164,72 @@ class BiomassValuationSummary(BaseModel):
     user_overridden: bool
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Cage technology models
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CagePenInput(BaseModel):
+    """One net-pen cage (merd) within a sea locality."""
+    cage_id: str
+    cage_type: str = Field(description="open_net | semi_closed | fully_closed | submerged")
+    biomass_tonnes: float = Field(gt=0)
+    volume_m3: Optional[float] = None
+    installation_year: Optional[int] = None
+    # Advanced weighting fields (all optional)
+    biomass_value_nok: Optional[float] = Field(default=None, ge=0)
+    consequence_factor: Optional[float] = Field(default=None, gt=0)
+    operational_complexity_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    structural_criticality_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    single_point_of_failure: bool = False
+    redundancy_level: Optional[int] = Field(default=None, ge=1, le=5)
+    technology_maturity_score: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    failure_mode_class: Optional[str] = Field(
+        default=None,
+        description="proportional | threshold | binary_high_consequence",
+    )
+
+
+class CageTechSummary(BaseModel):
+    """Cage-type composition and effective domain multipliers for one locality."""
+    site_id: str
+    site_name: str
+    cage_count: int
+    cage_types_present: List[str]
+    biomass_by_cage_type: Dict[str, float]
+    effective_domain_multipliers: Dict[str, float]
+
+
+class CageWeightDetail(BaseModel):
+    """Per-cage weighting breakdown for explainability in FeasibilityResponse."""
+    cage_id: str
+    cage_type: str
+    biomass_tonnes: float
+    biomass_value_nok: Optional[float] = None
+    derived_complexity: float
+    derived_criticality: float
+    failure_mode_class: str
+    domain_weights: Dict[str, float] = Field(default_factory=dict)
+    defaults_used: bool = True
+
+
+class LocalityCageRiskProfile(BaseModel):
+    """Full cage risk profile for one locality, returned in FeasibilityResponse."""
+    site_id: str
+    site_name: str
+    cage_count: int
+    cage_types_present: List[str]
+    biomass_by_cage_type: Dict[str, float]
+    effective_domain_multipliers: Dict[str, float]
+    cages: List[CagePenInput]
+    cage_weight_details: Optional[List[CageWeightDetail]] = None
+    weighting_mode: str = "biomass_only"
+    warnings: List[str] = Field(default_factory=list)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Allocation / response models
+# ─────────────────────────────────────────────────────────────────────────────
+
 class SiteAllocationRow(BaseModel):
     name: str
     biomass_tonnes: int
@@ -162,6 +239,9 @@ class SiteAllocationRow(BaseModel):
     annual_revenue_nok: float
     tiv_nok: float
     weight_pct: float
+    cage_count: int = 0
+    cage_types_present: List[str] = Field(default_factory=list)
+    cage_domain_multipliers: Optional[Dict[str, float]] = None
 
 
 class AllocationSummary(BaseModel):
@@ -173,11 +253,15 @@ class AllocationSummary(BaseModel):
     financial_ratios: Dict[str, float]
     sites: List[SiteAllocationRow]
     biomass_valuation: Optional[BiomassValuationSummary] = None
+    cage_multipliers: Optional[Dict[str, float]] = None
+    cage_profiles: Optional[List[LocalityCageRiskProfile]] = None
     # History calibration tracking (populated by operator_builder)
     calibration_active: bool = False
     calibration_mode: str = "none"   # "none" | "portfolio" | "domain"
     calibrated_parameters: Dict[str, float] = Field(default_factory=dict)
     warnings: List[str] = Field(default_factory=list)
+    site_selection_mode: str = "generic"
+    selected_locality_numbers: List[int] = Field(default_factory=list)
 
 
 # ── History domain mapping ──────────────────────────────────────────────────
@@ -376,6 +460,7 @@ class TraceabilityBlock(BaseModel):
     applied_mitigations: List[str] = Field(default_factory=list)
     mapping_note: str = ""
     site_trace: List[TraceabilitySiteTrace] = Field(default_factory=list)
+    site_selection_mode: str = "generic"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -449,6 +534,7 @@ class FeasibilityResponse(BaseModel):
     loss_analysis: Optional[LossAnalysisBlock] = None
     traceability: Optional[TraceabilityBlock] = None
     c5ai_meta: Optional[C5AIRunMeta] = None
+    cage_profiles: Optional[List[LocalityCageRiskProfile]] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -480,6 +566,25 @@ class SiteProfileInput(BaseModel):
     lice_pressure_factor: float = Field(default=1.0, ge=0.1, le=5.0)
     hab_risk_factor: float = Field(default=1.0, ge=0.1, le=5.0)
     mooring_age_years: Optional[int] = None
+
+
+class SelectedSeaSiteInput(BaseModel):
+    """One real sea locality selected for a specific-locality feasibility run."""
+    site_id: str = Field(description="Shield internal site ID (from site registry)")
+    locality_no: Optional[int] = Field(default=None, description="BarentsWatch locality number")
+    site_name: str
+    biomass_tonnes: float = Field(gt=0, description="Biomass assigned to this locality")
+    biomass_value_nok: Optional[float] = Field(
+        default=None, gt=0,
+        description="Total biomass value for this site. If None, derived from applied value/tonne.",
+    )
+    fjord_exposure: str = "semi_exposed"
+    lice_pressure_factor: float = Field(default=1.0, ge=0.1, le=5.0)
+    hab_risk_factor: float = Field(default=1.0, ge=0.1, le=5.0)
+    # Set True by builder when biomass_value_nok was auto-derived
+    biomass_value_auto_derived: bool = False
+    # Optional cage portfolio for this locality
+    cages: Optional[List[CagePenInput]] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -584,3 +689,7 @@ class ScenarioResponse(BaseModel):
     facility_results: List[ScenarioFacilityResultResponse]
     highest_risk_driver: str
     narrative: str
+
+
+# Rebuild forward references (OperatorProfileInput uses SelectedSeaSiteInput defined after it)
+OperatorProfileInput.model_rebuild()

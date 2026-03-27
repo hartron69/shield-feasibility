@@ -43,6 +43,8 @@ class SiteProfile:
     hab_risk_factor: float = 1.0             # >1 = higher HAB risk
     mooring_age_years: Optional[int] = None
     net_integrity_score: Optional[float] = None  # 0–1
+    # Cage portfolio (optional): list of CagePenConfig dicts or None
+    cages: Optional[List] = None  # List[CagePenConfig] — imported at runtime to avoid circular dep
 
     @property
     def is_biomass_site(self) -> bool:

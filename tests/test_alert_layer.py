@@ -502,7 +502,7 @@ class TestAlertSimulator:
         a = self.sim.simulate_hab_warning()
         assert a.risk_type == 'hab'
         assert a.alert_level == 'WARNING'
-        assert a.site_id == 'DEMO_S01'
+        assert a.site_id == 'KH_S01'
 
     def test_lice_watch(self):
         a = self.sim.simulate_lice_watch()

@@ -40,8 +40,9 @@ router = APIRouter(prefix="/api/c5ai", tags=["c5ai"])
 
 def _build_demo_operator_input():
     """
-    Build a minimal C5AIOperatorInput for the three demo sites.
+    Build a minimal C5AIOperatorInput for Kornstad Havbruk AS (3 real localities).
     No historical observations — all forecasters run in prior mode.
+    Coordinates and exposure from bw_config.py / site_registry.py.
     """
     from c5ai_plus.data_models.biological_input import (
         C5AIOperatorInput,
@@ -49,39 +50,39 @@ def _build_demo_operator_input():
     )
     sites = [
         SiteMetadata(
-            site_id="DEMO_OP_S01",
-            site_name="Frohavet North",
-            latitude=63.5,
-            longitude=8.2,
+            site_id="KH_S01",
+            site_name="Kornstad",
+            latitude=62.960383,
+            longitude=7.45015,
             species="Atlantic Salmon",
-            biomass_tonnes=3200,
-            biomass_value_nok=208_000_000,
-            fjord_exposure="open_coast",
-        ),
-        SiteMetadata(
-            site_id="DEMO_OP_S02",
-            site_name="Sunndalsfjord",
-            latitude=62.7,
-            longitude=8.6,
-            species="Atlantic Salmon",
-            biomass_tonnes=3500,
-            biomass_value_nok=227_500_000,
+            biomass_tonnes=3000,
+            biomass_value_nok=195_000_000,
             fjord_exposure="semi_exposed",
         ),
         SiteMetadata(
-            site_id="DEMO_OP_S03",
-            site_name="Storfjorden South",
-            latitude=62.1,
-            longitude=7.1,
+            site_id="KH_S02",
+            site_name="Leite",
+            latitude=63.03515,
+            longitude=7.676817,
             species="Atlantic Salmon",
             biomass_tonnes=2500,
             biomass_value_nok=162_500_000,
+            fjord_exposure="semi_exposed",
+        ),
+        SiteMetadata(
+            site_id="KH_S03",
+            site_name="Hogsnes",
+            latitude=63.093033,
+            longitude=7.675883,
+            species="Atlantic Salmon",
+            biomass_tonnes=2800,
+            biomass_value_nok=182_000_000,
             fjord_exposure="sheltered",
         ),
     ]
     return C5AIOperatorInput(
-        operator_id="DEMO_OP",
-        operator_name="Nordic Aqua Partners AS",
+        operator_id="KORNSTAD_HAVBRUK",
+        operator_name="Kornstad Havbruk AS",
         sites=sites,
     )
 
@@ -152,8 +153,8 @@ def _run_c5ai_pipeline_safe() -> dict:
 
     # ── Stub fallback ─────────────────────────────────────────────────────────
     return {
-        "site_ids":            ["DEMO_OP_S01", "DEMO_OP_S02", "DEMO_OP_S03"],
-        "site_names":          ["Frohavet North", "Sunndalsfjord", "Storfjorden South"],
+        "site_ids":            ["KH_S01", "KH_S02", "KH_S03"],
+        "site_names":          ["Kornstad", "Leite", "Hogsnes"],
         "site_count":          3,
         "c5ai_vs_static_ratio": 1.0,
         "total_expected_annual_loss_nok": 0.0,
@@ -364,6 +365,19 @@ def site_registry_endpoint() -> dict:
     except Exception:
         pass
     return summary
+
+
+@router.get("/risk-overview")
+def c5ai_risk_overview() -> dict:
+    """
+    Returns C5AI+ risk overview (overall_risk_score, per-site scores, domain breakdown)
+    derived from the current live risk feed snapshot for the Kornstad Havbruk operator.
+
+    Re-computed on every call — reflects the latest data from the feed.
+    Use after POST /api/c5ai/run or GET /api/live-risk/feed to get up-to-date scores.
+    """
+    from backend.services.live_risk_feed import get_c5ai_risk_overview
+    return get_c5ai_risk_overview()
 
 
 @router.get("/bw/data-status")

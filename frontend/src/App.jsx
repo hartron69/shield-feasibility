@@ -15,7 +15,9 @@ import StrategyComparisonPage from './components/StrategyComparisonPage.jsx'
 import LearningPage from './components/LearningPage.jsx'
 import ReportsPage from './components/ReportsPage.jsx'
 import DashboardPage from './components/DashboardPage.jsx'
-import { fetchMitigationLibrary, fetchExample, runFeasibility, fetchSmoltExample, runSmoltFeasibility, runC5AI, fetchC5AIStatus, notifyInputsUpdated } from './api/client.js'
+import LiveRiskFeedPage from './components/live_risk/LiveRiskFeedPage.jsx'
+import LocalityLiveRiskPage from './components/live_risk/LocalityLiveRiskPage.jsx'
+import { fetchMitigationLibrary, fetchExample, runFeasibility, fetchSmoltExample, runSmoltFeasibility, runC5AI, fetchC5AIStatus, notifyInputsUpdated, fetchC5AIRiskOverview } from './api/client.js'
 import C5AIStatusBar from './components/C5AIStatusBar.jsx'
 import { C5AI_MOCK } from './data/c5ai_mock.js'
 import { MOCK_ALERTS } from './data/mockAlertsData.js'
@@ -108,6 +110,7 @@ const DEFAULT_SMOLT_FINANCIALS = {
 const L1_NAV = [
   { id: 'dashboard',    label: 'Dashboard'            },
   { id: 'risk',         label: 'Risk Intelligence'    },
+  { id: 'live_risk',    label: 'Live Risk'             },
   { id: 'feasibility',  label: 'PCC Feasibility'      },
 ]
 
@@ -166,7 +169,11 @@ export default function App() {
   const [smoltFinancials, setSmoltFinancials]   = useState({ ...DEFAULT_SMOLT_FINANCIALS })
   const [c5aiStatus, setC5aiStatus]             = useState(null)
   const [c5aiLoading, setC5aiLoading]           = useState(false)
+  const [c5aiRiskData, setC5aiRiskData]         = useState(null)
   const [showStaleModal, setShowStaleModal]     = useState(false)
+  const [siteSelectionMode, setSiteSelectionMode] = useState('generic')
+  const [selectedSites, setSelectedSites]       = useState([])
+  const [liveRiskLocalityId, setLiveRiskLocalityId] = useState(null)
 
   useEffect(() => {
     const ft = operatorType === 'smolt' ? 'smolt' : 'sea'
@@ -175,7 +182,12 @@ export default function App() {
 
   useEffect(() => {
     fetchC5AIStatus().then(setC5aiStatus).catch(() => {})
+    fetchC5AIRiskOverview().then(setC5aiRiskData).catch(() => {})
   }, [])
+
+  function refreshC5AIRiskOverview() {
+    fetchC5AIRiskOverview().then(setC5aiRiskData).catch(() => {})
+  }
 
   async function handleC5AIRun() {
     setC5aiLoading(true)
@@ -282,6 +294,8 @@ export default function App() {
     setSelectedMitigations([])
     setSmoltFacilities([{ ...DEFAULT_SMOLT_FACILITY }])
     setSmoltFinancials({ ...DEFAULT_SMOLT_FINANCIALS })
+    setSiteSelectionMode('generic')
+    setSelectedSites([])
     setResult(null)
     setError(null)
     setStep(0)
@@ -354,8 +368,30 @@ export default function App() {
       if (operatorType === 'smolt') {
         res = await runSmoltFeasibility(buildSmoltPayload())
       } else {
+        // Build operator_profile with site-selection fields
+        const isSpecific = siteSelectionMode === 'specific' && selectedSites.length > 0
+        const operatorProfile = {
+          ...operator,
+          site_selection_mode: isSpecific ? 'specific' : 'generic',
+          selected_sites: isSpecific
+            ? selectedSites.map(s => ({
+                site_id:            s.site_id,
+                locality_no:        s.locality_no ?? null,
+                site_name:          s.site_name,
+                biomass_tonnes:     parseFloat(s.biomass_tonnes) || 3000,
+                biomass_value_nok:  s.biomass_value_manual
+                  ? (parseFloat(s.biomass_value_nok) || null)
+                  : null,
+                fjord_exposure:     s.fjord_exposure || 'semi_exposed',
+                lice_pressure_factor: parseFloat(s.lice_pressure_factor) || 1.0,
+                hab_risk_factor:    parseFloat(s.hab_risk_factor) || 1.0,
+              }))
+            : null,
+          // In specific mode, n_sites matches actual selected count for risk scaling
+          n_sites: isSpecific ? selectedSites.length : operator.n_sites,
+        }
         const payload = {
-          operator_profile: operator,
+          operator_profile: operatorProfile,
           model_settings: model,
           strategy_settings: strategy,
           mitigation: { selected_actions: selectedMitigations },
@@ -395,7 +431,7 @@ export default function App() {
           <button
             key={item.id}
             className={`main-nav-btn ${activeMainSection === item.id ? 'active' : ''}`}
-            onClick={() => setActiveMainSection(item.id)}
+            onClick={() => { setActiveMainSection(item.id); if (item.id !== 'live_risk') setLiveRiskLocalityId(null) }}
           >
             {item.label}
           </button>
@@ -472,13 +508,29 @@ export default function App() {
                     placeholder="0"
                   />
                 </div>
-                <button
-                  className="smolt-apply-btn"
-                  style={{ marginTop: 4, width: '100%' }}
-                  onClick={handleAgaquaExample}
-                >
-                  Last Agaqua-eksempel
-                </button>
+
+                {/* Known smolt facilities — same as Risk Intelligence */}
+                <div style={{
+                  marginTop: 8, padding: '7px 9px',
+                  background: '#eff6ff', border: '1px solid #bfdbfe',
+                  borderRadius: 5,
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1e40af', marginBottom: 4 }}>
+                    Agaqua AS — kjente settefiskanlegg
+                  </div>
+                  <div style={{ fontSize: 11, color: '#374151', lineHeight: 1.7 }}>
+                    Villa Smolt AS (Herøy, RAS)<br />
+                    Olden Oppdrettsanlegg AS (Stryn, gjennomstrøm)<br />
+                    Setran Settefisk AS (Osen, gjennomstrøm)
+                  </div>
+                  <button
+                    className="smolt-apply-btn"
+                    style={{ marginTop: 6, width: '100%', background: '#1e40af', color: '#fff', fontWeight: 700 }}
+                    onClick={handleAgaquaExample}
+                  >
+                    Last inn disse anleggene
+                  </button>
+                </div>
               </div>
             )}
             {ACCORDION_SECTIONS.map((section) => (
@@ -490,7 +542,15 @@ export default function App() {
                 {open[section] && (
                   <div className="accordion-body">
                     {section === 'Operator' && operatorType === 'sea' && (
-                      <OperatorProfile values={operator} onChange={handleOperatorChange} derived={AUTO_FIELDS} />
+                      <OperatorProfile
+                        values={operator}
+                        onChange={handleOperatorChange}
+                        derived={AUTO_FIELDS}
+                        siteSelectionMode={siteSelectionMode}
+                        onSiteModeChange={setSiteSelectionMode}
+                        selectedSites={selectedSites}
+                        onSelectedSitesChange={setSelectedSites}
+                      />
                     )}
                     {section === 'Operator' && operatorType === 'smolt' && (
                       <SmoltTIVPanel
@@ -556,9 +616,15 @@ export default function App() {
           )}
           {activeMainSection === 'risk' && activeRiskTab === 'risiko' && (
             <C5AIModule
-              c5aiData={C5AI_MOCK}
+              c5aiData={c5aiRiskData
+                ? { ...C5AI_MOCK, overall_risk_score: c5aiRiskData.overall_risk_score, sites: c5aiRiskData.sites, domain_breakdown: c5aiRiskData.domain_breakdown }
+                : C5AI_MOCK}
               feasibilityResult={result}
               operator={operator}
+              onNavigateToLiveRisk={id => {
+                setLiveRiskLocalityId(id)
+                setActiveMainSection('live_risk')
+              }}
             />
           )}
           {activeMainSection === 'risk' && activeRiskTab === 'varsler' && (
@@ -566,6 +632,20 @@ export default function App() {
           )}
           {activeMainSection === 'risk' && activeRiskTab === 'laering' && (
             <LearningPage />
+          )}
+
+          {/* Live Risk Intelligence */}
+          {activeMainSection === 'live_risk' && !liveRiskLocalityId && (
+            <LiveRiskFeedPage
+              onSelectLocality={id => setLiveRiskLocalityId(id)}
+              onFeedRefreshed={refreshC5AIRiskOverview}
+            />
+          )}
+          {activeMainSection === 'live_risk' && liveRiskLocalityId && (
+            <LocalityLiveRiskPage
+              localityId={liveRiskLocalityId}
+              onBack={() => setLiveRiskLocalityId(null)}
+            />
           )}
 
           {/* PCC Feasibility sub-tabs — ResultPanel */}

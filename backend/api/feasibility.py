@@ -7,7 +7,7 @@ POST /api/feasibility/example – return pre-filled example request
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from backend.schemas import FeasibilityRequest, FeasibilityResponse
 from backend.services.run_analysis import run_feasibility_service
@@ -43,6 +43,15 @@ EXAMPLE_REQUEST = FeasibilityRequest(
 @router.post("/run", response_model=FeasibilityResponse)
 def run_feasibility(request: FeasibilityRequest) -> FeasibilityResponse:
     """Run the full feasibility analysis pipeline."""
+    profile = request.operator_profile
+    if (
+        getattr(profile, "site_selection_mode", "generic") == "specific"
+        and profile.selected_sites
+    ):
+        from backend.services.site_registry import validate_selected_sites
+        errors = validate_selected_sites(profile.selected_sites)
+        if errors:
+            raise HTTPException(status_code=422, detail={"selected_sites_errors": errors})
     return run_feasibility_service(request)
 
 

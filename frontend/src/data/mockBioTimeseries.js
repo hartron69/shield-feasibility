@@ -15,7 +15,7 @@ function series(values) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// S01 – Frohavet North (åpen kyst, varmest, høyest risiko)
+// S01 – Kornstad (semi-eksponert, varmest, høyest risiko)
 // ─────────────────────────────────────────────────────────────────────────────
 const S01 = {
   surface_temp_c: series([
@@ -65,7 +65,7 @@ const S01 = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// S02 – Sunndalsfjord (semi-eksponert, litt kjøligere vinter)
+// S02 – Leite (semi-eksponert, litt kjøligere vinter)
 // ─────────────────────────────────────────────────────────────────────────────
 const S02 = {
   surface_temp_c: series([
@@ -115,7 +115,7 @@ const S02 = {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// S03 – Storfjorden South (ly, kjøligst, lavest risiko)
+// S03 – Hogsnes (ly, kjøligst, lavest risiko)
 // ─────────────────────────────────────────────────────────────────────────────
 const S03 = {
   surface_temp_c: series([
@@ -168,9 +168,9 @@ const S03 = {
 // Eksportert tidsserie-map: { site_id → { param → [{date, value}] } }
 // ─────────────────────────────────────────────────────────────────────────────
 export const MOCK_BIO_TIMESERIES = {
-  'DEMO_OP_S01': S01,
-  'DEMO_OP_S02': S02,
-  'DEMO_OP_S03': S03,
+  'KH_S01': S01,
+  'KH_S02': S02,
+  'KH_S03': S03,
 }
 
 // Terskelverdier for risikoparametere (vises som rød stiplet linje i grafene)

@@ -1,4 +1,6 @@
 import React from 'react'
+import SeaLocalitySelector from './SeaLocalitySelector.jsx'
+import SeaLocalityAllocationTable from './SeaLocalityAllocationTable.jsx'
 
 // Inline styles for auto-calculated fields
 const AUTO_INPUT_STYLE = {
@@ -23,7 +25,15 @@ function computeSuggested(ref, realisation, haircut) {
   return Math.round(ref * 1000 * realisation * (1 - haircut))
 }
 
-export default function OperatorProfile({ values, onChange, derived = new Set() }) {
+export default function OperatorProfile({
+  values,
+  onChange,
+  derived = new Set(),
+  siteSelectionMode = 'generic',
+  onSiteModeChange,
+  selectedSites = [],
+  onSelectedSitesChange,
+}) {
   const set = (field) => (e) => onChange({ ...values, [field]: e.target.value })
   const setNum = (field) => (e) => onChange({ ...values, [field]: parseFloat(e.target.value) || 0 })
   const setInt = (field) => (e) => onChange({ ...values, [field]: parseInt(e.target.value) || 1 })
@@ -61,6 +71,32 @@ export default function OperatorProfile({ values, onChange, derived = new Set() 
     })
   }
 
+  // ── Specific locality mode handlers ───────────────────────────────────────
+  function handleSiteSelectionIds(newIds, registrySites) {
+    // Keep existing allocation data for already-selected sites; initialise new ones
+    const existing = {}
+    for (const s of selectedSites) existing[s.site_id] = s
+
+    const next = registrySites
+      .filter(r => newIds.has(r.site_id))
+      .map(r => existing[r.site_id] || {
+        site_id: r.site_id,
+        locality_no: r.locality_no,
+        site_name: r.site_name,
+        biomass_tonnes: 3000,
+        biomass_value_nok: null,        // auto-derive
+        biomass_value_manual: false,
+        fjord_exposure: r.fjord_exposure || 'semi_exposed',
+        lice_pressure_factor: 1.0,
+        hab_risk_factor: 1.0,
+      })
+    onSelectedSitesChange(next)
+  }
+
+  const appliedValue = values.biomass_value_per_tonne || suggested || 64800
+  const isSpecific = siteSelectionMode === 'specific'
+  const selectedIdSet = new Set(selectedSites.map(s => s.site_id))
+
   return (
     <div>
       {/* ── Identity ───────────────────────────────────────────────── */}
@@ -74,16 +110,84 @@ export default function OperatorProfile({ values, onChange, derived = new Set() 
         <input value={values.country} onChange={set('country')} placeholder="e.g. Norge" />
       </div>
 
-      <div className="field-row">
-        <div className="field">
-          <label>Number of Sites</label>
-          <input type="number" min="1" max="20" value={values.n_sites} onChange={setInt('n_sites')} />
+      {/* ── Sea-site mode selector ─────────────────────────────────── */}
+      {onSiteModeChange && (
+        <div style={{ marginTop: 10, marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#667', letterSpacing: '0.5px',
+            textTransform: 'uppercase', marginBottom: 6 }}>
+            Porteføljemodus
+          </div>
+          <div className="sea-mode-selector">
+            <button
+              type="button"
+              className={`sea-mode-btn ${!isSpecific ? 'active' : ''}`}
+              onClick={() => onSiteModeChange('generic')}
+            >
+              Generisk portefølje
+            </button>
+            <button
+              type="button"
+              className={`sea-mode-btn ${isSpecific ? 'active' : ''}`}
+              onClick={() => onSiteModeChange('specific')}
+            >
+              Spesifikke lokaliteter
+            </button>
+          </div>
         </div>
-        <div className="field">
-          <label>Total Biomass (t)</label>
-          <input type="number" min="1" value={values.total_biomass_tonnes} onChange={setNum('total_biomass_tonnes')} />
+      )}
+
+      {/* ── Generic mode: n_sites + total biomass ─────────────────── */}
+      {!isSpecific && (
+        <div className="field-row">
+          <div className="field">
+            <label>Number of Sites</label>
+            <input type="number" min="1" max="20" value={values.n_sites} onChange={setInt('n_sites')} />
+          </div>
+          <div className="field">
+            <label>Total Biomass (t)</label>
+            <input type="number" min="1" value={values.total_biomass_tonnes} onChange={setNum('total_biomass_tonnes')} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── Specific mode: locality selector + allocation ─────────── */}
+      {isSpecific && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#667', letterSpacing: '0.5px',
+            textTransform: 'uppercase', marginBottom: 6 }}>
+            Velg lokaliteter fra C5AI+ / BarentsWatch
+          </div>
+          <SeaLocalitySelector
+            selectedIds={selectedIdSet}
+            onChange={handleSiteSelectionIds}
+          />
+
+          {selectedSites.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#667', letterSpacing: '0.5px',
+                textTransform: 'uppercase', marginBottom: 6 }}>
+                Fordel biomasse og verdi
+              </div>
+              <SeaLocalityAllocationTable
+                sites={selectedSites}
+                onChange={onSelectedSitesChange}
+                appliedValue={appliedValue}
+              />
+            </div>
+          )}
+
+          {selectedSites.length > 0 && (
+            <div style={{
+              marginTop: 8, fontSize: 11, padding: '6px 10px',
+              background: '#ecfdf5', border: '1px solid #6ee7b7',
+              borderRadius: 5, color: '#065f46', lineHeight: 1.5,
+            }}>
+              Denne analysen er basert p&#229; {selectedSites.length} valgte lokaliteter fra C5AI+ / BarentsWatch.
+              BW-lokalitetsnummer: {selectedSites.map(s => s.locality_no).join(', ')}.
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Biomass Valuation ──────────────────────────────────────── */}
       <div style={{

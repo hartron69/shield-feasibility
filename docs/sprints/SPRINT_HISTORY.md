@@ -4,6 +4,48 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Live Feed → C5AI Risk Score Wiring (2026-03-27)
+**Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
+**Artifacts:** `docs/sprints/sprint_live_feed_c5ai_wiring/`
+**Summary:** Connected the Live Risk feed to the C5AI+ Risk Intelligence module. Added `GET /api/c5ai/risk-overview` backend endpoint that derives `overall_risk_score`, per-site risk scores, and domain breakdown fractions from the current live risk feed snapshot (biomass-weighted, consistent with `_compute_risk()` domain weights). Frontend: new `c5aiRiskData` state in `App.jsx` fetched on mount and on every manual "Oppdater feed" click (via `onFeedRefreshed` callback passed to `LiveRiskFeedPage`). C5AIModule receives a merged object where the live risk scores override the static `C5AI_MOCK` while forecast data stays mock. Falls back silently to static mock if backend is unreachable.
+
+## Sprint – Mitigation Tab Fixes & CV Transparency (2026-03-27)
+**Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
+**Artifacts:** `docs/sprints/sprint_mitigation_tab_fixes/`
+**Summary:** Fixed two bugs in the Mitigation results tab: (1) NaN % in Vekt column — root cause was missing `"weight"` key in `crit_deltas` dicts in `run_analysis.py` (both smolt and sea paths); (2) misleading "Score improves by +0.0 pts" note — replaced with Norwegian message "Tiltakene krysser ingen kriterieterskler — poengsummen er uendret." Added CV transparency to Loss Stability finding in `suitability_engine.py`: `"CV≈0.78"` → `"CV: 0.92 → 0.78 (terskel <0.75 for neste band)"`. Balance Sheet finding translated to Norwegian. `MitigationTab.jsx` now renders the `finding` text as italic subtitle below criterion name in the Kriterievis table.
+
+## Sprint – Risk Intelligence Copy & Label Cleanup (2026-03-27)
+**Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
+**Artifacts:** `docs/sprints/sprint_risk_intelligence_copy_cleanup/`
+**Summary:** Applied comprehensive Norwegian-language copy pass across all six C5AI+ module files. Added strategic banner (blue callout) and footer disclaimer in `RiskOverviewTab.jsx`. Replaced all English labels: Portfolio Risk → Selskapets risikobilde, Risk Score → Strategisk risikonivå, Site Risk Ranking → Viktigste lokaliteter, Domain → Risikotype, Learning → Strategiske mønstre, and 15+ other labels. All 20 risk type identifiers now have Norwegian display names. `C5AIModule.jsx` header updated. Captive bridge wording strengthened with italic contextual helper text under every section.
+
+## Sprint – Risk Intelligence Refactor (2026-03-27)
+**Tests after:** unchanged (backend unmodified) | Frontend build: 0 errors, 109 modules
+**Artifacts:** `docs/sprints/sprint_risk_intelligence_refactor/`
+**Summary:** Separated Risk Intelligence (strategic portfolio/captive dashboard) from Live Risk (operational source of truth). Removed 3 overlapping tabs from C5AIModule: Alerts, BarentsWatch, and Anlegg — these are operational views now owned by Live Risk. Removed AlertSummaryCards from RiskOverviewTab. Added: concentration analysis panel with biomass distribution bar and HHI badge, "Live Risk →" per-site link-out buttons that navigate directly to locality detail, Norwegian tab labels throughout. App.jsx wires `onNavigateToLiveRisk` callback to C5AIModule so site link-outs land on the correct locality page.
+
+## Sprint – Live Risk Intelligence (2026-03-27)
+**Tests after:** 1810 passed, 0 failed (+76 new) | Frontend build: 0 errors, 113 modules
+**Artifacts:** `docs/sprints/sprint_live_risk_intelligence/`
+**Summary:** Added a dedicated "Live Risk" top-level module (4th L1 nav item) giving full transparency into locality data feeds. Backend: 6 new service files (`live_risk_mock.py`, `source_health.py`, `confidence_scoring.py`, `event_timeline.py`, `risk_change_explainer.py`, `live_risk_feed.py`) and 1 new API router (`backend/api/live_risk.py`) with 9 endpoints at `/api/live-risk/`. Mock data uses deterministic seeded synthetic time series for the 3 Kornstad Havbruk AS localities (90 days, 5 measurement parameters). Frontend: 8 new components (`LiveRiskFeedPage.jsx`, `LocalityLiveRiskPage.jsx`, `RawDataChart.jsx`, `RiskHistoryChart.jsx`, `SourceStatusPanel.jsx`, `RiskChangeBreakdownPanel.jsx`, `RiskEventsTimeline.jsx`, `ConfidenceBadge.jsx`) plus 9 fetch functions in `client.js` and `lr-*` CSS classes. No new npm dependencies — all charts are pure SVG.
+
+## Sprint – Biomass Percentage Allocation (2026-03-27)
+**Tests after:** 1734 passed, 0 failed (no change — UI-only + minor backend guard) | Frontend build: 0 errors, 105 modules
+**Artifacts:** `docs/sprints/sprint_biomass_pct_allocation/`
+**Summary:** Changed cage biomass input from absolute tonnes to percentage of the locality's total biomass. Each cage stores `biomass_pct` (0–100); `biomass_tonnes` is always derived as `pct × siteTotal / 100`. New `ControlSumBar` in `CagePortfolioPanel.jsx` shows sum of cage percentages with green/blue/red status and the unallocated remainder in tonnes. "Fordel jevnt" button distributes 100% equally. Empty/fallow cages (0%) dimmed with "Tom" label. `SeaLocalityAllocationTable.jsx` passes `totalSiteBiomass` prop and recomputes cage tonnes when site biomass changes. Backend: `_build_cage_pen_configs()` silently skips 0-tonne cages.
+
+## Sprint – Advanced Cage Weighting (2026-03-26)
+**Tests after:** 1734 passed, 0 failed (+82 new) | Frontend build: 0 errors, 105 modules
+**Artifacts:** `docs/sprints/sprint_advanced_cage_weighting/`
+**Summary:** Extended cage portfolio model (Sprint 2) with multi-factor weighting engine. A locality's effective domain risk multipliers are now driven by five components: biomass, economic value, consequence (value × consequence_factor × failure_mode_multiplier), operational complexity, and structural criticality (with SPOF/redundancy modifiers). New files: `config/cage_weighting.py` (constants), `models/cage_weighting.py` (engine with `compute_locality_domain_multipliers_advanced()`). `CagePenConfig` extended with 7 optional advanced fields. Backend API now returns `cage_weight_details`, `weighting_mode`, and `warnings` per locality. Backward compatible: no advanced data → exact biomass-only fallback. Frontend: per-cage collapsible "Avansert" panel in `CagePortfolioPanel.jsx`; per-locality weighting mode badge and collapsible weight detail table in `CageRiskProfileTab.jsx`.
+
+## Sprint – Specific Sea Localities (2026-03-26)
+**Tests after:** 1600 passed, 0 failed (+20 new) | Frontend build: 0 errors, 102 modules
+**Artifacts:** `docs/sprints/sprint_specific_sea_localities/`
+**Summary:** Added specific-locality mode for sea PCC feasibility. Users can now toggle between "Generisk portefølje" (existing behavior unchanged) and "Spesifikke lokaliteter" (select actual BW-registered sites). New frontend components: `SeaLocalitySelector.jsx` (fetch registry, multi-select with BW quality badges) and `SeaLocalityAllocationTable.jsx` (per-site biomass/value editor with "Auto-fordelt" labelling). Backend: validation via `validate_selected_sites()` returns HTTP 422 on invalid/duplicate site_ids; `MetadataBlock` now carries `site_selection_mode`, `selected_site_count`, `selected_locality_numbers`; `TraceabilityBlock.site_selection_mode` propagated from `alloc_summary`; fixed missing `location` field in `_build_specific_sites()`. TraceabilityPanel displays "Spesifikke lokaliteter" / "Generisk portefølje" chip. Limitations: domain modelling remains portfolio-level; registry currently limited to Kornstad Havbruk AS (3 sites).
+
+---
+
 ## Sprint – Input Data Audit Report (2026-03-23)
 **Tests after:** 1 533 passed, 0 failed (+18 new) | Frontend build: 0 errors, 100 modules
 **Artifacts:** `docs/sprints/sprint_input_audit/` (pending)

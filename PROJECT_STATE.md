@@ -1,9 +1,9 @@
 # Shield Risk Platform – Project State
 
-**Date:** 2026-03-10
-**Test suite:** 1 092 passed, 0 failed (38 deprecation warnings)
-**Frontend build:** 0 errors · 76 modules · 28.4 kB CSS · 289 kB JS
-**Backend:** FastAPI · Python · uvicorn
+**Date:** 2026-03-27
+**Test suite:** 1 810 passed, 0 failed (4 pre-existing errors in smolt test, 71 warnings)
+**Frontend build:** 0 errors · 113 modules · 63.3 kB CSS · 501 kB JS
+**Backend:** FastAPI · Python 3.11 · uvicorn
 **Frontend:** React 18 · Vite 5 · pure SVG charts (no charting library)
 
 ---
@@ -16,15 +16,20 @@ shield-feasibility/
 ├── main.py                          # CLI entry: 9-step PCC pipeline
 ├── data/sample_input.json           # Nordic Aqua Partners AS (demo operator)
 │
-├── config/settings.py               # Global constants (NOK thresholds, CAT params)
+├── config/
+│   ├── settings.py                  # Global constants (NOK thresholds, CAT params)
+│   └── cage_weighting.py            # Advanced cage weighting constants (NEW Sprint 11)
+│
 ├── data/input_schema.py             # OperatorInput, SiteProfile dataclasses
 │
-├── models/                          # Core stochastic models
+├── models/                          # Core stochastic and risk models
 │   ├── monte_carlo.py               # Compound Poisson-LogNormal MC engine
 │   ├── correlation.py               # RiskCorrelationMatrix (equicorrelation, Cholesky)
-│   ├── regime_model.py              # RegimeModel (3 regimes: 75%/1×, 20%/1.8×, 5%/3.5×)
-│   ├── domain_correlation.py        # DomainCorrelationMatrix 4×4 (Sprint 7)
-│   ├── domain_loss_breakdown.py     # DomainLossBreakdown + correlated simplex perturbation
+│   ├── regime_model.py              # RegimeModel (3 regimes)
+│   ├── domain_correlation.py        # DomainCorrelationMatrix 4×4
+│   ├── domain_loss_breakdown.py     # DomainLossBreakdown + cage multiplier application
+│   ├── cage_technology.py           # CagePenConfig, CAGE_DOMAIN_MULTIPLIERS (NEW Sprint 9)
+│   ├── cage_weighting.py            # 5-component advanced weighting engine (NEW Sprint 11)
 │   ├── loss_model.py                # LossView (gross/net/retained per strategy)
 │   ├── pcc_economics.py             # PCCAssumptions presets, RI structure helpers
 │   ├── captive_structure.py         # Cell captive capital structure
@@ -32,7 +37,7 @@ shield-feasibility/
 │       ├── base_strategy.py         # AnnualCostBreakdown, StrategyResult
 │       ├── full_insurance.py
 │       ├── hybrid.py
-│       ├── pcc_captive.py           # Fixed RI/SCR/TCOR bugs (Sprint 8b)
+│       ├── pcc_captive.py           # Fixed RI/SCR/TCOR (Sprint 8b)
 │       ├── pooled_pcc.py
 │       └── self_insurance.py
 │
@@ -45,87 +50,66 @@ shield-feasibility/
 │
 ├── reporting/
 │   ├── pdf_report.py                # ReportLab Platypus · 13-page board PDF
-│   ├── chart_generator.py           # 10 matplotlib charts → BytesIO
+│   ├── chart_generator.py           # 10+ matplotlib charts → BytesIO
 │   └── correlated_risk_analytics.py # Scenario extraction, tail analysis, narratives
 │
-├── c5ai_plus/                       # C5AI+ v5.0 – biological risk intelligence
+├── c5ai_plus/                       # C5AI+ v5.0 – multi-domain risk intelligence
 │   ├── pipeline.py                  # ForecastPipeline (7-step orchestration)
+│   ├── multi_domain_engine.py       # MultiDomainEngine, MultiDomainForecast
 │   ├── config/c5ai_settings.py      # C5AI_SETTINGS (priors, thresholds, version)
 │   ├── data_models/
 │   │   ├── biological_input.py      # C5AIOperatorInput, SiteInput
 │   │   ├── forecast_schema.py       # RiskForecast, SiteForecast, RiskTypeForecast
 │   │   └── learning_schema.py       # PredictionRecord, ObservedEvent, LearningCycleResult
-│   ├── forecasting/
-│   │   ├── base_forecaster.py       # BaseForecaster (optional model_registry= param)
-│   │   ├── hab_forecaster.py
-│   │   ├── lice_forecaster.py
-│   │   ├── jellyfish_forecaster.py
-│   │   └── pathogen_forecaster.py
-│   ├── ingestion/data_loader.py     # DataLoader, SiteData
-│   ├── network/site_network.py      # SiteRiskNetwork (networkx optional)
-│   ├── validation/forecast_validator.py
-│   ├── export/forecast_exporter.py  # → risk_forecast.json
-│   ├── feature_engineering/features.py
-│   ├── causal/cate_module.py
-│   ├── alerts/                      # Early Warning / Alert Layer (Sprint – Alert Layer)
-│   │   ├── alert_models.py
-│   │   ├── alert_rules.py
-│   │   ├── pattern_detector.py
-│   │   ├── probability_shift_detector.py
-│   │   ├── alert_engine.py
-│   │   ├── alert_explainer.py
-│   │   ├── alert_store.py
-│   │   └── alert_simulator.py
+│   ├── forecasting/                 # Biological: HAB, lice, jellyfish, pathogen
+│   ├── structural/                  # Structural domain forecasting
+│   ├── environmental/               # Environmental domain forecasting
+│   ├── operational/                 # Operational domain forecasting
+│   ├── ingestion/, network/, validation/, export/, feature_engineering/, causal/
+│   ├── alerts/                      # Early Warning / Alert Layer (8 modules)
 │   ├── models/                      # Self-learning probability/severity models
-│   │   ├── probability_model.py     # BetaBinomialModel, SklearnProbabilityModel
-│   │   ├── severity_model.py        # LogNormalSeverityModel (Welford online MLE)
-│   │   └── model_registry.py        # ModelRegistry (load/save/version/shadow/promote)
 │   ├── learning/                    # predict → observe → evaluate → retrain
-│   │   ├── learning_loop.py         # LearningLoop.run_cycle() – 10-step orchestration
-│   │   ├── prediction_store.py
-│   │   ├── event_store.py
-│   │   ├── evaluator.py             # Brier, log-loss, MAE, calibration slope
-│   │   ├── retraining_pipeline.py   # BetaBinomial (<20 obs) or RF (≥20 obs)
-│   │   └── shadow_mode.py           # ShadowModeManager
 │   └── simulation/                  # Synthetic data for learning demos
-│       ├── site_data_simulator.py   # SiteDataSimulator (seasonal temp, HAB, lice)
-│       └── event_simulator.py       # EventSimulator (Bernoulli + LogNormal + HAB correlation)
 │
 ├── backend/                         # FastAPI adapter
 │   ├── main.py                      # FastAPI app, CORS, static file mount
 │   ├── schemas.py                   # Pydantic request/response models
 │   ├── api/
 │   │   ├── feasibility.py           # POST /api/feasibility/run, /example
-│   │   └── mitigation.py            # GET /api/mitigation/library
+│   │   ├── mitigation.py            # GET /api/mitigation/library
+│   │   └── inputs_audit.py          # GET /api/inputs/audit
 │   ├── services/
 │   │   ├── operator_builder.py      # SimplifiedProfile → (OperatorInput, AllocationSummary)
 │   │   ├── run_analysis.py          # 9-step pipeline adapter → FeasibilityResponse
 │   │   └── history_analytics.py     # Historical loss domain analytics
 │   └── static/reports/              # Generated PDFs served at /static/reports/<uuid>.pdf
 │
-├── risk_domains/structural.py
-│
-├── tests/                           # 1 092 tests total across 36 test files
+├── tests/                           # 1 734 tests across 40+ test files (0 failed)
 │
 ├── frontend/                        # React 18 + Vite 5 GUI
 │   └── src/
-│       ├── App.jsx                  # Root: 8-page nav, state, API wiring
-│       ├── App.css                  # ~28 kB – all styles
-│       ├── api/client.js            # fetchMitigationLibrary, fetchExample, runFeasibility
+│       ├── App.jsx                  # Root: 9-page nav, state, API wiring
+│       ├── App.css                  # ~53 kB – all styles
+│       ├── api/client.js            # fetchMitigationLibrary, fetchExample, runFeasibility, fetchInputsAudit
 │       ├── data/
-│       │   ├── c5ai_mock.js         # C5AI_MOCK – static forecast data for C5AI+ module
-│       │   ├── mockAlertsData.js    # MOCK_ALERTS (10 records), MOCK_ALERT_SUMMARY
-│       │   ├── mockInputsData.js    # MOCK_SITE_PROFILES, MOCK_BIOLOGICAL_INPUTS,
-│       │   │                        # MOCK_ALERT_SIGNALS, MOCK_DATA_QUALITY,
-│       │   │                        # SCENARIO_BASELINE, SCENARIO_PRESETS, BIO_READING_LABELS
-│       │   └── mockBioTimeseries.js # MOCK_BIO_TIMESERIES, PARAM_THRESHOLDS, PARAM_COLORS
+│       │   ├── cageTechnologyMeta.js  # Cage types, multipliers, default scores, labels
+│       │   ├── c5ai_mock.js           # C5AI_MOCK – multi-domain forecast data
+│       │   ├── mockAlertsData.js      # MOCK_ALERTS (18 records across 3 domains)
+│       │   ├── mockInputsData.js      # MOCK_SITE_PROFILES, MOCK_BIOLOGICAL_INPUTS, etc.
+│       │   ├── mockBioTimeseries.js   # 12-month biological time series (3 sites)
+│       │   └── mockMultiDomainData.js # Multi-domain C5AI+ mock forecasts
 │       └── components/
 │           ├── InputForm/           # PCC feasibility input accordion
-│           ├── results/             # 8-tab result panel (PCC feasibility)
-│           ├── c5ai/                # C5AI+ Risk Intelligence module
+│           │   ├── CagePortfolioPanel.jsx   # Per-cage % allocation + advanced fields
+│           │   ├── SeaLocalityAllocationTable.jsx
+│           │   └── SeaLocalitySelector.jsx
+│           ├── results/             # 9-tab result panel
+│           │   └── CageRiskProfileTab.jsx   # Merd-profil tab
+│           ├── c5ai/                # C5AI+ module (7 tabs)
 │           ├── alerts/              # Early warning alert components
 │           └── inputs/              # Inputs page with 5 tabs
 │
+├── CHANGELOG.md                     # Version history
 ├── docs/sprints/SPRINT_HISTORY.md   # Chronological sprint log
 └── examples/                        # Standalone demo scripts
 ```
@@ -137,7 +121,7 @@ shield-feasibility/
 ### FastAPI Application (`backend/main.py`)
 - **Title:** Shield Risk Platform API v1.0.0
 - **CORS:** `http://localhost:5173` / `http://127.0.0.1:5173`
-- **Static files:** `backend/static/` mounted at `/static` — PDFs served at `/static/reports/<uuid>.pdf`
+- **Static files:** `backend/static/` mounted at `/static` — PDFs at `/static/reports/<uuid>.pdf`
 - **Start:** `uvicorn backend.main:app --reload --port 8000`
 
 ### API Routes
@@ -148,15 +132,32 @@ shield-feasibility/
 | `GET` | `/api/mitigation/library` | All 12 predefined mitigation actions |
 | `POST` | `/api/feasibility/run` | Full 9-step pipeline → `FeasibilityResponse` |
 | `POST` | `/api/feasibility/example` | Nordic Aqua Partners pre-filled request |
+| `GET` | `/api/inputs/audit` | Input data audit report → `InputsAuditReport` |
 
 ### Request Model (`FeasibilityRequest`)
+
 ```
 OperatorProfileInput
   name, country, n_sites, total_biomass_tonnes
   biomass_value_per_tonne (64 800 NOK/t default)
-  reference_price_per_kg, realisation_factor, prudence_haircut  ← valuation formula
+  reference_price_per_kg, realisation_factor, prudence_haircut
   biomass_value_per_tonne_override  ← optional manual override
   annual_revenue_nok, annual_premium_nok
+  site_selection_mode: 'generic' | 'specific'
+  selected_sites: Optional[List[SelectedSeaSite]]
+    site_id, locality_no, site_name, biomass_tonnes, biomass_value_nok
+    cages: Optional[List[CagePenInput]]   ← per-cage portfolio
+
+CagePenInput
+  cage_id, cage_type, biomass_tonnes
+  # Advanced weighting fields (all optional):
+  biomass_value_nok, consequence_factor
+  operational_complexity_score [0–1]
+  structural_criticality_score [0–1]
+  single_point_of_failure: bool
+  redundancy_level [1–5]
+  technology_maturity_score [0–1]
+  failure_mode_class: 'proportional' | 'threshold' | 'binary_high_consequence'
 
 ModelSettingsInput
   n_simulations (100–100 000, default 5 000)
@@ -164,43 +165,45 @@ ModelSettingsInput
   generate_pdf: bool
   use_history_calibration: bool
 
-StrategySettingsInput
-  strategy: 'full_insurance' | 'hybrid' | 'pcc_captive' | 'self_insurance'
-  retention_nok: Optional[float]
-
-PoolingSettingsInput
-  enabled, n_members, inter_member_correlation, similarity_spread,
-  pooled_retention_nok, pooled_ri_limit_nok, pooled_ri_loading_factor,
-  shared_admin_saving_pct, allocation_basis
-
-MitigationInput
-  selected_actions: List[str]  ← IDs from mitigation library
+StrategySettingsInput / PoolingSettingsInput / MitigationInput
 ```
 
 ### Response Model (`FeasibilityResponse`)
+
 ```
 baseline: ScenarioBlock          ← KPIs + base64 charts + criterion scores
 mitigated: Optional[ScenarioBlock]
 comparison: Optional[ComparisonBlock]
 report: ReportBlock              ← pdf_url if generate_pdf
-metadata: MetadataBlock
-allocation: Optional[AllocationSummary]   ← TIV ratio, site breakdown, biomass valuation
-history: Optional[HistoricalLossSummary]  ← domain breakdown, calibration metadata
-pooling: Optional[PoolingResult]          ← diversification stats, TCOR comparison
+metadata: MetadataBlock          ← site_selection_mode, selected_site_count
+allocation: Optional[AllocationSummary]
+  cage_profiles: Optional[List[LocalityCageRiskProfile]]
+    site_id, site_name, cage_count, cage_types_present
+    biomass_by_cage_type, effective_domain_multipliers
+    cage_weight_details: List[CageWeightDetail]   ← per-cage breakdown
+    weighting_mode: 'advanced' | 'biomass_only'
+    warnings: List[str]
+history: Optional[HistoricalLossSummary]
+pooling: Optional[PoolingResult]
 ```
 
 ### Operator Builder (`backend/services/operator_builder.py`)
-Converts `OperatorProfileInput` → `(OperatorInput, AllocationSummary)`:
+
+Key responsibilities:
+- Converts `OperatorProfileInput` → `(OperatorInput, AllocationSummary)`
+- Supports two site modes: `generic` (scale from template) and `specific` (use selected BW localities)
+- In specific mode: validates site_ids, builds per-site cage configs, calls
+  `compute_locality_domain_multipliers_advanced()` per locality
+- Cage configs with `biomass_tonnes == 0` (empty/fallow merder) are silently skipped
 - Risk severity scales with TIV ratio vs. template
 - Risk event frequency scales with `sqrt(n_sites)`
-- Financial fields (EBITDA, equity, FCF, assets) derived from revenue via template ratios
-- Biomass valuation formula: `suggested = ref_price × 1000 × realisation × (1 − haircut)`
-- `applied = override if set, else biomass_value_per_tonne`
+- Financial fields derived from revenue via template ratios
 
 ### Biomass Valuation Formula
 ```
 suggested_NOK_per_tonne = ref_price_per_kg × 1000 × realisation_factor × (1 − prudence_haircut)
 defaults: 80 × 1000 × 0.90 × 0.90 = 64 800 NOK/t
+applied = override if set, else biomass_value_per_tonne
 ```
 
 ---
@@ -211,22 +214,23 @@ defaults: 80 × 1000 × 0.90 × 0.90 = 64 800 NOK/t
 2. **Monte Carlo simulation** — Compound Poisson-LogNormal, N simulations × 5 years
 3. **Domain correlation** — Additive Gaussian perturbation on simplex
 4. **Strategy evaluation** — Run selected strategy against simulation results
-5. **Mitigation application** — Apply selected mitigation actions (probability + severity reduction)
+5. **Mitigation application** — Apply selected mitigation actions
 6. **Suitability scoring** — 6-criterion model → composite score → verdict
 7. **Cost analysis** — TCOR, 5yr cost comparison baseline vs. mitigated
 8. **Correlated risk analytics** — Scenario extraction, tail analysis, board narratives
-9. **PDF report** — ReportLab Platypus, 13 pages, 10 charts
+9. **PDF report** — ReportLab Platypus, 13 pages, 10+ charts
 
 ### Monte Carlo Engine (`models/monte_carlo.py`)
 - **Model:** Compound Poisson-LogNormal — `S_t = Σ X_i` where `N_t ~ Poisson(λ)`, `X_i ~ LogNormal`
 - **CAT overlay:** With probability `p_cat`, inject extra event at `multiplier × base_mean`
 - **Horizon:** N × 5 annual totals per simulation
-- **Site correlation:** Gaussian copula via Cholesky decomposition when `RiskCorrelationMatrix` provided
+- **Site correlation:** Gaussian copula via Cholesky decomposition
 - **Regime model:** 3 regimes (75% normal, 20% elevated ×1.8, 5% catastrophic ×3.5)
-- **Domain correlation:** `DomainCorrelationMatrix` (4×4, expert-default: bio-struct=0.20, env-struct=0.60, env-bio=0.40, ops-struct=0.35)
+- **Domain correlation:** `DomainCorrelationMatrix` 4×4 (expert-default: bio-struct=0.20,
+  env-struct=0.60, env-bio=0.40, ops-struct=0.35)
+- **Cage multipliers:** `cage_multipliers` dict → applied per domain after simulation
 
 ### Suitability Engine (`analysis/suitability_engine.py`)
-Six weighted criteria, 0–100 scale each:
 
 | Criterion | Weight |
 |---|---|
@@ -237,101 +241,133 @@ Six weighted criteria, 0–100 scale each:
 | Operational Readiness | 13.5% |
 | Biological Operational Readiness (C5AI+) | 10.0% |
 
-Verdicts: ≥72 STRONGLY RECOMMENDED · 55–71 RECOMMENDED · 40–54 POTENTIALLY SUITABLE · 25–39 NOT RECOMMENDED · <25 NOT SUITABLE
+Verdicts: ≥72 STRONGLY RECOMMENDED · 55–71 RECOMMENDED · 40–54 POTENTIALLY SUITABLE ·
+25–39 NOT RECOMMENDED · <25 NOT SUITABLE
 
 Hard cost gate: >5% PCC/FI excess → cap at POTENTIALLY SUITABLE; >15% → NOT RECOMMENDED.
 
-### PCC Captive Economics (`models/pcc_economics.py`, `models/strategies/pcc_captive.py`)
-- **RI structure:** Annual-aggregate XL — `net = min(loss, retention)`, `ri_recovery = min(max(loss−retention, 0), ri_limit)`
+### PCC Captive Economics
+- **RI structure:** Annual-aggregate XL — `net = min(loss, retention)`,
+  `ri_recovery = min(max(loss−retention, 0), ri_limit)`
 - **RI premium:** Burning-cost method — `E[RI recovery] × loading_factor`
 - **SCR:** VaR(99.5%) of net retained loss distribution (bounded at retention)
-- **Presets:** conservative (2.5× RI loading), base (1.75×), optimised (1.25×)
-- **Corrected 5yr TCOR:** ~64M NOK (was ~210M before bug fixes)
-
-### Mitigation Library (`analysis/mitigation.py`)
-12 predefined actions covering: `lice_barrier`, `automatic_feeding`, `deep_light`, `oxygenation_system`, `real_time_monitoring`, `emergency_harvest_protocol`, `net_integrity_system`, `mooring_upgrade`, `deformation_monitoring`, `ai_early_warning`, and others. Each action specifies: affected domains, probability reduction, severity reduction, annual cost, capex, targeted risk types.
-
-### PDF Report (`reporting/pdf_report.py`)
-ReportLab BaseDocTemplate · 13 pages · 10+ charts:
-- Cover page (canvas callback), executive summary, loss distribution, domain breakdown
-- Domain correlation heatmap, scenario domain stacks, tail domain composition (Sprint 7)
-- PCC cost breakdown table with RI premium highlighted (Sprint 8b)
-- Strategy comparison, mitigation impact, recommendation narrative
+- **Corrected 5yr TCOR:** ~64M NOK (was ~210M before Sprint 8b bug fixes)
 
 ---
 
-## 4. C5AI+ Modules
-
-### ForecastPipeline (`c5ai_plus/pipeline.py`) — 7 Steps
-1. Load & validate biological input data (`DataLoader`)
-2. Build site risk network (`SiteRiskNetwork`, requires networkx)
-3. Run per-site forecasters for all 4 risk types
-4. Apply network risk multipliers to loss estimates
-5. Aggregate to operator level (sum across sites, mean across years)
-6. Assemble metadata + validate (`ForecastValidator`)
-7. Export to `risk_forecast.json` if `output_path` given
-
-### Risk Types
-`hab` · `lice` · `jellyfish` · `pathogen`
-
-### Forecasters (`c5ai_plus/forecasting/`)
-Each forecaster (`HABForecaster`, `LiceForecaster`, `JellyfishForecaster`, `PathogenForecaster`) extends `BaseForecaster`:
-- Accepts `SiteData` + `forecast_years`
-- Returns `List[RiskTypeForecast]` — one per year
-- Each `RiskTypeForecast`: `event_probability`, `expected_loss_mean/p50/p90`, `confidence_score`, `data_quality_flag`, `model_used`
-- `BaseForecaster` accepts optional `model_registry=` param for self-learning integration
-
-### Data Quality Flags
-`SUFFICIENT` · `LIMITED` · `POOR` · `PRIOR_ONLY`
-
-### Site Risk Network (`c5ai_plus/network/site_network.py`)
-- networkx-based graph of sites
-- `get_risk_multiplier(site_id)` — amplifies event probabilities and loss estimates for connected sites
-- Gracefully disabled when networkx not installed
-
-### Self-Learning Extension (`c5ai_plus/learning/`, `c5ai_plus/models/`)
-
-**Model types:**
-- `BetaBinomialModel` — conjugate Bayesian; works from sample 1; prior = C5AI_SETTINGS priors
-- `SklearnProbabilityModel` — Random Forest; activated when n_obs ≥ 20
-- `LogNormalSeverityModel` — online Welford MLE for severity
-
-**Learning loop (`LearningLoop.run_cycle()`):**
-1. Fetch pending predictions from store
-2. Load observed events from event store
-3. Match predictions ↔ events by (operator, risk_type, year)
-4. Evaluate (Brier score, log-loss, MAE, calibration slope)
-5. Decide retrain vs. skip (insufficient data or score already good)
-6. Run retraining pipeline → new model version
-7. Shadow mode: compare new vs. current
-8. Promote if shadow validates
-9. Persist to ModelRegistry
-10. Return `LearningCycleResult`
-
-**Learning status:** cold (<3 cycles) → warming (3–9) → active (≥10)
-
-**Storage paths:**
-```
-c5ai_plus/learning/store/
-  registry/{operator_id}/...
-  predictions/{operator_id}/...
-  events/{operator_id}/...
-```
-
----
-
-## 5. Alert Engine (`c5ai_plus/alerts/`)
+## 4. Cage Portfolio Model
 
 ### Architecture
+Each sea locality is modelled as a portfolio of named net-pen cages (merder).
+
 ```
-AlertEngine.generate_alerts(site_forecasts, previous_probabilities, env_data)
-  ├── PatternDetector.detect()         → (precursor_score [0,1], List[PatternSignal])
-  ├── ProbabilityShiftDetector.detect() → ProbabilityShiftSignal
-  ├── _determine_level()               → NORMAL | WATCH | WARNING | CRITICAL
-  └── AlertExplainer.explain()         → fills explanation_text + recommended_actions
+locality
+  └── cages: List[CagePenConfig]
+        ├── cage_id, cage_type, biomass_pct / biomass_tonnes
+        ├── domain_multipliers  ← from CAGE_DOMAIN_MULTIPLIERS[cage_type]
+        └── advanced fields: biomass_value_nok, consequence_factor,
+            operational_complexity_score, structural_criticality_score,
+            single_point_of_failure, redundancy_level, failure_mode_class
 ```
 
-### Level Mapping (transparent)
+### Cage Type Multipliers (`CAGE_DOMAIN_MULTIPLIERS`)
+
+| Type | Biological | Structural | Environmental | Operational |
+|---|---|---|---|---|
+| `open_net` | 1.00 | 1.00 | 1.00 | 1.00 |
+| `semi_closed` | 0.75 | 0.95 | 0.80 | 1.10 |
+| `fully_closed` | 0.45 | 1.20 | 0.60 | 1.25 |
+| `submerged` | 0.70 | 1.15 | 0.55 | 1.15 |
+
+### Advanced Weighting Engine (`models/cage_weighting.py`)
+
+Five components per cage:
+
+| Component | Derivation |
+|---|---|
+| biomass | `cage.biomass_tonnes` |
+| value | `cage.biomass_value_nok` (0 if not set) |
+| consequence | `value × consequence_factor × failure_mode_multiplier` |
+| complexity | `operational_complexity_score` or cage-type default |
+| criticality | `base_criticality × spof_mult × redundancy_scale` |
+
+Domain component weights:
+
+| Domain | biomass | value | consequence | complexity | criticality |
+|---|---|---|---|---|---|
+| biological | 0.50 | 0.25 | 0.15 | 0.05 | 0.05 |
+| structural | 0.25 | 0.15 | 0.30 | 0.15 | 0.15 |
+| environmental | 0.30 | 0.10 | 0.25 | 0.25 | 0.10 |
+| operational | 0.15 | 0.10 | 0.25 | 0.30 | 0.20 |
+
+Backward compatible: no advanced data → exact biomass-only fallback.
+
+### Biomass Percentage Allocation (GUI)
+- Each cage enters `biomass_pct` (0–100% of locality total).
+- `biomass_tonnes` derived: `pct × site.biomass_tonnes / 100`.
+- Control-sum bar enforces ≤ 100%; empty/fallow cages (0%) allowed.
+- When site-level biomass changes, cage tonnes recompute from stored pct.
+- Backend skips 0-tonne cages in `_build_cage_pen_configs()`.
+
+---
+
+## 5. Specific Sea Localities Mode
+
+Users toggle between two site input modes:
+
+| Mode | Description |
+|---|---|
+| `generic` | Scale from template — existing behaviour unchanged |
+| `specific` | Select actual BW-registered localities from registry |
+
+Real locality registry (Kornstad Havbruk AS):
+
+| ID | Name | BW No. | Exposure |
+|---|---|---|---|
+| `KH_S01` | Kornstad | 12855 | 1.15 — semi-exposed |
+| `KH_S02` | Leite | 12870 | 1.10 — semi-exposed |
+| `KH_S03` | Hogsnes | 12871 | 0.85 — sheltered |
+
+Backend validation: `validate_selected_sites()` → HTTP 422 on invalid/duplicate site_ids.
+`MetadataBlock` carries `site_selection_mode`, `selected_site_count`, `selected_locality_numbers`.
+
+---
+
+## 6. C5AI+ Modules
+
+### ForecastPipeline — 7 Steps
+1. Load & validate biological input data
+2. Build site risk network (networkx, gracefully disabled if absent)
+3. Run per-site forecasters for 19 risk types across 4 domains
+4. Apply network risk multipliers
+5. Aggregate to operator level
+6. Assemble metadata + validate
+7. Export to `risk_forecast.json` if `output_path` given
+
+### Risk Type Coverage (19 types)
+
+| Domain | Risk Types |
+|---|---|
+| Biological | `hab`, `lice`, `jellyfish`, `pathogen` |
+| Structural | `net_integrity`, `mooring_failure`, `cage_structural`, `anchor_failure`, `storm_structural` |
+| Environmental | `current_storm`, `ice`, `oxygen_depletion`, `temperature_extreme`, `algae_bloom` |
+| Operational | `human_error`, `equipment_failure`, `procedure_failure`, `feed_system`, `vessel_incident` |
+
+### Self-Learning Extension
+
+**Model types:**
+- `BetaBinomialModel` — conjugate Bayesian; works from sample 1
+- `SklearnProbabilityModel` — Random Forest; activated when n_obs ≥ 20
+- `LogNormalSeverityModel` — online Welford MLE
+
+**Learning loop status:** cold (<3 cycles) → warming (3–9) → active (≥10)
+
+---
+
+## 7. Alert Engine (`c5ai_plus/alerts/`)
+
+### Level Mapping
+
 | Condition | Level |
 |---|---|
 | precursor_score ≥ 0.70 OR current_prob ≥ 0.35 | CRITICAL |
@@ -339,44 +375,15 @@ AlertEngine.generate_alerts(site_forecasts, previous_probabilities, env_data)
 | precursor_score ≥ 0.25 OR shift.triggered | WATCH |
 | otherwise | NORMAL |
 
-### Alert Rules (`alert_rules.py`)
-15 `AlertRule(frozen=True)` instances:
-- HAB (4): warm surface, low oxygen, high nitrate, high prior probability
-- Lice (4): warm water, elevated counts, treatment fatigue, open coast exposure
-- Jellyfish (3): warm seasonal, current pattern, prior sightings
-- Pathogen (4): neighbour outbreak, high biomass, operational stress, high prior
-
-### Key Dataclasses
-```
-AlertRecord
-  alert_id (uuid4), site_id, risk_type
-  alert_type: 'pattern' | 'probability_shift' | 'composite'
-  alert_level: 'NORMAL' | 'WATCH' | 'WARNING' | 'CRITICAL'
-  current_probability, previous_probability, probability_delta
-  top_drivers (List[str]), triggered_rules (List[str])
-  explanation_text, recommended_actions (List[str])
-  workflow_status: 'OPEN' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'CLOSED'
-  board_visibility: bool  (True for CRITICAL)
-  generated_at: ISO timestamp
-
-AlertSummary
-  site_id, total_alerts, critical_alerts, warning_alerts,
-  top_risk_type, latest_alert_at
-```
-
-### Alert Store (`alert_store.py`)
-JSON persistence: `{root}/alerts/{site_id}/{year}.json`
-Methods: `save`, `load_all`, `load_recent(n=20)`, `filter_by_level`, `filter_by_risk_type`
-
-### Alert Simulator (`alert_simulator.py`)
-4 canonical demo scenarios: `simulate_hab_warning`, `simulate_lice_watch`, `simulate_jellyfish_critical`, `simulate_pathogen_warning`. `simulate_all()` returns 10 records across 3 sites and 4 alert levels.
+15 alert rules (HAB×4, Lice×4, Jellyfish×3, Pathogen×4).
+`simulate_all()` returns 18 records across 3 sites.
 
 ---
 
-## 6. GUI Architecture
+## 8. GUI Architecture
 
 ### Navigation (`App.jsx`)
-8-item secondary nav bar below the app header:
+9-page nav:
 
 | Page ID | Label | Left Panel |
 |---|---|---|
@@ -389,189 +396,58 @@ Methods: `save`, `load_all`, `load_recent(n=20)`, `filter_by_level`, `filter_by_
 | `learning` | Learning | No |
 | `reports` | Reports | No |
 
-`FEASIBILITY_PAGES = {'feasibility', 'strategy'}` — only these pages render the left accordion panel. All others use `app-body.no-left-panel` (full-width layout).
-
-### State Management
-All state lives in `App.jsx`:
-- `operator`, `model`, `strategy`, `pooling`, `selectedMitigations` — feasibility form state
-- `result` — `FeasibilityResponse` from last API call
-- `activePage` — controls navigation and left panel visibility
-- `loading`, `step`, `error` — run progress
-- `library` — mitigation library fetched on mount
+`FEASIBILITY_PAGES = {'feasibility', 'strategy'}` — only these render the left accordion.
 
 ### Left Panel (PCC Feasibility Inputs)
 5-section accordion: **Operator** | **Model** | **Strategy** | **Mitigation** | **Pooling**
 
-Key interactions:
-- Valuation params (ref price / realisation / haircut) auto-cascade to `biomass_value_per_tonne` when no override is set
-- Biomass or value changes auto-derive `annual_revenue_nok` and `annual_premium_nok`
-- `handleExample()` → fetches pre-filled request, merges, switches to `feasibility` page
+Operator section includes:
+- Site mode toggle (Generic / Specific sea localities)
+- `SeaLocalitySelector.jsx` (specific mode)
+- `SeaLocalityAllocationTable.jsx` with `CagePortfolioPanel.jsx` per locality:
+  - Per-cage % input, technology select, cage ID
+  - Collapsible "Avansert" panel (6 advanced risk fields + default badges)
+  - Control-sum bar (sum of % with green/blue/red status)
+  - "Fordel jevnt" button
 
-### Right Panel Pages
+### Right Panel — Result Tabs
+9 tabs (PCC Feasibility):
+1. Summary — KPI cards, C5AI+ enrichment bar
+2. Charts — base64 PNG charts
+3. Mitigation — cost/benefit per action
+4. Recommendation — narrative text
+5. Report — PDF download
+6. Allocation — exposure/financial ratios, per-site table, biomass valuation
+7. History — domain loss breakdown, calibration metadata
+8. Pooling — diversification stats, member breakdown
+9. **Merd-profil** — per-locality cage composition, multiplier cards, weighting mode badge,
+   cage weight detail table (collapsible), warnings
 
-**OverviewPage** — 5 KPI cards (risk score ring, critical alerts, avg completeness, E[annual loss], learning status), alert summary, domain loss bars, completeness cards per site. `onNavigate` prop for "View all alerts →" / "View full inputs →" links.
-
-**InputsPage** — 5-tab shell:
-- *Site Profile* — 3 site cards: biomass, values, exposure/operational factors, source badges
-- *Biological Inputs* — chart/table toggle + 5-group filter (see §7 below)
-- *Alert Signals* — 12 signals, site/risk/triggered filters, signal table with delta coloring
-- *Data Quality* — completeness cards + per-risk dq-table sorted by flag severity
-- *Scenario Inputs* — 6-field override with sliders, 4 presets, stub run (§8 below)
-
-**C5AIModule** — 5-tab panel fed from `C5AI_MOCK` + live `feasibilityResult`:
-- *Risk Overview* — AlertSummaryCards at top, risk score ring, domain bars
-- *Biological Forecasts* — per-site, per-risk-type forecast cards
-- *Risk Drivers* — causal driver breakdown
-- *Learning Status* — Brier score history table, learning phase indicator
-- *Alerts* — compact AlertTable + AlertDetailPanel scoped to operator
-
-**AlertsPage** — level filter pills + risk type filter pills → AlertTable → AlertDetailPanel. Shows total / filtered counts.
-
-**ResultPanel (PCC Feasibility)** — 8-tab result view:
-- *Summary* — KPI cards, C5AI+ enrichment bar
-- *Charts* — base64 PNG charts from API
-- *Mitigation* — cost/benefit per action
-- *Recommendation* — narrative text
-- *Report* — PDF download link
-- *Allocation* — exposure ratios, financial ratios, per-site table, biomass valuation KPI cards
-- *History* — domain loss breakdown, calibration metadata
-- *Pooling* — diversification stats, member breakdown, TCOR comparison
-
-**StrategyComparisonPage** — 3 strategy cards (PCC Captive RECOMMENDED NOK 64M · Full Insurance BASELINE NOK 97M · Mutual Pooling ALTERNATIVE NOK 74M). Passes live `result` for data-driven rendering if available.
-
-**LearningPage** — wraps `LearningStatusTab` with data context banner (training source, portfolio completeness %).
-
-**ReportsPage** — 4 report types; Board PDF available; C5AI+ Summary / Alert Log CSV / Input Audit planned.
-
-### Shared Components
-- `InputSourceBadge` — pill: real (green) · simulated (blue) · estimated (amber) · missing (red)
-- `InputCompletenessCard` — progress bar + confidence label + dq-flag pills; green ≥80% · amber ≥60% · red <60%
-- `AlertLevelBadge` — colour-coded pill per NORMAL/WATCH/WARNING/CRITICAL
-- `ProbabilityShiftBadge` — ↑/↓/→ with pp change; `shift-up` red · `shift-down` green
+### Mock Data Sites
+All demo data uses Kornstad Havbruk AS (KH_S01/02/03 — Kornstad/Leite/Hogsnes).
+Previous DEMO_OP_S01/02/03 (Nordic Aqua Partners) references removed.
 
 ---
 
-## 7. Inputs System
+## 9. Data Flow (PCC Feasibility)
 
-### Mock Data (`frontend/src/data/mockInputsData.js`)
-Three demo sites consistent across all mock data:
-
-| Site ID | Name | Exposure |
-|---|---|---|
-| DEMO_OP_S01 | Frohavet North | 1.40 (open coast, highest risk) |
-| DEMO_OP_S02 | Sunndalsfjord | 1.10 (semi-exposed) |
-| DEMO_OP_S03 | Storfjorden South | 0.85 (sheltered, lowest risk) |
-
-Exports: `MOCK_SITE_PROFILES`, `MOCK_BIOLOGICAL_INPUTS`, `MOCK_ALERT_SIGNALS`, `MOCK_DATA_QUALITY`, `SCENARIO_BASELINE`, `SCENARIO_PRESETS`, `BIO_READING_LABELS`.
-
-### Biological Time Series (`frontend/src/data/mockBioTimeseries.js`)
-12-month series (April 2025 – March 2026) for 11 parameters across 3 sites:
-
-| Parameter | Color | Threshold |
-|---|---|---|
-| `surface_temp_c` | Red `#DC2626` | > 15.0°C (HAB-terskel) |
-| `dissolved_oxygen_mg_l` | Blue `#2563EB` | < 7.0 mg/L (Oksygentrigger) |
-| `nitrate_umol_l` | Amber `#D97706` | > 12.0 µmol/L (HAB-indikator) |
-| `salinity_ppt` | Cyan `#0891B2` | — |
-| `chlorophyll_a_ug_l` | Green `#16A34A` | > 3.0 µg/L (Algeindikator) |
-| `lice_count_per_fish` | Purple `#7C3AED` | > 1.0 lus/fisk (Behandlingstrigger) |
-| `hab_alert_count` | Red | — |
-| `jellyfish_sightings` | Cyan | — |
-| `pathogen_obs_count` | Brown | — |
-| `treatments_last_90d` | Grey | — |
-| `neighbor_lice_pressure` | Purple | > 1.5 (Nettverksvarsling) |
-
-### BioLineChart (`frontend/src/components/inputs/BioLineChart.jsx`)
-Pure SVG, no library. Key features:
-- `viewBox="0 0 420 {height}"` · `MARGIN = {top:18, right:16, bottom:34, left:46}`
-- Smooth **Catmull-Rom** spline (converted to cubic Bézier) for line and area fill
-- **Baseline** — dashed grey `#9CA3AF`, `strokeDasharray="5 4"`
-- **Threshold** — dashed red `#DC2626`, `strokeDasharray="4 3"` + risk-zone fill `rgba(220,38,38,0.06)`
-- **Hover tooltip** — dark overlay rect with month + value, nearest-point detection via viewBox scaling
-- **Last data point** — filled circle `r=4`; hovered points also `r=4`
-- **Legend row** — Målt verdi / Baseline / Terskel inline at chart bottom
-
-### BiologicalInputsPanel (`frontend/src/components/inputs/BiologicalInputsPanel.jsx`)
-- **Toolbar** — site selector buttons + recorded-at timestamp + InputSourceBadge + Grafer/Tabell toggle
-- **Group filter** — 5 groups: Alle · Temperatur & oksygen · Næringsstoffer & alger · Salinitet · Lus & behandlinger · Biologiske hendelser
-- **Chart grid** — `auto-fill minmax(300px, 1fr)`, one `bio-chart-card` per visible parameter
-- **Alert highlight** — cards where last value breaches threshold get `bio-chart-card-alert` (red border + `#FFF5F5` bg) + "Terskel nådd" badge
-- **Table view** — original table preserved (current / baseline / delta / unit / source per parameter)
-
----
-
-## 8. Scenario System
-
-### Current State: UI-Complete Stub
-The Scenario Inputs tab in `ScenarioOverridePanel.jsx` is fully built as a UI but the backend route `/api/c5ai/scenario` is **not yet wired**.
-
-### 6 Editable Parameters
-| Parameter | Range | Step |
-|---|---|---|
-| Total Biomass | 1 000–50 000 t | 100 |
-| Dissolved Oxygen | 3–12 mg/L | 0.1 |
-| Nitrate | 0–40 µmol/L | 0.5 |
-| Lice Pressure Index | 0.5–4 | 0.1 |
-| Exposure Factor | 0.5–2.0× | 0.05 |
-| Operational Factor | 0.5–2.0× | 0.05 |
-
-Each field has a linked `<input type="range">` slider and displays % deviation from baseline.
-
-### 4 Presets (from `SCENARIO_PRESETS`)
-Warm Summer · Lice Outbreak · Severe Storm · Optimal Conditions
-
-### Stub Run Logic (900ms client-side)
-```js
-scaleFactor = lice_pressure × 0.15 + exposure_factor × 0.25
-            + operational_factor × 0.10 + (nitrate > 10 ? 0.12 : 0) + 0.80
-```
-Returns: `scenario_scale_factor`, `estimated_annual_loss_change_pct`, `highest_risk_driver`.
-
-**Next sprint:** wire to `POST /api/c5ai/scenario` → full Monte Carlo run with overridden parameters.
-
----
-
-## 9. PCC Feasibility Integration
-
-### Data Flow
 ```
 GUI (App.jsx)
   └── POST /api/feasibility/run (FeasibilityRequest)
         └── operator_builder.build_operator_input()
-              ↓  (OperatorInput, AllocationSummary)
+              ├── specific mode: validate_selected_sites()
+              │   └── per-site: _build_cage_pen_configs()
+              │         └── compute_locality_domain_multipliers_advanced()
+              │               → AdvancedWeightingResult (domain_multipliers, cage_weight_details)
+              └─→ (OperatorInput, AllocationSummary with cage_profiles)
             run_analysis.run_feasibility_analysis()
-              ├── MonteCarloEngine.run()       → SimulationResults
-              ├── [strategy].evaluate()        → StrategyResult
-              ├── MitigationLibrary.apply()    → mitigated SimulationResults
-              ├── SuitabilityEngine.score()    → SuitabilityScore + criterion_scores
-              ├── CostAnalyzer.analyse()       → CostAnalysis
-              ├── build_correlated_risk_summary() → narratives + scenarios
-              └── PDFReportGenerator.generate() → PDF → /static/reports/<uuid>.pdf
-```
-
-### C5AI+ Integration Point
-`ForecastPipeline.run(operator_input, static_mean_annual_loss)`:
-- `static_mean_annual_loss` comes from `SimulationResults.mean_annual_loss`
-- Returns `RiskForecast` → `c5ai_vs_static_ratio` and `loss_breakdown_fractions` pass into PCC cell pricing
-- `SuitabilityEngine` criterion 6 (Biological Operational Readiness, 10%) reads `C5AI+` data quality flags from forecast metadata
-
-### Historical Loss Calibration
-When `use_history_calibration=True` and ≥3 historical records are present:
-- `HistoricalLossSummary.calibration_mode` = `"portfolio"` or `"domain"`
-- `calibrated_parameters` override `mean_loss_severity` and `expected_annual_events` in `MonteCarloEngine`
-- `AllocationSummary.calibration_active = True`
-
-### Sample Output (Nordic Aqua Partners AS)
-```
-TIV:            NOK 886.9M
-Revenue:        NOK 897.0M
-Premium:        NOK  19.5M
-E[annual loss]: NOK  22.6M
-VaR 99.5%:      NOK 134.2M
-PCC 5yr TCOR:   NOK  64M   (corrected; was NOK 210M before Sprint 8b fixes)
-Full ins TCOR:  NOK  97M
-Verdict:        POTENTIALLY SUITABLE
-PDF:            ~430 kB · 13 pages · 10 charts
+              ├── MonteCarloEngine.run(cage_multipliers=...)  → SimulationResults
+              ├── [strategy].evaluate()                       → StrategyResult
+              ├── MitigationLibrary.apply()                   → mitigated SimulationResults
+              ├── SuitabilityEngine.score()                   → SuitabilityScore
+              ├── CostAnalyzer.analyse()                      → CostAnalysis
+              ├── build_correlated_risk_summary()             → narratives + scenarios
+              └── PDFReportGenerator.generate()               → PDF
 ```
 
 ---
@@ -580,33 +456,35 @@ PDF:            ~430 kB · 13 pages · 10 charts
 
 | File | Tests | Area |
 |---|---|---|
-| `test_alert_layer.py` | 64 | Alert engine, models, rules, store, simulator |
+| `test_cage_weighting.py` | 82 | Advanced weighting engine (NEW Sprint 11) |
+| `test_cage_technology.py` | 52 | Cage technology model (NEW Sprint 9) |
+| `test_alert_layer.py` | 64 | Alert engine, models, rules, store |
 | `test_learning_loop.py` | 66 | Self-learning (9 test classes) |
 | `test_operator_builder.py` | 31 | TIV scaling, financial ratios, MC flow |
 | `test_pcc_calibration.py` | 37 | PCCAssumptions, RI structure, SCR |
-| `test_pcc_report_fixes.py` | 21 | TCOR bugs fixed, cost breakdown |
+| `test_pcc_report_fixes.py` | 21 | TCOR correctness, cost breakdown |
 | `test_biomass_valuation.py` | 25 | Valuation formula, override, schema |
+| `test_inputs_audit.py` | 18 | Audit endpoint, data correctness |
 | `test_backend_api.py` | 16 | FastAPI endpoints (TestClient) |
 | `test_correlation.py` | 44 | RiskCorrelationMatrix |
 | `test_regime_model.py` | 28 | RegimeModel |
-| `test_domain_correlation.py` | — | DomainCorrelationMatrix |
-| `test_mc_domain_correlation.py` | — | MC + domain correlation integration |
-| *(+24 other files)* | — | Risk domains, mitigation, forecasting, pooling, etc. |
-| **Total** | **1 092** | **0 failed** |
+| *(+28 other files)* | ~1 250 | Risk domains, mitigation, forecasting, pooling, etc. |
+| **Total** | **1 734** | **0 failed** |
 
 ---
 
-## 11. Known Limitations & Pending Work
+## 11. Known Limitations
 
-| Item | Status |
-|---|---|
-| `/api/c5ai/scenario` route | Not implemented — scenario panel is a stub |
-| C5AI+ alerts not wired to live forecasts in GUI | GUI uses `MOCK_ALERTS`; `AlertEngine` is backend-only |
-| `networkx` optional — site risk network disabled without it | Warning logged; graceful fallback |
-| Mitigation `deformation_monitoring` / `ai_early_warning` targeted risk types don't match bio domains | Non-fatal warning in tests; falls back to portfolio-wide scaling |
-| PDF charts use `matplotlib` (blocking) | Not async — acceptable for demo latency |
-| Learning storage uses local JSON files | Not suitable for multi-user / production deployment |
-| Scenario backend route | Next sprint: `POST /api/c5ai/scenario` → full MC with parameter overrides |
+| Item | Status | Priority |
+|---|---|---|
+| `/api/c5ai/scenario` route | Not wired — `ScenarioOverridePanel.jsx` is a UI stub | Next sprint |
+| C5AI+ alerts in GUI use `MOCK_ALERTS` | `AlertEngine` is backend-only; not live-wired | Future |
+| Cage registry limited to 3 Kornstad localities | `SEA_LOCALITY_REGISTRY` is hardcoded | Expand per operator |
+| `networkx` optional | Site risk network disabled without it; warning logged | Low |
+| `biomass_pct` is UI-only | Not stored in `CagePenInput` schema — derived to `biomass_tonnes` | Acceptable |
+| PDF charts use blocking `matplotlib` | Not async — acceptable at demo scale | Future |
+| Learning store uses local JSON files | Not suitable for multi-user production | Future |
+| Multi-domain C5AI+ uses 15 simulated risk types | Structural/env/ops are stubs vs. biological (real model) | Future |
 
 ---
 
@@ -614,7 +492,7 @@ PDF:            ~430 kB · 13 pages · 10 charts
 
 ```bash
 # Python tests
-pytest tests/ -q                                       # 1 092 passed
+pytest tests/ -q                                       # 1 734 passed
 
 # Backend API
 uvicorn backend.main:app --reload --port 8000
@@ -622,8 +500,8 @@ uvicorn backend.main:app --reload --port 8000
 # Frontend (dev)
 cd frontend && npm run dev                             # http://localhost:5173
 
-# Frontend (build)
-cd frontend && npm run build                           # 0 errors
+# Frontend (build verification)
+cd frontend && npm run build                           # 0 errors, 105 modules
 
 # C5AI+ pipeline (standalone)
 python -m c5ai_plus.pipeline --input c5ai_input.json --output risk_forecast.json
@@ -635,3 +513,27 @@ python main.py --input my_input.json -n 20000          # custom operator
 # Self-learning demo
 python examples/run_learning_loop_demo.py
 ```
+
+---
+
+## 13. Recommended Next Sprint
+
+**Scenario Backend Route** (`POST /api/c5ai/scenario`)
+
+The `ScenarioOverridePanel.jsx` is UI-complete with 6 editable parameters, 4 presets,
+and a 900ms client-side stub. The next logical sprint wires it to a real backend endpoint
+that runs a lightweight Monte Carlo with the overridden parameters and returns:
+
+```json
+{
+  "scenario_id": "...",
+  "scale_factor": 1.24,
+  "estimated_annual_loss_nok": 28_000_000,
+  "domain_breakdown": {...},
+  "highest_risk_driver": "lice_pressure",
+  "vs_baseline_pct": +23.8
+}
+```
+
+Scope: ~1 day. New route `POST /api/c5ai/scenario` accepting `ScenarioOverrideInput`
+→ lightweight `MonteCarloEngine.run()` with parameter injection → `ScenarioResult` response.

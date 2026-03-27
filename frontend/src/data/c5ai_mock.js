@@ -1,15 +1,15 @@
 /**
  * C5AI+ Risk Intelligence – Mock Data
  *
- * Calibrated against Nordic Aqua Partners AS (9 200 t, 3 sites, Norway).
+ * Calibrated against Kornstad Havbruk AS (8 300 t, 3 sites, Møre og Romsdal).
  * Brier score history from the 5-cycle demo run (run_learning_loop_demo.py).
  * Replace with live API call when /api/c5ai/* routes are ready.
  */
 
 export const C5AI_MOCK = {
   metadata: {
-    operator_id:             'DEMO_OP',
-    operator_name:           'Nordic Aqua Partners AS',
+    operator_id:             'KORNSTAD_HAVBRUK',
+    operator_name:           'Kornstad Havbruk AS',
     model_version:           '5.0.0',
     generated_at:            '2026-03-10T08:14:22Z',
     forecast_horizon_years:  5,
@@ -24,7 +24,7 @@ export const C5AI_MOCK = {
       jellyfish: 'v1.15',
       pathogen:  'v1.15',
     },
-    sites_included: ['DEMO_OP_S01', 'DEMO_OP_S02', 'DEMO_OP_S03'],
+    sites_included: ['KH_S01', 'KH_S02', 'KH_S03'],
     warnings: [],
   },
 
@@ -34,28 +34,28 @@ export const C5AI_MOCK = {
 
   sites: [
     {
-      site_id:       'DEMO_OP_S01',
-      site_name:     'Frohavet North',
-      biomass_tonnes: 3200,
-      biomass_value_nok: 207_360_000,
-      fjord_exposure: 'open_coast',
-      risk_score:     72,
+      site_id:       'KH_S01',
+      site_name:     'Kornstad',
+      biomass_tonnes: 3000,
+      biomass_value_nok: 195_000_000,
+      fjord_exposure: 'semi_exposed',
+      risk_score:     62,
       dominant_risks: ['hab', 'lice'],
     },
     {
-      site_id:       'DEMO_OP_S02',
-      site_name:     'Sunndalsfjord',
-      biomass_tonnes: 3500,
-      biomass_value_nok: 226_800_000,
+      site_id:       'KH_S02',
+      site_name:     'Leite',
+      biomass_tonnes: 2500,
+      biomass_value_nok: 162_500_000,
       fjord_exposure: 'semi_exposed',
       risk_score:     58,
       dominant_risks: ['lice'],
     },
     {
-      site_id:       'DEMO_OP_S03',
-      site_name:     'Storfjorden South',
-      biomass_tonnes: 2500,
-      biomass_value_nok: 162_000_000,
+      site_id:       'KH_S03',
+      site_name:     'Hogsnes',
+      biomass_tonnes: 2800,
+      biomass_value_nok: 182_000_000,
       fjord_exposure: 'sheltered',
       risk_score:     41,
       dominant_risks: ['pathogen'],
@@ -73,8 +73,8 @@ export const C5AI_MOCK = {
 
   biological_forecast: [
     {
-      site_id:   'DEMO_OP_S01',
-      site_name: 'Frohavet North',
+      site_id:   'KH_S01',
+      site_name: 'Kornstad',
       hab: {
         probability:         0.22,
         baseline_probability: 0.12,
@@ -125,8 +125,8 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id:   'DEMO_OP_S02',
-      site_name: 'Sunndalsfjord',
+      site_id:   'KH_S02',
+      site_name: 'Leite',
       hab: {
         probability:         0.12,
         baseline_probability: 0.12,
@@ -177,8 +177,8 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id:   'DEMO_OP_S03',
-      site_name: 'Storfjorden South',
+      site_id:   'KH_S03',
+      site_name: 'Hogsnes',
       hab: {
         probability:         0.06,
         baseline_probability: 0.12,
@@ -236,7 +236,7 @@ export const C5AI_MOCK = {
     {
       rank:        1,
       driver:      'Sea Surface Temperature',
-      site:        'Frohavet North',
+      site:        'Kornstad',
       risk_type:   'hab',
       importance:  0.38,
       direction:   'positive',
@@ -244,12 +244,12 @@ export const C5AI_MOCK = {
     },
     {
       rank:        2,
-      driver:      'Open Coastal Exposure',
-      site:        'Frohavet North',
+      driver:      'Fjord Circulation Pattern',
+      site:        'Kornstad',
       risk_type:   'hab',
       importance:  0.27,
       direction:   'positive',
-      description: 'Open-coast exposure associated with 1.8× higher HAB event probability versus semi-exposed sites in the same fjord region.',
+      description: 'Semi-exposed coastal position with prevailing current patterns from the open sea associated with 1.4× elevated HAB transport risk relative to inner-fjord sites.',
     },
     {
       rank:        3,
@@ -263,7 +263,7 @@ export const C5AI_MOCK = {
     {
       rank:        4,
       driver:      'Chlorophyll-a Concentration',
-      site:        'Frohavet North',
+      site:        'Kornstad',
       risk_type:   'hab',
       importance:  0.22,
       direction:   'positive',
@@ -272,7 +272,7 @@ export const C5AI_MOCK = {
     {
       rank:        5,
       driver:      'Network Proximity',
-      site:        'Sunndalsfjord',
+      site:        'Leite',
       risk_type:   'lice',
       importance:  0.19,
       direction:   'positive',
@@ -281,7 +281,7 @@ export const C5AI_MOCK = {
     {
       rank:        6,
       driver:      'Years in Operation',
-      site:        'Storfjorden South',
+      site:        'Hogsnes',
       risk_type:   'pathogen',
       importance:  0.15,
       direction:   'negative',
@@ -290,7 +290,7 @@ export const C5AI_MOCK = {
     {
       rank:        7,
       driver:      'Salinity Variability',
-      site:        'Sunndalsfjord',
+      site:        'Leite',
       risk_type:   'jellyfish',
       importance:  0.11,
       direction:   'positive',
@@ -359,7 +359,7 @@ export const C5AI_MOCK = {
 
   structural_forecast: [
     {
-      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      site_id: 'KH_S01', site_name: 'Kornstad',
       risks: {
         mooring_failure:      { probability: 0.22, expected_loss_mean: 1_980_000, expected_loss_p50: 1_050_000, expected_loss_p90: 4_200_000, confidence: 0.48, drivers: ['Mooring inspection score 0.55 < 0.60', 'Inspection overdue (210d > 180d)'] },
         net_integrity:        { probability: 0.27, expected_loss_mean: 2_700_000, expected_loss_p50: 1_440_000, expected_loss_p90: 5_600_000, confidence: 0.42, drivers: ['Net strength 72% below 70% threshold', 'Net age 3.5y > 3-year guideline'] },
@@ -369,7 +369,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      site_id: 'KH_S02', site_name: 'Leite',
       risks: {
         mooring_failure:      { probability: 0.05, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   960_000, confidence: 0.68, drivers: ['Mooring within normal parameters'] },
         net_integrity:        { probability: 0.08, expected_loss_mean:   800_000, expected_loss_p50:   430_000, expected_loss_p90: 1_660_000, confidence: 0.70, drivers: ['Net condition normal'] },
@@ -379,7 +379,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      site_id: 'KH_S03', site_name: 'Hogsnes',
       risks: {
         mooring_failure:      { probability: 0.05, expected_loss_mean:   450_000, expected_loss_p50:   240_000, expected_loss_p90:   960_000, confidence: 0.72, drivers: ['Mooring score 0.92 — excellent'] },
         net_integrity:        { probability: 0.08, expected_loss_mean:   800_000, expected_loss_p50:   430_000, expected_loss_p90: 1_660_000, confidence: 0.75, drivers: ['New net — 0.9 years, 96% residual strength'] },
@@ -394,7 +394,7 @@ export const C5AI_MOCK = {
 
   environmental_forecast: [
     {
-      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      site_id: 'KH_S01', site_name: 'Kornstad',
       risks: {
         oxygen_stress:      { probability: 0.26, expected_loss_mean: 2_080_000, expected_loss_p50: 1_100_000, expected_loss_p90: 4_300_000, confidence: 0.45, drivers: ['DO 6.8 mg/L below 7.0 mg/L safe limit', 'O2 saturation 78% below 80%'] },
         temperature_extreme:{ probability: 0.22, expected_loss_mean: 1_320_000, expected_loss_p50:   700_000, expected_loss_p90: 2_700_000, confidence: 0.50, drivers: ['Surface temp 16.2C above safe high (16C)'] },
@@ -404,7 +404,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      site_id: 'KH_S02', site_name: 'Leite',
       risks: {
         oxygen_stress:      { probability: 0.10, expected_loss_mean:   800_000, expected_loss_p50:   425_000, expected_loss_p90: 1_650_000, confidence: 0.65, drivers: ['Oxygen within normal range'] },
         temperature_extreme:{ probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.68, drivers: ['Temperature 12.4C — within safe range'] },
@@ -414,7 +414,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      site_id: 'KH_S03', site_name: 'Hogsnes',
       risks: {
         oxygen_stress:      { probability: 0.10, expected_loss_mean:   800_000, expected_loss_p50:   425_000, expected_loss_p90: 1_650_000, confidence: 0.68, drivers: ['DO 9.5 mg/L — optimal'] },
         temperature_extreme:{ probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.70, drivers: ['Temp 9.8C — within safe range'] },
@@ -429,7 +429,7 @@ export const C5AI_MOCK = {
 
   operational_forecast: [
     {
-      site_id: 'DEMO_OP_S01', site_name: 'Frohavet North',
+      site_id: 'KH_S01', site_name: 'Kornstad',
       risks: {
         human_error:         { probability: 0.27, expected_loss_mean: 1_350_000, expected_loss_p50:   700_000, expected_loss_p90: 2_800_000, confidence: 0.48, drivers: ['Staffing score 0.55 < 0.60', 'High-risk ops 6.5/month'] },
         procedure_failure:   { probability: 0.22, expected_loss_mean: 1_320_000, expected_loss_p50:   700_000, expected_loss_p90: 2_700_000, confidence: 0.50, drivers: ['Training compliance 72% < 80% requirement'] },
@@ -439,7 +439,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S02', site_name: 'Sunndalsfjord',
+      site_id: 'KH_S02', site_name: 'Leite',
       risks: {
         human_error:         { probability: 0.12, expected_loss_mean:   600_000, expected_loss_p50:   310_000, expected_loss_p90: 1_250_000, confidence: 0.68, drivers: ['Staffing within normal range'] },
         procedure_failure:   { probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.70, drivers: ['Training compliance 88% — adequate'] },
@@ -449,7 +449,7 @@ export const C5AI_MOCK = {
       },
     },
     {
-      site_id: 'DEMO_OP_S03', site_name: 'Storfjorden South',
+      site_id: 'KH_S03', site_name: 'Hogsnes',
       risks: {
         human_error:         { probability: 0.12, expected_loss_mean:   600_000, expected_loss_p50:   310_000, expected_loss_p90: 1_250_000, confidence: 0.72, drivers: ['Staffing 0.92 — excellent'] },
         procedure_failure:   { probability: 0.08, expected_loss_mean:   480_000, expected_loss_p50:   256_000, expected_loss_p90:   980_000, confidence: 0.75, drivers: ['Training 97% — best in class'] },
@@ -474,7 +474,7 @@ export const C5AI_MOCK = {
     suitability_impact: {
       bio_criterion_score:   68,
       bio_criterion_weight:  0.25,
-      bio_criterion_finding: 'C5AI+ detects elevated HAB risk at Frohavet North (open coast, SST 15.2°C). Biological scale factor 1.18× applied to Monte Carlo simulation.',
+      bio_criterion_finding: 'C5AI+ detects elevated HAB risk at Kornstad (semi-eksponert, SST 14.8°C). Biologisk skalfaktor 1.18× påført Monte Carlo-simulering.',
     },
   },
 }

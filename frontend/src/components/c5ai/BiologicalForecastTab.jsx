@@ -3,10 +3,16 @@ import React, { useState } from 'react'
 const RISK_TYPES = ['hab', 'lice', 'jellyfish', 'pathogen']
 
 const RISK_META = {
-  hab:       { label: 'Harmful Algal Bloom', abbr: 'HAB',       emoji: '🟡', desc: 'Chrysochromulina, Karenia & related species' },
-  lice:      { label: 'Sea Lice Infestation', abbr: 'Lice',     emoji: '🟢', desc: 'Lepeophtheirus salmonis & Caligus spp.' },
-  jellyfish: { label: 'Jellyfish Bloom',       abbr: 'Jellyfish', emoji: '🔵', desc: 'Aurelia, Cyanea & Pelagia blooms' },
-  pathogen:  { label: 'Pathogen / Disease',    abbr: 'Pathogen', emoji: '🔴', desc: 'ILA, PD, Moritella, Aeromonas & related' },
+  hab:       { label: 'Skadelig algeblomst (HAB)', abbr: 'HAB',    emoji: '🟡', desc: 'Chrysochromulina, Karenia og beslektede arter' },
+  lice:      { label: 'Lakselusinfeksjon',          abbr: 'Lus',    emoji: '🟢', desc: 'Lepeophtheirus salmonis og Caligus spp.' },
+  jellyfish: { label: 'Manetoppblomst',             abbr: 'Manet',  emoji: '🔵', desc: 'Aurelia, Cyanea og Pelagia-blomster' },
+  pathogen:  { label: 'Patogen / sykdom',           abbr: 'Patogen',emoji: '🔴', desc: 'ILA, PD, Moritella, Aeromonas og beslektede' },
+}
+
+const TREND_LABELS = {
+  increasing: 'Stigende',
+  decreasing: 'Synkende',
+  stable:     'Stabil',
 }
 
 function fmtM(v) {
@@ -50,8 +56,8 @@ function modelBadgeClass(model) {
 
 function modelBadgeLabel(model) {
   if (!model) return 'prior'
-  if (model.startsWith('ml_')) return 'ML model'
-  if (model === 'prior_fallback') return 'prior (fallback)'
+  if (model.startsWith('ml_')) return 'ML-modell'
+  if (model === 'prior_fallback') return 'prior (reserve)'
   return 'prior'
 }
 
@@ -81,7 +87,7 @@ export default function BiologicalForecastTab({ data }) {
           className={`tab-btn ${selectedSite === 'all' ? 'active' : ''}`}
           style={{ borderRadius: 6, border: '1px solid var(--mid-grey)', padding: '6px 14px' }}
           onClick={() => setSelectedSite('all')}
-        >All Sites</button>
+        >Alle anlegg</button>
         {sites.map(s => (
           <button
             key={s.id}
@@ -96,7 +102,7 @@ export default function BiologicalForecastTab({ data }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 24 }}>
         {RISK_TYPES.map(rt => {
           const meta = RISK_META[rt]
-          const avgP     = aggregate(displayForecast, rt, 'probability')
+          const avgP      = aggregate(displayForecast, rt, 'probability')
           const totalLoss = sumField(displayForecast, rt, 'expected_loss_mean')
           const sumP90    = sumField(displayForecast, rt, 'expected_loss_p90')
           const trend     = displayForecast[0]?.[rt]?.trend || 'stable'
@@ -112,18 +118,19 @@ export default function BiologicalForecastTab({ data }) {
                   <div style={{ fontSize: 11, color: 'var(--dark-grey)', marginTop: 2 }}>{meta.desc}</div>
                 </div>
                 <span className={`trend-badge trend-${trend}`}>
-                  {trend === 'increasing' ? '↑' : trend === 'decreasing' ? '↓' : '→'} {trend}
+                  {trend === 'increasing' ? '↑' : trend === 'decreasing' ? '↓' : '→'}{' '}
+                  {TREND_LABELS[trend] || trend}
                 </span>
               </div>
 
               <div style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 11, color: 'var(--dark-grey)', marginBottom: 4 }}>
-                  Annual Event Probability
+                  Årlig hendelsessannsynlighet
                   <span style={{
                     marginLeft: 8, fontWeight: 700,
                     color: pc === 'high' ? 'var(--danger)' : pc === 'medium' ? '#92400E' : 'var(--success)'
                   }}>
-                    {pc.toUpperCase()}
+                    {pc === 'high' ? 'HØY' : pc === 'medium' ? 'MODERAT' : 'LAV'}
                   </span>
                 </div>
                 <ProbBar p={avgP || 0} />
@@ -131,11 +138,11 @@ export default function BiologicalForecastTab({ data }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--dark-grey)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>E[Loss]/yr</div>
+                  <div style={{ fontSize: 10, color: 'var(--dark-grey)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Forv. tap/år</div>
                   <div style={{ fontWeight: 700, fontSize: 13 }}>{fmtM(totalLoss)}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: 'var(--dark-grey)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>P90 Loss</div>
+                  <div style={{ fontSize: 10, color: 'var(--dark-grey)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>P90-tap</div>
                   <div style={{ fontWeight: 700, fontSize: 13 }}>{fmtM(sumP90)}</div>
                 </div>
               </div>
@@ -143,7 +150,7 @@ export default function BiologicalForecastTab({ data }) {
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                 <span className={`model-badge ${modelBadgeClass(model)}`}>{modelBadgeLabel(model)}</span>
                 {conf != null && (
-                  <span className="badge badge-cost">Confidence {(conf * 100).toFixed(0)}%</span>
+                  <span className="badge badge-cost">Modellsikkerhet {(conf * 100).toFixed(0)}%</span>
                 )}
               </div>
             </div>
@@ -153,18 +160,18 @@ export default function BiologicalForecastTab({ data }) {
 
       {/* ── Per-site breakdown table ─────────────────────────────────────── */}
       <div className="card">
-        <div className="section-title">Per-Site Breakdown</div>
+        <div className="section-title">Fordeling per anlegg</div>
         <table className="data-table">
           <thead>
             <tr>
-              <th>Site</th>
+              <th>Anlegg</th>
               {RISK_TYPES.map(rt => (
-                <th key={rt}>{RISK_META[rt].abbr} Prob</th>
+                <th key={rt}>{RISK_META[rt].abbr} sannsynl.</th>
               ))}
               {RISK_TYPES.map(rt => (
-                <th key={rt + '_loss'}>{RISK_META[rt].abbr} E[Loss]</th>
+                <th key={rt + '_loss'}>{RISK_META[rt].abbr} forv. tap</th>
               ))}
-              <th>Total E[Loss]</th>
+              <th>Sum forventet tap</th>
             </tr>
           </thead>
           <tbody>
@@ -198,12 +205,12 @@ export default function BiologicalForecastTab({ data }) {
         </table>
       </div>
 
-      {/* ── Adjusted vs baseline note ────────────────────────────────────── */}
+      {/* ── Bayesian enrichment note ─────────────────────────────────────── */}
       <div className="info-note">
-        <strong>Bayesian enrichment:</strong> Probabilities shown are the Bayesian posterior estimates from the
-        C5AI+ learning loop. Where <em>adjusted_probability</em> differs from the static prior,
-        the model has incorporated historical observations. Switch to the Learning Status tab to
-        view Brier score convergence across training cycles.
+        <strong>Bayesiansk berikelse:</strong> Sannsynlighetene er posterior-estimater fra C5AI+-læringsmodellen.
+        Der <em>justert sannsynlighet</em> avviker fra den statiske prioren, har modellen tatt inn
+        historiske observasjoner fra dette anlegget og justert det strategiske risikobildet tilsvarende.
+        Gå til Læringsmodell-fanen for å se Brier-skår-konvergens over treningssykluser.
       </div>
     </div>
   )

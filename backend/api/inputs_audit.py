@@ -10,7 +10,7 @@ Returns a structured JSON audit report covering:
 Data sources
 ------------
 C5AI+ status     : backend.services.c5ai_state (live, in-memory)
-Per-site quality : Three demo sites (DEMO_OP_S01–S03) — same as mockInputsData.js.
+Per-site quality : Kornstad Havbruk AS (KH_S01–KH_S03) — same as mockInputsData.js.
                    Consistent with frontend mock so report and UI match.
 Model limitations: Hardcoded — reflects known stub-model gaps documented in
                    docs/sprints/sprint_c5ai_traceability_refinement/02_architecture.md
@@ -91,9 +91,9 @@ class InputsAuditReport(BaseModel):
 
 _SITE_QUALITY: List[dict] = [
     {
-        "site_id": "DEMO_OP_S01",
-        "site_name": "Frohavet North",
-        "fjord_exposure": "open_coast",
+        "site_id": "KH_S01",
+        "site_name": "Kornstad",
+        "fjord_exposure": "semi_exposed",
         "overall_completeness": 0.61,
         "overall_confidence": "medium",
         "risk_types": {
@@ -119,8 +119,8 @@ _SITE_QUALITY: List[dict] = [
         },
     },
     {
-        "site_id": "DEMO_OP_S02",
-        "site_name": "Sunndalsfjord",
+        "site_id": "KH_S02",
+        "site_name": "Leite",
         "fjord_exposure": "semi_exposed",
         "overall_completeness": 0.74,
         "overall_confidence": "medium",
@@ -147,8 +147,8 @@ _SITE_QUALITY: List[dict] = [
         },
     },
     {
-        "site_id": "DEMO_OP_S03",
-        "site_name": "Storfjorden South",
+        "site_id": "KH_S03",
+        "site_name": "Hogsnes",
         "fjord_exposure": "sheltered",
         "overall_completeness": 0.83,
         "overall_confidence": "high",
@@ -222,7 +222,7 @@ _MODEL_LIMITATIONS: List[str] = [
     "SCR-bidrag per anlegg er proporsjonal allokering av portefølje-SCR — ikke et "
     "selvstendig anleggsspesifikt SCR-estimat.",
     "Risikoparametere (frekvens, alvorlighetsgrad) er skalert fra template-data "
-    "(Nordic Aqua Partners AS). Operatørspesifikke faktorer er ikke fullt ut kalibrert.",
+    "(Kornstad Havbruk AS). Operatørspesifikke faktorer er ikke fullt ut kalibrert.",
     "C5AI+-prognose dekker kun sjøanlegg. Settefisk-lokaliteter har ingen C5AI+-modell.",
     "Alle data i denne rapporten er simulert demodata. Faktiske verdier krever "
     "integrasjon mot BarentsWatch, Seacloud eller operatørens egne sensordata.",
@@ -302,7 +302,7 @@ def get_inputs_audit() -> InputsAuditReport:
 
     return InputsAuditReport(
         generated_at=datetime.now(timezone.utc).isoformat(),
-        operator="Nordic Aqua Partners AS (demo)",
+        operator="Kornstad Havbruk AS (demo)",
         c5ai_status=c5ai_snap,
         domain_coverage=domain_coverage,
         sites=sites,

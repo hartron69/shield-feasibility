@@ -179,6 +179,56 @@ def get_bw_coverage(site_id: str) -> Optional[dict]:
     return None
 
 
+def validate_selected_sites(
+    selected_sites: list,
+    allow_facility_types: tuple = ("sea_cage",),
+) -> list[str]:
+    """
+    Validate a list of SelectedSeaSiteInput objects against the registry.
+
+    Returns a list of error strings. Empty list = valid.
+
+    Checks:
+      1. Each site_id exists in registry.
+      2. If locality_no is provided, it matches the registry record for that site_id.
+      3. No duplicate site_ids.
+      4. facility_type is in allow_facility_types.
+    """
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+
+    for sel in selected_sites:
+        sid = sel.site_id
+
+        # Duplicate check
+        if sid in seen_ids:
+            errors.append(f"Duplicate site_id: {sid}")
+            continue
+        seen_ids.add(sid)
+
+        # Registry lookup
+        rec = get_site_by_site_id(sid)
+        if rec is None:
+            errors.append(f"site_id '{sid}' not found in registry")
+            continue
+
+        # facility_type check
+        if rec.facility_type not in allow_facility_types:
+            errors.append(
+                f"site_id '{sid}' has facility_type '{rec.facility_type}', "
+                f"expected one of {allow_facility_types}"
+            )
+
+        # locality_no consistency
+        if sel.locality_no is not None and sel.locality_no != rec.locality_no:
+            errors.append(
+                f"site_id '{sid}': provided locality_no {sel.locality_no} "
+                f"does not match registry ({rec.locality_no})"
+            )
+
+    return errors
+
+
 def get_registry_summary() -> dict:
     """
     Return a dict with all sites and operator info, suitable for an API response.

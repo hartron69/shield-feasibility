@@ -11,6 +11,7 @@ import PoolingTab from './PoolingTab.jsx'
 import SeaSiteLossTable from './SeaSiteLossTable.jsx'
 import TraceabilityPanel from './TraceabilityPanel.jsx'
 import C5AISiteTracePanel from './C5AISiteTracePanel.jsx'
+import CageRiskProfileTab from './CageRiskProfileTab.jsx'
 
 const TABS = ['Summary', 'Charts', 'Mitigation', 'Recommendation', 'Allocation', 'Tapsanalyse', 'Loss History', 'Pooling', 'Report', 'Datagrunnlag']
 
@@ -35,6 +36,8 @@ export default function ResultPanel({ result, selectedMitigations, library, oper
 
   const { baseline, mitigated, comparison, report, allocation, history, pooling } = result
   const c5aiMeta = result.c5ai_meta || null
+  const cageProfiles = result.cage_profiles || null
+  const tabs = cageProfiles ? [...TABS, 'Merd-profil'] : TABS
 
   return (
     <div>
@@ -93,7 +96,7 @@ export default function ResultPanel({ result, selectedMitigations, library, oper
         />
       )}
       <div className="tab-bar">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button key={t} className={`tab-btn ${activeTab === t ? 'active' : ''}`} onClick={() => setActiveTab(t)}>
             {t}
           </button>
@@ -142,6 +145,9 @@ export default function ResultPanel({ result, selectedMitigations, library, oper
           traceability={result.traceability || null}
           onNavigateToRisk={onNavigate}
         />
+      )}
+      {activeTab === 'Merd-profil' && (
+        <CageRiskProfileTab cageProfiles={cageProfiles} />
       )}
     </div>
   )

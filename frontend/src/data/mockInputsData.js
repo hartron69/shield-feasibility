@@ -2,41 +2,41 @@
  * Mock Inputs Data for C5AI+ Inputs Page
  *
  * Consistent with C5AI_MOCK (c5ai_mock.js) and MOCK_ALERTS (mockAlertsData.js).
- * Three sites: Frohavet North (S01), Sunndalsfjord (S02), Storfjorden South (S03).
+ * Three sites: Kornstad (KH_S01), Leite (KH_S02), Hogsnes (KH_S03) — Kornstad Havbruk AS.
  */
 
 // ── 1. Site Profiles ──────────────────────────────────────────────────────────
 export const MOCK_SITE_PROFILES = [
   {
-    site_id:             'DEMO_OP_S01',
-    site_name:           'Frohavet North',
+    site_id:             'KH_S01',
+    site_name:           'Kornstad',
     region:              'Møre og Romsdal, Norway',
     species:             'Atlantic Salmon (Salmo salar)',
-    biomass_tonnes:      3200,
-    biomass_value_nok:   207_360_000,
-    equipment_value_nok:  52_000_000,
-    infra_value_nok:      38_000_000,
-    annual_revenue_nok:  288_000_000,
-    exposure_factor:     1.40,   // 1.0=sheltered, 1.5=open coast
+    biomass_tonnes:      3000,
+    biomass_value_nok:   195_000_000,
+    equipment_value_nok:  48_000_000,
+    infra_value_nok:      35_000_000,
+    annual_revenue_nok:  270_000_000,
+    exposure_factor:     1.15,   // 1.0=sheltered, 1.5=open coast
     operational_factor:  1.10,   // 1.0=standard, higher = stressed operations
-    fjord_exposure:      'open_coast',
-    lice_pressure_factor: 1.40,
-    hab_risk_factor:     1.25,
+    fjord_exposure:      'semi_exposed',
+    lice_pressure_factor: 1.15,
+    hab_risk_factor:     1.10,
     years_in_operation:  7,
     license_number:      'NOR-MR-1842',
     nis_certification:   true,
     data_source:         'simulated',
   },
   {
-    site_id:             'DEMO_OP_S02',
-    site_name:           'Sunndalsfjord',
+    site_id:             'KH_S02',
+    site_name:           'Leite',
     region:              'Møre og Romsdal, Norway',
     species:             'Atlantic Salmon (Salmo salar)',
-    biomass_tonnes:      3500,
-    biomass_value_nok:   226_800_000,
-    equipment_value_nok:  58_000_000,
-    infra_value_nok:      42_000_000,
-    annual_revenue_nok:  315_000_000,
+    biomass_tonnes:      2500,
+    biomass_value_nok:   162_500_000,
+    equipment_value_nok:  42_000_000,
+    infra_value_nok:      30_000_000,
+    annual_revenue_nok:  225_000_000,
     exposure_factor:     1.15,
     operational_factor:  1.00,
     fjord_exposure:      'semi_exposed',
@@ -48,15 +48,15 @@ export const MOCK_SITE_PROFILES = [
     data_source:         'simulated',
   },
   {
-    site_id:             'DEMO_OP_S03',
-    site_name:           'Storfjorden South',
+    site_id:             'KH_S03',
+    site_name:           'Hogsnes',
     region:              'Møre og Romsdal, Norway',
     species:             'Atlantic Salmon (Salmo salar)',
-    biomass_tonnes:      2500,
-    biomass_value_nok:   162_000_000,
-    equipment_value_nok:  40_000_000,
-    infra_value_nok:      29_000_000,
-    annual_revenue_nok:  225_000_000,
+    biomass_tonnes:      2800,
+    biomass_value_nok:   182_000_000,
+    equipment_value_nok:  45_000_000,
+    infra_value_nok:      32_000_000,
+    annual_revenue_nok:  252_000_000,
     exposure_factor:     0.85,
     operational_factor:  0.95,
     fjord_exposure:      'sheltered',
@@ -72,8 +72,8 @@ export const MOCK_SITE_PROFILES = [
 // ── 2. Biological / Environmental Inputs ──────────────────────────────────────
 export const MOCK_BIOLOGICAL_INPUTS = [
   {
-    site_id:    'DEMO_OP_S01',
-    site_name:  'Frohavet North',
+    site_id:    'KH_S01',
+    site_name:  'Kornstad',
     recorded_at: '2026-03-09T12:00:00Z',
     data_source: 'simulated',
     readings: {
@@ -91,8 +91,8 @@ export const MOCK_BIOLOGICAL_INPUTS = [
     },
   },
   {
-    site_id:    'DEMO_OP_S02',
-    site_name:  'Sunndalsfjord',
+    site_id:    'KH_S02',
+    site_name:  'Leite',
     recorded_at: '2026-03-09T12:00:00Z',
     data_source: 'simulated',
     readings: {
@@ -110,8 +110,8 @@ export const MOCK_BIOLOGICAL_INPUTS = [
     },
   },
   {
-    site_id:    'DEMO_OP_S03',
-    site_name:  'Storfjorden South',
+    site_id:    'KH_S03',
+    site_name:  'Hogsnes',
     recorded_at: '2026-03-09T12:00:00Z',
     data_source: 'simulated',
     readings: {
@@ -147,35 +147,35 @@ export { BIO_READING_LABELS }
 
 // ── 3. Alert Signals (precursor signals from pattern detector) ────────────────
 export const MOCK_ALERT_SIGNALS = [
-  // Frohavet North (S01) — HAB signals
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'hab',
+  // Kornstad (S01) — HAB signals
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'hab',
     signal_name:'hab_warm_surface',   current_value:15.2, baseline_value:13.0, delta:2.2, threshold:15.0, unit:'°C',       triggered:true  },
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'hab',
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'hab',
     signal_name:'hab_low_oxygen',     current_value: 6.8, baseline_value: 8.5, delta:-1.7,threshold: 7.0, unit:'mg/L',    triggered:true  },
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'hab',
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'hab',
     signal_name:'hab_high_nitrate',   current_value:18.4, baseline_value: 5.0, delta:13.4,threshold:12.0, unit:'µmol/L', triggered:true  },
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'hab',
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'hab',
     signal_name:'hab_high_prior',     current_value: 0.22,baseline_value: 0.12,delta:0.10,threshold: 0.15,unit:'prob',   triggered:true  },
-  // Frohavet North — Lice signals
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'lice',
+  // Kornstad — Lice signals
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'lice',
     signal_name:'lice_warm_water',    current_value:15.2, baseline_value:10.0, delta:5.2, threshold:10.0, unit:'°C',      triggered:true  },
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'lice',
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'lice',
     signal_name:'lice_elevated_counts',current_value:2.4, baseline_value:0.5,  delta:1.9, threshold: 1.0, unit:'lice/fish',triggered:true },
-  // Frohavet North — Jellyfish signals
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'jellyfish',
+  // Kornstad — Jellyfish signals
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'jellyfish',
     signal_name:'jellyfish_warm_seasonal',current_value:1.09,baseline_value:0.08,delta:1.01,threshold:0.5,unit:'index',  triggered:true  },
-  { site_id:'DEMO_OP_S01', site_name:'Frohavet North', risk_type:'jellyfish',
+  { site_id:'KH_S01', site_name:'Kornstad', risk_type:'jellyfish',
     signal_name:'jellyfish_prior_sightings',current_value:3,baseline_value:0.5,delta:2.5,threshold:2.0,unit:'obs',       triggered:true  },
-  // Sunndalsfjord (S02) — Lice signals
-  { site_id:'DEMO_OP_S02', site_name:'Sunndalsfjord',  risk_type:'lice',
+  // Leite (S02) — Lice signals
+  { site_id:'KH_S02', site_name:'Leite',  risk_type:'lice',
     signal_name:'lice_warm_water',    current_value:12.4, baseline_value:10.0, delta:2.4, threshold:10.0, unit:'°C',      triggered:true  },
-  { site_id:'DEMO_OP_S02', site_name:'Sunndalsfjord',  risk_type:'lice',
+  { site_id:'KH_S02', site_name:'Leite',  risk_type:'lice',
     signal_name:'lice_elevated_counts',current_value:1.6, baseline_value:0.5,  delta:1.1, threshold: 1.0, unit:'lice/fish',triggered:true },
-  // Storfjorden South (S03) — Pathogen signals
-  { site_id:'DEMO_OP_S03', site_name:'Storfjorden South',risk_type:'pathogen',
+  // Hogsnes (S03) — Pathogen signals
+  { site_id:'KH_S03', site_name:'Hogsnes',risk_type:'pathogen',
     signal_name:'pathogen_neighbor_outbreak',current_value:0.20,baseline_value:0.10,delta:0.10,threshold:0.15,unit:'index',triggered:true},
-  // Storfjorden South — not triggered
-  { site_id:'DEMO_OP_S03', site_name:'Storfjorden South',risk_type:'lice',
+  // Hogsnes — not triggered
+  { site_id:'KH_S03', site_name:'Hogsnes',risk_type:'lice',
     signal_name:'lice_warm_water',    current_value:11.2, baseline_value:10.0, delta:1.2, threshold:10.0, unit:'°C',      triggered:false },
 ]
 
@@ -187,8 +187,8 @@ export const MOCK_ALERT_SIGNALS = [
 //   operational:   human_error, procedure_failure, equipment_failure, incident, maintenance_backlog
 export const MOCK_DATA_QUALITY = [
   {
-    site_id:    'DEMO_OP_S01',
-    site_name:  'Frohavet North',
+    site_id:    'KH_S01',
+    site_name:  'Kornstad',
     overall_completeness: 0.61,
     overall_confidence:   'medium',
     risk_types: {
@@ -218,8 +218,8 @@ export const MOCK_DATA_QUALITY = [
     },
   },
   {
-    site_id:    'DEMO_OP_S02',
-    site_name:  'Sunndalsfjord',
+    site_id:    'KH_S02',
+    site_name:  'Leite',
     overall_completeness: 0.74,
     overall_confidence:   'medium',
     risk_types: {
@@ -249,8 +249,8 @@ export const MOCK_DATA_QUALITY = [
     },
   },
   {
-    site_id:    'DEMO_OP_S03',
-    site_name:  'Storfjorden South',
+    site_id:    'KH_S03',
+    site_name:  'Hogsnes',
     overall_completeness: 0.83,
     overall_confidence:   'high',
     risk_types: {
@@ -283,11 +283,11 @@ export const MOCK_DATA_QUALITY = [
 
 // ── 5. Scenario Baselines ─────────────────────────────────────────────────────
 export const SCENARIO_BASELINE = {
-  biomass_tonnes:      9200,
+  biomass_tonnes:      8300,
   oxygen_mg_l:          8.5,
   nitrate_umol_l:       5.0,
   lice_pressure:        1.0,
-  exposure_factor:      1.13,   // weighted average across 3 sites
+  exposure_factor:      1.05,   // weighted average across 3 sites
   operational_factor:   1.02,
 }
 
@@ -324,7 +324,7 @@ export const SCENARIO_PRESETS = [
 export const SITE_REGISTRY = Object.fromEntries(
   MOCK_SITE_PROFILES.map(s => [s.site_id, s.site_name])
 )
-// e.g. { DEMO_OP_S01: 'Frohavet North', DEMO_OP_S02: 'Sunndalsfjord', ... }
+// e.g. { KH_S01: 'Kornstad', KH_S02: 'Leite', ... }
 
 // ── 7. Canonical risk-type → domain mapping ───────────────────────────────────
 // Single source of truth used by alerts, forecasts, data-quality and overview

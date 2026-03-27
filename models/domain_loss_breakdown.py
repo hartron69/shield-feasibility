@@ -430,6 +430,41 @@ class DomainLossBreakdown:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Cage technology helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def apply_cage_multipliers_to_domain_fractions(
+    domain_fractions: Dict[str, float],
+    cage_multipliers: Dict[str, float],
+) -> Dict[str, float]:
+    """
+    Scale domain fractions by cage technology multipliers and renormalise.
+
+    Only domains present in ``domain_fractions`` are scaled; multipliers for
+    domains not in the fractions dict are ignored.  The result is always
+    renormalised to sum to 1.0.  If all scaled fractions are zero the
+    original fractions are returned unchanged.
+
+    Parameters
+    ----------
+    domain_fractions : Dict[str, float]
+        Base fractions to scale (e.g. DEFAULT_DOMAIN_FRACTIONS).
+    cage_multipliers : Dict[str, float]
+        Per-domain multipliers from ``compute_locality_domain_multipliers()``.
+
+    Returns
+    -------
+    Dict[str, float]
+        Renormalised fractions after cage-technology adjustment.
+    """
+    scaled = {d: f * cage_multipliers.get(d, 1.0) for d, f in domain_fractions.items()}
+    total = sum(scaled.values())
+    if total == 0.0:
+        return dict(domain_fractions)  # safety fallback
+    return {d: v / total for d, v in scaled.items()}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Factory function
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -438,6 +473,7 @@ def build_domain_loss_breakdown(
     bio_breakdown: Optional[Dict[str, np.ndarray]] = None,
     domain_correlation: Optional["DomainCorrelationMatrix"] = None,
     rng: Optional[np.random.Generator] = None,
+    cage_multipliers: Optional[Dict[str, float]] = None,
 ) -> DomainLossBreakdown:
     """
     Convenience factory for ``DomainLossBreakdown``.
@@ -451,6 +487,11 @@ def build_domain_loss_breakdown(
     perturbed by correlated Gaussian noise each simulation year so that
     domain losses co-vary realistically across years.
 
+    When ``cage_multipliers`` is provided the domain fractions are scaled by
+    the per-domain multipliers (from ``compute_locality_domain_multipliers()``)
+    before loss decomposition.  For the C5AI+ path only the non-bio residual
+    fractions are adjusted (biological domain is already modelled).
+
     Parameters
     ----------
     annual_losses : np.ndarray
@@ -463,15 +504,54 @@ def build_domain_loss_breakdown(
         Random number generator for the Gaussian perturbation.  If
         ``domain_correlation`` is provided and ``rng`` is None a default
         generator seeded at 0 is used and a ``UserWarning`` is emitted.
+    cage_multipliers : Dict[str, float], optional
+        Per-domain technology multipliers from cage portfolio aggregation.
+        Scales domain fractions before loss decomposition.
 
     Returns
     -------
     DomainLossBreakdown
     """
     if bio_breakdown:
-        dbd = DomainLossBreakdown.from_bio_breakdown(bio_breakdown, annual_losses)
+        if cage_multipliers:
+            # Apply cage multipliers to non-bio residual fractions only
+            eff_non_bio = apply_cage_multipliers_to_domain_fractions(
+                _NON_BIO_DOMAIN_FRACTIONS, cage_multipliers
+            )
+            biological = {k: v.copy() for k, v in bio_breakdown.items()}
+            bio_total = sum(biological.values())
+            residual = np.maximum(annual_losses - bio_total, 0.0)
+            structural    = _split_domain(residual, "structural",    eff_non_bio)
+            environmental = _split_domain(residual, "environmental", eff_non_bio)
+            operational   = _split_domain(residual, "operational",   eff_non_bio)
+            dbd = DomainLossBreakdown(
+                biological=biological,
+                structural=structural,
+                environmental=environmental,
+                operational=operational,
+                bio_modelled=True,
+            )
+        else:
+            dbd = DomainLossBreakdown.from_bio_breakdown(bio_breakdown, annual_losses)
     else:
-        dbd = DomainLossBreakdown.prior_only(annual_losses)
+        if cage_multipliers:
+            # Apply cage multipliers to all domain fractions
+            eff_fracs = apply_cage_multipliers_to_domain_fractions(
+                DEFAULT_DOMAIN_FRACTIONS, cage_multipliers
+            )
+            biological    = _split_domain(annual_losses, "biological",    eff_fracs)
+            structural    = _split_domain(annual_losses, "structural",    eff_fracs)
+            environmental = _split_domain(annual_losses, "environmental", eff_fracs)
+            operational   = _split_domain(annual_losses, "operational",   eff_fracs)
+            dbd = DomainLossBreakdown(
+                biological=biological,
+                structural=structural,
+                environmental=environmental,
+                operational=operational,
+                bio_modelled=False,
+            )
+        else:
+            dbd = DomainLossBreakdown.prior_only(annual_losses)
 
     if domain_correlation is not None:
         if rng is None:

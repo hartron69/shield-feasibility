@@ -372,6 +372,7 @@ def run_feasibility_analysis(
                 bc = base_crit_map.get(mc["name"], {})
                 crit_deltas.append({
                     "name":           mc["name"],
+                    "weight":         mc.get("weight", 0),
                     "baseline_raw":   bc.get("raw_score", 0),
                     "mitigated_raw":  mc["raw_score"],
                     "delta_weighted": round(mc["weighted_score"] - bc.get("weighted_score", 0), 3),
@@ -381,16 +382,21 @@ def run_feasibility_analysis(
             # Explain the score change in plain language
             improved = [d for d in crit_deltas if d["delta_weighted"] > 0.05]
             worsened = [d for d in crit_deltas if d["delta_weighted"] < -0.05]
-            if score_delta >= 0:
+            if abs(score_delta) < 0.05 and not improved and not worsened:
                 note = (
-                    f"Score improves by {score_delta:+.1f} pts. "
-                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}." if improved else "")
+                    "Tiltakene krysser ingen kriterieterskler — poengsummen er uendret. "
+                    "Risikogevinsten er synlig i forventet tapsdelta og SCR-endring ovenfor."
+                )
+            elif score_delta > 0:
+                note = (
+                    f"Poengsummen forbedres med {score_delta:+.1f} pkt. "
+                    + (f"Kriterier som forbedres: {', '.join(d['name'] for d in improved)}." if improved else "")
                 )
             else:
                 note = (
-                    f"Score changes by {score_delta:+.1f} pts. "
-                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}. " if improved else "")
-                    + (f"Criteria unchanged or lower: {', '.join(d['name'] for d in worsened)}." if worsened else "")
+                    f"Poengsummen endres med {score_delta:+.1f} pkt. "
+                    + (f"Kriterier som forbedres: {', '.join(d['name'] for d in improved)}. " if improved else "")
+                    + (f"Kriterier som svekkes: {', '.join(d['name'] for d in worsened)}." if worsened else "")
                 )
 
             comparison_block = ComparisonBlock(
@@ -609,6 +615,7 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
         operator,
         n_simulations=model.n_simulations,
         domain_correlation=domain_corr,
+        cage_multipliers=alloc_summary.cage_multipliers,
     )
     sim = engine.run()
 
@@ -788,6 +795,7 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
                 bc = base_crit_map.get(mc["name"], {})
                 crit_deltas.append({
                     "name":           mc["name"],
+                    "weight":         mc.get("weight", 0),
                     "baseline_raw":   bc.get("raw_score", 0),
                     "mitigated_raw":  mc["raw_score"],
                     "delta_weighted": round(mc["weighted_score"] - bc.get("weighted_score", 0), 3),
@@ -796,16 +804,21 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
 
             improved = [d for d in crit_deltas if d["delta_weighted"] > 0.05]
             worsened = [d for d in crit_deltas if d["delta_weighted"] < -0.05]
-            if score_delta >= 0:
+            if abs(score_delta) < 0.05 and not improved and not worsened:
                 note = (
-                    f"Score improves by {score_delta:+.1f} pts. "
-                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}." if improved else "")
+                    "Tiltakene krysser ingen kriterieterskler — poengsummen er uendret. "
+                    "Risikogevinsten er synlig i forventet tapsdelta og SCR-endring ovenfor."
+                )
+            elif score_delta > 0:
+                note = (
+                    f"Poengsummen forbedres med {score_delta:+.1f} pkt. "
+                    + (f"Kriterier som forbedres: {', '.join(d['name'] for d in improved)}." if improved else "")
                 )
             else:
                 note = (
-                    f"Score changes by {score_delta:+.1f} pts. "
-                    + (f"Criteria improving: {', '.join(d['name'] for d in improved)}. " if improved else "")
-                    + (f"Criteria unchanged or lower: {', '.join(d['name'] for d in worsened)}." if worsened else "")
+                    f"Poengsummen endres med {score_delta:+.1f} pkt. "
+                    + (f"Kriterier som forbedres: {', '.join(d['name'] for d in improved)}. " if improved else "")
+                    + (f"Kriterier som svekkes: {', '.join(d['name'] for d in worsened)}." if worsened else "")
                 )
 
             comparison_block = ComparisonBlock(
@@ -817,8 +830,8 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
                 annual_cost_saving=annual_cost_saving,
                 top_benefit_domains=top_domains,
                 narrative=(
-                    f"Applying {len(actions)} mitigation action(s) reduces expected annual loss "
-                    f"by {abs(delta_pct):.1f}%. Top benefiting domains: {', '.join(top_domains)}."
+                    f"{len(actions)} tiltak reduserer forventet årlig tap med "
+                    f"{abs(delta_pct):.1f} %. Beste risikodomener: {', '.join(top_domains)}."
                 ),
                 composite_score_delta=score_delta,
                 criterion_deltas=crit_deltas,
@@ -1002,13 +1015,18 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
         _la_block2 = None
 
     # ── Traceability block ────────────────────────────────────────────────────
+    _sel_mode = alloc_summary.site_selection_mode if alloc_summary else "generic"
     from backend.services.traceability import build_traceability_block
     try:
         _traceability2 = build_traceability_block(
-            sim, operator, selected or [], _la_block2
+            sim, operator, selected or [], _la_block2,
+            site_selection_mode=_sel_mode,
         )
     except Exception:
         _traceability2 = None
+
+    _sel_count = len(alloc_summary.sites) if (alloc_summary and _sel_mode == "specific") else 0
+    _sel_locs = alloc_summary.selected_locality_numbers if alloc_summary else []
 
     return FeasibilityResponse(
         baseline=baseline_block,
@@ -1019,6 +1037,9 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
             domain_correlation_active=(domain_corr is not None),
             mitigation_active=bool(selected),
             n_simulations=model.n_simulations,
+            site_selection_mode=_sel_mode,
+            selected_site_count=_sel_count,
+            selected_locality_numbers=_sel_locs,
         ),
         allocation=alloc_summary,
         history=hist_summary,
@@ -1026,4 +1047,5 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
         loss_analysis=_la_block2,
         traceability=_traceability2,
         c5ai_meta=_build_c5ai_meta(_la_block2, _traceability2),
+        cage_profiles=alloc_summary.cage_profiles if alloc_summary else None,
     )

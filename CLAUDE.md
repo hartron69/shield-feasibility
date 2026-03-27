@@ -91,15 +91,15 @@ These must not change without explicit user instruction:
 
 ## Mock Data Sites
 
-Three demo sites used consistently across all mock data:
+Real Kornstad Havbruk AS localities used consistently across all Risk Intelligence mock data:
 
-| ID | Name | Exposure |
-|---|---|---|
-| `DEMO_OP_S01` | Frohavet North | 1.40 — open coast, highest risk |
-| `DEMO_OP_S02` | Sunndalsfjord | 1.10 — semi-exposed |
-| `DEMO_OP_S03` | Storfjorden South | 0.85 — sheltered, lowest risk |
+| ID | Name | BW locality | Exposure |
+|---|---|---|---|
+| `KH_S01` | Kornstad | 12855 | 1.15 — semi-exposed |
+| `KH_S02` | Leite | 12870 | 1.10 — semi-exposed |
+| `KH_S03` | Hogsnes | 12871 | 0.85 — sheltered, lowest risk |
 
-These site IDs are referenced in: `mockInputsData.js`, `mockAlertsData.js`, `mockBioTimeseries.js`, `c5ai_mock.js`, and `alert_simulator.py`. Keep them consistent.
+Operator: `KORNSTAD_HAVBRUK` / Kornstad Havbruk AS. These site IDs are referenced in: `mockInputsData.js`, `mockAlertsData.js`, `mockBioTimeseries.js`, `c5ai_mock.js`, `mockMultiDomainData.js`, and `alert_simulator.py`. Keep them consistent.
 
 ---
 
