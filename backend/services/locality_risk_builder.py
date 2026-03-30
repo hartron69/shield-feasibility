@@ -141,7 +141,8 @@ def build_locality_risk_profile(
         used_defaults.append("cage_weighting_mode=none")
 
     # ── 4. Domain scores & total ─────────────────────────────────────────────
-    total_risk_score = float(risk["total"])
+    total_risk_score        = float(risk["total"])
+    total_risk_score_source = "live_risk"
     domain_scores = DomainRiskScores(
         biological=float(risk["biological"]),
         structural=float(risk["structural"]),
@@ -190,6 +191,7 @@ def build_locality_risk_profile(
         cage_count=cage_count,
         cage_weighting_mode=cage_weighting_mode,
         total_risk_score=total_risk_score,
+        total_risk_score_source=total_risk_score_source,
         domain_scores=domain_scores,
         domain_weights=domain_weights,
         domain_multipliers=domain_multipliers,

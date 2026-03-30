@@ -57,6 +57,7 @@ def _minimal_profile() -> LocalityRiskProfile:
         cage_count=0,
         cage_weighting_mode="none",
         total_risk_score=28.5,
+        total_risk_score_source="live_risk",
         domain_scores=_make_scores(),
         domain_weights=DomainRiskWeights(biological=0.5, structural=0.2, environmental=0.2, operational=0.1),
         domain_multipliers={d: 1.0 for d in DOMAINS},
@@ -152,6 +153,7 @@ class TestLocalityRiskProfileSerialisation:
         p = _minimal_profile()
         p2 = LocalityRiskProfile.from_dict(p.to_dict())
         assert p2.total_risk_score == pytest.approx(28.5)
+        assert p2.total_risk_score_source == "live_risk"
 
 
 # ── B. Helper functions ─────────────────────────────────────────────────────────
@@ -260,6 +262,11 @@ class TestBuilderStandardLocality:
     def test_drift_type_is_sjo(self, lid):
         p = build_locality_risk_profile(lid)
         assert p.drift_type == "sjø"
+
+    @pytest.mark.parametrize("lid", KH_IDS)
+    def test_total_risk_score_source_is_live_risk(self, lid):
+        p = build_locality_risk_profile(lid)
+        assert p.total_risk_score_source == "live_risk"
 
     @pytest.mark.parametrize("lid", KH_IDS)
     def test_total_risk_score_in_valid_range(self, lid):
