@@ -58,19 +58,19 @@ async def run_scenario(req: ScenarioRequest) -> ScenarioResponse:
     else:
         operator_profile = req.operator
         if operator_profile is None:
-            # Use a default profile so the engine can run without full sea input
-            from backend.schemas import OperatorProfileInput
-            operator_profile = OperatorProfileInput()
-        op_input, _ = build_operator_input(operator_profile)
-        site_inputs = None
-        if operator_profile.sites:
-            from backend.services.sea_site_builder import SeaSiteBuilder
-            sea_builder = SeaSiteBuilder()
-            _, site_inputs = sea_builder.build_group(
-                sites=[_to_site_profile(s) for s in operator_profile.sites],
-                operator_name=operator_profile.name,
-                annual_premium_nok=operator_profile.annual_premium_nok,
-            )
+            # No operator provided — use KH portfolio from Live Risk config
+            op_input, site_inputs = _build_kh_default()
+        else:
+            op_input, _ = build_operator_input(operator_profile)
+            site_inputs = None
+            if operator_profile.sites:
+                from backend.services.sea_site_builder import SeaSiteBuilder
+                sea_builder = SeaSiteBuilder()
+                _, site_inputs = sea_builder.build_group(
+                    sites=[_to_site_profile(s) for s in operator_profile.sites],
+                    operator_name=operator_profile.name,
+                    annual_premium_nok=operator_profile.annual_premium_nok,
+                )
         result = engine.run(op_input, params, site_inputs=site_inputs)
 
     return ScenarioResponse(
@@ -86,6 +86,65 @@ async def run_scenario(req: ScenarioRequest) -> ScenarioResponse:
         highest_risk_driver = result.highest_risk_driver,
         narrative           = result.narrative,
     )
+
+
+def _build_kh_default():
+    """
+    Build KH portfolio (Kornstad / Leite / Hogsnes) from Live Risk config
+    for sea scenarios when no operator is supplied by the frontend.
+
+    Returns (group_op_input, site_inputs_list) ready for ScenarioEngine.run().
+    """
+    from backend.services.live_risk_feed import get_locality_config, _OPERATOR_FINANCIALS
+    from backend.services.sea_site_builder import SeaSiteBuilder
+
+    _EXPOSURE_MAP = {
+        (0.0, 1.0):  "sheltered",
+        (1.0, 1.12): "semi_exposed",
+        (1.12, 9.9): "open_coast",
+    }
+
+    def exposure_class(factor):
+        for (lo, hi), label in _EXPOSURE_MAP.items():
+            if lo <= factor < hi:
+                return label
+        return "semi_exposed"
+
+    KH_SITES = ["KH_S01", "KH_S02", "KH_S03"]
+    BIOMASS_VALUE_PER_TONNE = 65_000  # NOK — matches get_site_profile()
+
+    sites = []
+    for site_id in KH_SITES:
+        cfg = get_locality_config(site_id)
+        fin = _OPERATOR_FINANCIALS.get(site_id, {})
+        biomass_t = cfg.get("biomass_tonnes", 0)
+        sites.append(SiteProfile(
+            name                  = cfg["name"],
+            location              = cfg["region"],
+            species               = "Atlantic Salmon",
+            biomass_tonnes        = biomass_t,
+            biomass_value_per_tonne = BIOMASS_VALUE_PER_TONNE,
+            equipment_value       = fin.get("equipment_value_nok", biomass_t * BIOMASS_VALUE_PER_TONNE * 0.10),
+            infrastructure_value  = fin.get("infra_value_nok",      biomass_t * BIOMASS_VALUE_PER_TONNE * 0.07),
+            annual_revenue        = fin.get("annual_revenue_nok",    biomass_t * BIOMASS_VALUE_PER_TONNE * 1.20),
+            fjord_exposure        = exposure_class(cfg["exposure"]),
+            lice_pressure_factor  = 1.0,  # neutral baseline; scenario params override
+            mooring_age_years     = None,
+            latitude              = cfg["lat"],
+            longitude             = cfg["lon"],
+            municipality          = cfg["region"],
+        ))
+
+    total_revenue = sum(s.annual_revenue for s in sites)
+    annual_premium = total_revenue * 0.025  # ~2.5 % of revenue as market premium proxy
+
+    builder = SeaSiteBuilder()
+    group_op, site_inputs = builder.build_group(
+        sites             = sites,
+        operator_name     = "Kornstad Havbruk AS",
+        annual_premium_nok = annual_premium,
+    )
+    return group_op, site_inputs
 
 
 def _to_site_profile(s) -> SiteProfile:

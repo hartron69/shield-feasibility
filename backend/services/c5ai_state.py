@@ -27,6 +27,8 @@ _c5ai_run_id: Optional[str] = None
 _c5ai_last_run_at: Optional[datetime] = None
 _inputs_last_updated_at: Optional[datetime] = None
 _extra_run_meta: dict = {}
+_last_forecast = None          # Optional[RiskForecast] — in-memory only
+_live_risk_domain_fracs: dict = {}  # domain fractions from latest Live Risk overview
 
 
 def _now() -> datetime:
@@ -61,6 +63,32 @@ def get_run_extra() -> dict:
     """Return a copy of the extra run metadata under lock."""
     with _lock:
         return dict(_extra_run_meta)
+
+
+def store_forecast(forecast) -> None:
+    """Store the most recent RiskForecast object from the C5AI+ pipeline."""
+    global _last_forecast
+    with _lock:
+        _last_forecast = forecast
+
+
+def get_forecast():
+    """Return the stored RiskForecast, or None if C5AI+ has not been run."""
+    with _lock:
+        return _last_forecast
+
+
+def store_domain_fracs(fracs: dict) -> None:
+    """Store per-domain fractions derived from Live Risk overview."""
+    global _live_risk_domain_fracs
+    with _lock:
+        _live_risk_domain_fracs = dict(fracs)
+
+
+def get_domain_fracs() -> dict:
+    """Return stored Live Risk domain fractions, or empty dict if not set."""
+    with _lock:
+        return dict(_live_risk_domain_fracs)
 
 
 def get_status() -> dict:

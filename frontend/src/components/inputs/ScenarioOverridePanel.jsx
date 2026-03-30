@@ -1,6 +1,14 @@
 import React, { useState } from 'react'
 import { SCENARIO_BASELINE, SCENARIO_PRESETS } from '../../data/mockInputsData.js'
-import { runScenario } from '../../api/client.js'
+import { runScenario, fetchInputsSnapshot } from '../../api/client.js'
+
+// Kornstad Havbruk portfolio — biomass weights for Live Risk averaging
+const KH_SITES    = ['KH_S01', 'KH_S02', 'KH_S03']
+const SITE_BIOMASS = { KH_S01: 3000, KH_S02: 2500, KH_S03: 2800 }
+const TOTAL_BM    = 8300
+
+// Fields whose values can be derived from Live Risk (used to show Live Risk badge)
+const LIVE_FIELDS = new Set(['oxygen_mg_l', 'lice_pressure', 'operational_factor'])
 
 const SEA_FIELD_CONFIG = [
   { key: 'biomass_tonnes',     label: 'Total Biomass',       unit: 't',      min: 1000, max: 50000, step: 100  },
@@ -60,9 +68,16 @@ function ChangePct({ pct }) {
 export default function ScenarioOverridePanel({ operatorType = 'sea', operator, smoltInput }) {
   const isSmolt      = operatorType === 'smolt'
   const fieldConfig  = isSmolt ? SMOLT_FIELD_CONFIG : SEA_FIELD_CONFIG
-  const baselineData = isSmolt ? SMOLT_BASELINE : SCENARIO_BASELINE
 
-  const [values, setValues]           = useState({ ...baselineData })
+  // liveBaseline: set when user clicks "Nåværende tilstand"; null = use static SCENARIO_BASELINE
+  const [liveBaseline, setLiveBaseline]       = useState(null)
+  const [liveBaselineLoading, setLbLoading]   = useState(false)
+
+  const baselineData = isSmolt
+    ? SMOLT_BASELINE
+    : (liveBaseline || SCENARIO_BASELINE)
+
+  const [values, setValues]           = useState({ ...(isSmolt ? SMOLT_BASELINE : SCENARIO_BASELINE) })
   const [scenarioResult, setResult]   = useState(null)
   const [running, setRunning]         = useState(false)
   const [error, setError]             = useState(null)
@@ -83,6 +98,51 @@ export default function ScenarioOverridePanel({ operatorType = 'sea', operator, 
     setValues({ ...baselineData })
     setResult(null)
     setError(null)
+  }
+
+  async function loadLiveBaseline() {
+    setLbLoading(true)
+    try {
+      const snaps = await Promise.all(KH_SITES.map(id => fetchInputsSnapshot(id)))
+      const byId  = Object.fromEntries(KH_SITES.map((id, i) => [id, snaps[i]]))
+
+      // Biomass-weighted average helper
+      const wavg = (fn) => KH_SITES.reduce(
+        (sum, id) => sum + fn(byId[id]) * SITE_BIOMASS[id] / TOTAL_BM, 0
+      )
+
+      const getEnvReading  = (snap, param) =>
+        snap.environmental.readings.find(r => r.parameter === param)?.value ?? null
+      const getOpsReading  = (snap, param) =>
+        snap.operational.readings.find(r => r.parameter === param)?.value ?? null
+
+      const oxy     = wavg(s => getEnvReading(s, 'Løst O₂') ?? 8.5)
+      const liceAvg = wavg(s => s.biological.lice_now ?? 0.3)
+      const opsAvg  = wavg(s => getOpsReading(s, 'Operasjonell risikoskår') ?? 10)
+
+      // Map lice_now (lus/fisk) → pressure index: 0.5 lus/fisk ≡ index 1.0
+      const liceIndex = Math.max(0.5, Math.round((liceAvg / 0.5) * 10) / 10)
+      // Map ops_score (0–100) → operational_factor: score 10 → 1.02
+      const opsFactor = Math.round((1.0 + opsAvg * 0.002) * 100) / 100
+
+      const live = {
+        biomass_tonnes:    TOTAL_BM,
+        oxygen_mg_l:       Math.round(oxy * 10) / 10,
+        nitrate_umol_l:    5.0,     // no Live Risk source — keep static
+        lice_pressure:     liceIndex,
+        exposure_factor:   1.05,    // derived from locality config (static constant)
+        operational_factor: Math.min(2.0, opsFactor),
+      }
+
+      setLiveBaseline(live)
+      setValues({ ...live })
+      setResult(null)
+      setError(null)
+    } catch {
+      // backend not running — silently ignore; sliders keep current values
+    } finally {
+      setLbLoading(false)
+    }
   }
 
   async function handleRunScenario() {
@@ -128,6 +188,25 @@ export default function ScenarioOverridePanel({ operatorType = 'sea', operator, 
               {p.label}
             </button>
           ))}
+          <button
+            className="scenario-preset-btn"
+            style={{
+              marginLeft: 8,
+              background: liveBaseline ? '#EFF6FF' : undefined,
+              borderColor: liveBaseline ? '#2563EB' : undefined,
+              color: liveBaseline ? '#1D4ED8' : undefined,
+            }}
+            onClick={loadLiveBaseline}
+            disabled={liveBaselineLoading}
+            title="Fyller sliderne med nåværende Live Risk-verdier (biomass-vektet gjennomsnitt)"
+          >
+            {liveBaselineLoading ? 'Laster…' : liveBaseline ? '⟳ Nåværende tilstand' : 'Nåværende tilstand'}
+          </button>
+          {liveBaseline && (
+            <span style={{ fontSize: 11, color: '#2563EB', alignSelf: 'center', marginLeft: 4 }}>
+              ● Live Risk
+            </span>
+          )}
         </div>
       )}
 
@@ -194,6 +273,9 @@ export default function ScenarioOverridePanel({ operatorType = 'sea', operator, 
               <div className="scenario-baseline-row">
                 <span style={{ color: 'var(--dark-grey)', fontSize: 11 }}>
                   Baseline: {baselineData[key]}
+                  {!isSmolt && liveBaseline && LIVE_FIELDS.has(key) && (
+                    <span style={{ color: '#2563EB', marginLeft: 4 }}>(Live Risk)</span>
+                  )}
                 </span>
                 {delta != null && Math.abs(delta) > 0.5 && (
                   <span style={{ color, fontSize: 11, fontWeight: 600 }}>
@@ -297,6 +379,14 @@ export default function ScenarioOverridePanel({ operatorType = 'sea', operator, 
                         background: '#f9fafb', borderRadius: 6, padding: '8px 12px',
                         border: '1px solid #e5e7eb' }}>
             {scenarioResult.narrative}
+          </div>
+
+          {/* Model disclaimer */}
+          <div style={{ marginTop: 8, fontSize: 11, color: '#6B7280',
+                        background: '#f3f4f6', borderRadius: 5, padding: '6px 10px',
+                        border: '1px solid #e5e7eb' }}>
+            Scenarioresultatet viser modellert endring i forventet årlig tap under feasibility-modellen.
+            Absolutte NOK-verdier kan avvike fra Live Risk, mens prosentvis endring er best egnet for scenario-sammenlikning.
           </div>
         </div>
       )}

@@ -1,15 +1,22 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { C5AI_MOCK } from '../data/c5ai_mock.js'
-import { MOCK_ALERTS } from '../data/mockAlertsData.js'
-import { MOCK_DATA_QUALITY } from '../data/mockInputsData.js'
-import { SMOLT_SITE_RISK, SMOLT_DOMAIN_META } from '../data/mockSmoltSiteRiskData.js'
-import AlertSummaryCards from './alerts/AlertSummaryCards.jsx'
 import InputCompletenessCard from './inputs/InputCompletenessCard.jsx'
-import SiteRiskDetailPanel from './smolt/SiteRiskDetailPanel.jsx'
+import { fetchC5AIRiskOverview, fetchDataQuality } from '../api/client.js'
+
+const KH_SITES = ['KH_S01', 'KH_S02', 'KH_S03']
 
 const DOMAIN_COLORS = {
   biological: '#059669', structural: '#2563EB',
   environmental: '#D97706', operational: '#7C3AED',
+}
+
+const DOMAIN_LABELS = {
+  biological: 'Biologisk', structural: 'Strukturell',
+  environmental: 'Miljø', operational: 'Operasjonell',
+}
+
+const EXPOSURE_LABELS = {
+  semi_exposed: 'Semi-eksponert', sheltered: 'Skjermet', open: 'Eksponert',
 }
 
 function fmtM(v) { return `NOK ${(v / 1_000_000).toFixed(1)}M` }
@@ -20,14 +27,14 @@ function scoreClass(s) {
   return 'low'
 }
 
-function AlertBadge({ level }) {
+function RiskLevelBadge({ score }) {
+  const level = score >= 65 ? 'HIGH' : score >= 40 ? 'MEDIUM' : 'LOW'
   const map = {
-    CRITICAL: { bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
-    WARNING:  { bg: '#FEF9C3', color: '#713F12', border: '#FDE68A' },
-    WATCH:    { bg: '#DBEAFE', color: '#1E40AF', border: '#BFDBFE' },
-    NORMAL:   { bg: '#F0FDF4', color: '#166534', border: '#BBF7D0' },
+    HIGH:   { bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
+    MEDIUM: { bg: '#FEF9C3', color: '#713F12', border: '#FDE68A' },
+    LOW:    { bg: '#F0FDF4', color: '#166534', border: '#BBF7D0' },
   }
-  const s = map[level] || map.NORMAL
+  const s = map[level]
   return (
     <span style={{
       fontSize: 10, fontWeight: 700, padding: '2px 7px',
@@ -40,210 +47,183 @@ function AlertBadge({ level }) {
 }
 
 export default function OverviewPage({ onNavigate }) {
-  const [selectedSmoltId, setSelectedSmoltId] = useState(null)
-  const overall = C5AI_MOCK.overall_risk_score
-  const critCount = MOCK_ALERTS.filter(a => a.alert_level === 'CRITICAL').length
-  const warnCount = MOCK_ALERTS.filter(a => a.alert_level === 'WARNING').length
-  const avgCompleteness = MOCK_DATA_QUALITY.reduce((s, d) => s + d.overall_completeness, 0) / MOCK_DATA_QUALITY.length
+  const [riskOverview, setRiskOverview] = useState(null)
+  const [dataQuality,  setDataQuality]  = useState([])
+  const [loading,      setLoading]      = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      fetchC5AIRiskOverview().catch(() => null),
+      Promise.all(KH_SITES.map(id => fetchDataQuality(id).catch(() => null))),
+    ]).then(([overview, dqResults]) => {
+      if (overview) setRiskOverview(overview)
+      setDataQuality(dqResults.filter(Boolean).map(d => ({
+        ...d,
+        site_name: d.locality_name,
+        site_id:   d.locality_id,
+      })))
+    }).finally(() => setLoading(false))
+  }, [])
+
+  const overallScore    = riskOverview?.overall_risk_score ?? C5AI_MOCK.overall_risk_score
+  const domainBreakdown = riskOverview?.domain_breakdown   ?? C5AI_MOCK.domain_breakdown
+  const seaSites        = riskOverview?.sites              ?? []
+
+  const totalEAL = Object.values(domainBreakdown).reduce((s, d) => s + (d.annual_loss_nok ?? 0), 0)
+
+  const avgCompleteness = dataQuality.length > 0
+    ? dataQuality.reduce((s, d) => s + d.overall_completeness, 0) / dataQuality.length
+    : null
+
+  const operatorName = C5AI_MOCK.metadata.operator_name
+  const nSites       = C5AI_MOCK.sites.length
+  const horizon      = C5AI_MOCK.metadata.forecast_horizon_years
+  const modelVer     = C5AI_MOCK.metadata.model_version
 
   return (
     <div style={{ maxWidth: 1100 }}>
       <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 4 }}>Portfolio Overview</div>
       <div style={{ fontSize: 13, color: 'var(--dark-grey)', marginBottom: 20 }}>
-        Nordic Aqua Partners AS · {C5AI_MOCK.sites.length} sites · {C5AI_MOCK.metadata.forecast_horizon_years}-year horizon · Model {C5AI_MOCK.metadata.model_version}
+        {operatorName} · {nSites} sites · {horizon}-year horizon · Model {modelVer}
       </div>
 
       {/* ── Top KPI row ────────────────────────────────────────────────────── */}
       <div className="overview-kpi-row">
         <div className="overview-kpi-card">
           <div className="overview-kpi-label">Overall Risk Score</div>
-          <div className={`risk-score-ring ${scoreClass(overall)}`} style={{ width:64, height:64, margin:'8px auto' }}>
-            <span className="ring-value" style={{ fontSize:20 }}>{overall}</span>
+          <div className={`risk-score-ring ${scoreClass(overallScore)}`} style={{ width: 64, height: 64, margin: '8px auto' }}>
+            <span className="ring-value" style={{ fontSize: 20 }}>{Math.round(overallScore)}</span>
           </div>
-          <div style={{ fontSize:11, textAlign:'center', color:'var(--dark-grey)' }}>/ 100</div>
+          <div style={{ fontSize: 11, textAlign: 'center', color: 'var(--dark-grey)' }}>/ 100 · Live Risk</div>
         </div>
-        <div className="overview-kpi-card overview-kpi-critical">
-          <div className="overview-kpi-label">Critical Alerts</div>
-          <div className="overview-kpi-value" style={{ color:'#B91C1C' }}>{critCount}</div>
-          <div style={{ fontSize:11, color:'var(--dark-grey)' }}>{warnCount} warnings open</div>
+        <div className="overview-kpi-card">
+          <div className="overview-kpi-label">E[Annual Loss]</div>
+          <div className="overview-kpi-value" style={{ fontSize: 16 }}>{fmtM(totalEAL)}</div>
+          <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>Alle domener · Live Risk</div>
         </div>
         <div className="overview-kpi-card">
           <div className="overview-kpi-label">Input Completeness</div>
-          <div className="overview-kpi-value">{Math.round(avgCompleteness * 100)}%</div>
-          <div style={{ fontSize:11, color:'var(--dark-grey)' }}>Portfolio average</div>
+          {avgCompleteness != null ? (
+            <>
+              <div className="overview-kpi-value">{Math.round(avgCompleteness * 100)}%</div>
+              <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>Porteføljesnitt · Live Risk</div>
+            </>
+          ) : (
+            <div style={{ fontSize: 13, color: 'var(--dark-grey)', marginTop: 8 }}>
+              {loading ? 'Laster…' : '—'}
+            </div>
+          )}
         </div>
         <div className="overview-kpi-card">
-          <div className="overview-kpi-label">E[Annual Bio Loss]</div>
-          <div className="overview-kpi-value" style={{ fontSize:16 }}>
-            {fmtM(Object.values(C5AI_MOCK.domain_breakdown).reduce((s, d) => s + d.annual_loss_nok, 0))}
+          <div className="overview-kpi-label">Total Biomasse</div>
+          <div className="overview-kpi-value" style={{ fontSize: 16 }}>
+            {seaSites.reduce((s, si) => s + (si.biomass_tonnes ?? 0), 0).toLocaleString('nb-NO')} t
           </div>
-          <div style={{ fontSize:11, color:'var(--dark-grey)' }}>All domains</div>
-        </div>
-        <div className="overview-kpi-card">
-          <div className="overview-kpi-label">Learning Status</div>
-          <div style={{ margin:'8px 0' }}>
-            <span className={`c5ai-status-pill c5ai-status-${C5AI_MOCK.learning.status}`}>
-              {C5AI_MOCK.learning.status.toUpperCase()}
-            </span>
+          <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>
+            {fmtM(seaSites.reduce((s, si) => s + (si.biomass_value_nok ?? 0), 0))} verdi
           </div>
-          <div style={{ fontSize:11, color:'var(--dark-grey)' }}>Cycle {C5AI_MOCK.learning.cycles_completed} / 10</div>
         </div>
       </div>
 
-      {/* ── Alert summary ─────────────────────────────────────────────────── */}
-      <div className="card">
-        <div className="section-title" style={{ marginBottom:10 }}>Active Alerts</div>
-        <AlertSummaryCards alerts={MOCK_ALERTS} />
-        {onNavigate && (
-          <button className="overview-link-btn" onClick={() => onNavigate('alerts')}>
-            View all alerts →
-          </button>
-        )}
-      </div>
-
-      {/* ── Top Risk Sites (smolt) ────────────────────────────────────────── */}
+      {/* ── Top Risk Sites (sea) ──────────────────────────────────────────── */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div className="section-title" style={{ margin: 0 }}>Topp risikoanlegg — Settefisk</div>
+          <div className="section-title" style={{ margin: 0 }}>Topp risikoanlegg — Sjølokaliteter</div>
           {onNavigate && (
-            <button className="overview-link-btn" style={{ margin: 0 }} onClick={() => onNavigate('c5ai')}>
+            <button className="overview-link-btn" style={{ margin: 0 }} onClick={() => onNavigate('live_risk')}>
               Se alle anlegg →
             </button>
           )}
         </div>
         <div style={{ fontSize: 12, color: 'var(--dark-grey)', marginBottom: 12 }}>
-          Topp 3 settefiskanlegg rangert etter total risikoscore. Klikk et anlegg for å se detaljprofil.
+          KH-portefølje rangert etter total risikoscore fra Live Risk-modellen.
         </div>
+        {loading && <div style={{ fontSize: 13, color: 'var(--dark-grey)', padding: '12px 0' }}>Laster Live Risk…</div>}
+        {!loading && seaSites.length === 0 && (
+          <div style={{ fontSize: 13, color: 'var(--dark-grey)', padding: '12px 0' }}>
+            Ingen lokalitetsdata — start backend for å laste Live Risk.
+          </div>
+        )}
         <div className="site-risk-cards-row">
-          {[...SMOLT_SITE_RISK]
-            .sort((a, b) => b.total_risk_score - a.total_risk_score)
-            .slice(0, 3)
+          {[...seaSites]
+            .sort((a, b) => b.risk_score - a.risk_score)
             .map((site, rank) => {
-              const domMeta = SMOLT_DOMAIN_META[site.dominant_domain] || { label: site.dominant_domain, color: '#6B7280' }
-              const sc = site.total_risk_score >= 65 ? 'high' : site.total_risk_score >= 40 ? 'medium' : 'low'
-              const isSelected = site.site_id === selectedSmoltId
+              const sc = scoreClass(site.risk_score)
+              const domColor = DOMAIN_COLORS[site.dominant_risks?.[0]] || '#6B7280'
+              const domLabel = DOMAIN_LABELS[site.dominant_risks?.[0]] || site.dominant_risks?.[0]
               return (
                 <div
                   key={site.site_id}
-                  className={`site-risk-card ${isSelected ? 'site-risk-card-selected' : ''}`}
-                  onClick={() => setSelectedSmoltId(isSelected ? null : site.site_id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => e.key === 'Enter' && setSelectedSmoltId(isSelected ? null : site.site_id)}
+                  className="site-risk-card"
+                  onClick={() => onNavigate && onNavigate('live_risk')}
+                  role="button" tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && onNavigate && onNavigate('live_risk')}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <span className="site-rank-badge">#{rank + 1}</span>
-                    <AlertBadge level={site.alert_level} />
+                    <RiskLevelBadge score={site.risk_score} />
                   </div>
                   <div className="site-card-name">{site.site_name}</div>
                   <div style={{ fontSize: 11, color: 'var(--dark-grey)', marginBottom: 8 }}>
-                    {site.municipality} ·{' '}
-                    <span style={{ color: site.production_type === 'RAS' ? '#0D9488' : '#6B7280', fontWeight: 600 }}>
-                      {site.production_type}
-                    </span>
+                    {EXPOSURE_LABELS[site.fjord_exposure] || site.fjord_exposure} · Sjø
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <div className={`risk-score-ring ${sc}`} style={{ width: 44, height: 44, flexShrink: 0 }}>
-                      <span className="ring-value" style={{ fontSize: 13 }}>{site.total_risk_score}</span>
+                      <span className="ring-value" style={{ fontSize: 13 }}>{Math.round(site.risk_score)}</span>
                     </div>
                     <div>
                       <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>Dom. domene</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: domMeta.color }}>{domMeta.label}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: domColor }}>{domLabel}</div>
                     </div>
                   </div>
                   <div className="site-card-metrics">
                     <div className="site-card-metric">
-                      <div className="site-card-metric-label">EAL</div>
-                      <div className="site-card-metric-value">
-                        NOK {(site.expected_annual_loss_nok / 1_000_000).toFixed(2)}M
-                      </div>
+                      <div className="site-card-metric-label">Biomasse</div>
+                      <div className="site-card-metric-value">{site.biomass_tonnes?.toLocaleString('nb-NO')} t</div>
                     </div>
                     <div className="site-card-metric">
-                      <div className="site-card-metric-label">SCR-bidrag</div>
-                      <div className="site-card-metric-value">
-                        NOK {(site.scr_contribution_nok / 1_000_000).toFixed(2)}M
-                      </div>
+                      <div className="site-card-metric-label">Biomasseverdi</div>
+                      <div className="site-card-metric-value">{fmtM(site.biomass_value_nok)}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11 }}>
-                    <span style={{ color: site.alerts_open > 0 ? '#DC2626' : 'var(--dark-grey)' }}>
-                      {site.alerts_open > 0 ? `${site.alerts_open} varsler` : 'Ingen varsler'}
-                    </span>
-                    <span style={{ color: 'var(--dark-grey)' }}>
-                      Konfidens {Math.round(site.data_confidence * 100)}%
-                    </span>
+                  <div style={{ textAlign: 'right', marginTop: 8, fontSize: 11, color: 'var(--dark-grey)' }}>
+                    {site.site_id}
                   </div>
                 </div>
               )
             })}
         </div>
-        {selectedSmoltId && (
-          <div style={{ marginTop: 16 }}>
-            <SiteRiskDetailPanel
-              site={SMOLT_SITE_RISK.find(s => s.site_id === selectedSmoltId)}
-              onClose={() => setSelectedSmoltId(null)}
-            />
-          </div>
-        )}
       </div>
 
       {/* ── Domain breakdown ──────────────────────────────────────────────── */}
       <div className="card">
-        <div className="section-title" style={{ marginBottom:10 }}>Domain Loss Breakdown</div>
-        {Object.entries(C5AI_MOCK.domain_breakdown).map(([domain, d]) => (
+        <div className="section-title" style={{ marginBottom: 10 }}>Domain Loss Breakdown</div>
+        {Object.entries(domainBreakdown).map(([domain, d]) => (
           <div key={domain} className="domain-bar-row">
-            <div className="domain-bar-label" style={{ textTransform:'capitalize' }}>{domain}</div>
+            <div className="domain-bar-label" style={{ textTransform: 'capitalize' }}>{domain}</div>
             <div className="domain-bar-track">
-              <div className="domain-bar-fill" style={{ width:`${d.fraction*100}%`, background:DOMAIN_COLORS[domain] }} />
+              <div className="domain-bar-fill" style={{ width: `${d.fraction * 100}%`, background: DOMAIN_COLORS[domain] }} />
             </div>
-            <div className="domain-bar-pct" style={{ color:DOMAIN_COLORS[domain] }}>{(d.fraction*100).toFixed(0)}%</div>
+            <div className="domain-bar-pct" style={{ color: DOMAIN_COLORS[domain] }}>{(d.fraction * 100).toFixed(0)}%</div>
             <div className="domain-bar-nok">{fmtM(d.annual_loss_nok)}/yr</div>
           </div>
         ))}
       </div>
 
-      {/* ── Top alert per domain ──────────────────────────────────────────── */}
-      <div className="card">
-        <div className="section-title" style={{ marginBottom: 10 }}>Top Alert by Domain</div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {Object.entries(DOMAIN_COLORS).map(([domain, color]) => {
-            const domainAlerts = MOCK_ALERTS.filter(a => {
-              const d = a.domain || ({'hab':'biological','lice':'biological','jellyfish':'biological','pathogen':'biological'}[a.risk_type] || domain)
-              return d === domain
-            })
-            const top = domainAlerts.sort((a, b) => {
-              const order = { CRITICAL: 0, WARNING: 1, WATCH: 2, NORMAL: 3 }
-              return (order[a.alert_level] ?? 4) - (order[b.alert_level] ?? 4)
-            })[0]
-            return (
-              <div key={domain} style={{ flex: 1, minWidth: 180, padding: '10px 14px', border: `2px solid ${color}20`, borderRadius: 8, background: `${color}08` }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'capitalize', marginBottom: 4 }}>
-                  {domain}
-                </div>
-                {top ? (
-                  <>
-                    <div style={{ fontSize: 12, fontWeight: 600 }}>{top.risk_type.replace(/_/g, ' ')}</div>
-                    <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>
-                      {top.alert_level} · {top.site_id}
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ fontSize: 11, color: 'var(--dark-grey)' }}>No active alerts</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
       {/* ── Input completeness ────────────────────────────────────────────── */}
       <div className="card">
-        <div className="section-title" style={{ marginBottom:10 }}>Input Data Completeness</div>
-        <div className="dq-completeness-row">
-          {MOCK_DATA_QUALITY.map(site => (
-            <InputCompletenessCard key={site.site_id} site={site} />
-          ))}
-        </div>
+        <div className="section-title" style={{ marginBottom: 10 }}>Input Data Completeness</div>
+        {dataQuality.length > 0 ? (
+          <div className="dq-completeness-row">
+            {dataQuality.map(site => (
+              <InputCompletenessCard key={site.site_id} site={site} />
+            ))}
+          </div>
+        ) : (
+          <div style={{ fontSize: 13, color: 'var(--dark-grey)', padding: '8px 0' }}>
+            {loading ? 'Laster datakvalitet…' : 'Ingen datakvalitetsdata — start backend.'}
+          </div>
+        )}
         {onNavigate && (
           <button className="overview-link-btn" onClick={() => onNavigate('inputs')}>
             View full inputs →

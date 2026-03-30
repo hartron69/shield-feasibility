@@ -2,7 +2,7 @@
  * BioLineChart – Ren SVG linjegrafikk for biologisk tidsserie.
  *
  * Props:
- *   data       [{date: 'YYYY-MM', value: number}]  – 12 månedlige punkter
+ *   data       [{date: 'YYYY-MM'|'YYYY-MM-DD', value: number}]  – månedlige eller daglige punkter
  *   baseline   number                               – stiplet grå referanselinje
  *   threshold  {value, direction, label} | null     – stiplet rød/amber varslingsgrense
  *   color      string                               – linjefargen
@@ -56,7 +56,10 @@ export default function BioLineChart({
   const svgRef = useRef(null)
   const [tooltip, setTooltip] = useState(null) // { x, y, date, value }
 
-  if (!data || data.length === 0) return null
+  // Filter nulls; normalise to {date, value} (date may be YYYY-MM or YYYY-MM-DD)
+  const filtered = (data || []).filter(d => d.value !== null && d.value !== undefined)
+  if (filtered.length === 0) return null
+  data = filtered
 
   const W = 420
   const H = height
@@ -104,10 +107,11 @@ export default function BioLineChart({
     return { v, y: yScale(v) }
   })
 
-  // ── X-akse-etiketter (annenhver) ───────────────────────────────────────────
+  // ── X-akse-etiketter (adaptivt — ~12 etiketter uavhengig av datamengde) ───
+  const labelStep = Math.max(1, Math.floor(data.length / 12))
   const xLabels = data
     .map((d, i) => ({ i, label: formatMonth(d.date) }))
-    .filter((_, i) => i % 2 === 0 || i === data.length - 1)
+    .filter((_, i) => i % labelStep === 0 || i === data.length - 1)
 
   // ── Risikosonefyll (mellom terskel og aksetopp/bunn) ───────────────────────
   let riskFill = null

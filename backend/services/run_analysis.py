@@ -34,6 +34,22 @@ from data.input_schema import OperatorInput
 _REPORTS_DIR = Path(__file__).resolve().parents[2] / "backend" / "static" / "reports"
 
 
+def _compute_non_bio_fracs(domain_fracs: dict) -> dict:
+    """
+    Derive non-bio residual fractions from Live Risk domain fractions.
+    Normalises structural/environmental/operational to sum to 1.0
+    so they can replace _NON_BIO_DOMAIN_FRACTIONS in build_domain_loss_breakdown.
+    """
+    non_bio = {
+        d: domain_fracs.get(d, 0.0)
+        for d in ("structural", "environmental", "operational")
+    }
+    total = sum(non_bio.values())
+    if total <= 0:
+        return {}
+    return {d: v / total for d, v in non_bio.items()}
+
+
 def _buf_to_b64(buf: io.BytesIO) -> str:
     buf.seek(0)
     return base64.b64encode(buf.read()).decode("ascii")
@@ -167,7 +183,17 @@ def run_feasibility_analysis(
 
     # Step 3: Monte Carlo
     from models.monte_carlo import MonteCarloEngine
-    engine = MonteCarloEngine(op_input, n_simulations=model.n_simulations, domain_correlation=domain_corr)
+    from backend.services import c5ai_state as _c5ai
+    _stored_forecast = _c5ai.get_forecast()
+    _domain_fracs = _c5ai.get_domain_fracs()
+    _non_bio_fracs = _compute_non_bio_fracs(_domain_fracs) if _domain_fracs else None
+    engine = MonteCarloEngine(
+        op_input,
+        n_simulations=model.n_simulations,
+        domain_correlation=domain_corr,
+        pre_loaded_forecast=_stored_forecast,
+        non_bio_domain_fracs=_non_bio_fracs,
+    )
     sim = engine.run()
 
     # Step 4: Strategy models
@@ -611,11 +637,17 @@ def run_feasibility_service(request: FeasibilityRequest) -> FeasibilityResponse:
 
     # ── 3. Monte Carlo ────────────────────────────────────────────────────────
     from models.monte_carlo import MonteCarloEngine
+    from backend.services import c5ai_state as _c5ai
+    _stored_forecast = _c5ai.get_forecast()
+    _domain_fracs = _c5ai.get_domain_fracs()
+    _non_bio_fracs = _compute_non_bio_fracs(_domain_fracs) if _domain_fracs else None
     engine = MonteCarloEngine(
         operator,
         n_simulations=model.n_simulations,
         domain_correlation=domain_corr,
         cage_multipliers=alloc_summary.cage_multipliers,
+        pre_loaded_forecast=_stored_forecast,
+        non_bio_domain_fracs=_non_bio_fracs,
     )
     sim = engine.run()
 

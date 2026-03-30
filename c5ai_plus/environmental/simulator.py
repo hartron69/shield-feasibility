@@ -7,8 +7,8 @@ from typing import Dict
 from c5ai_plus.environmental.inputs import EnvironmentalSiteInput
 
 _DEMO_ENVIRONMENTAL: Dict[str, dict] = {
-    'DEMO_OP_S01': dict(  # Frohavet North — open coast, highest exposure
-        site_id='DEMO_OP_S01',
+    'KH_S01': dict(  # Kornstad — open coast, highest exposure
+        site_id='KH_S01',
         dissolved_oxygen_mg_l=6.8,
         oxygen_saturation_pct=78.0,
         surface_temp_c=16.2,
@@ -17,8 +17,8 @@ _DEMO_ENVIRONMENTAL: Dict[str, dict] = {
         ice_risk_score=0.02,
         site_exposure_class='open',
     ),
-    'DEMO_OP_S02': dict(  # Sunndalsfjord — semi-exposed
-        site_id='DEMO_OP_S02',
+    'KH_S02': dict(  # Leite — semi-exposed
+        site_id='KH_S02',
         dissolved_oxygen_mg_l=8.2,
         oxygen_saturation_pct=92.0,
         surface_temp_c=12.4,
@@ -27,8 +27,8 @@ _DEMO_ENVIRONMENTAL: Dict[str, dict] = {
         ice_risk_score=0.05,
         site_exposure_class='semi',
     ),
-    'DEMO_OP_S03': dict(  # Storfjorden South — sheltered
-        site_id='DEMO_OP_S03',
+    'KH_S03': dict(  # Hogsnes — sheltered
+        site_id='KH_S03',
         dissolved_oxygen_mg_l=9.5,
         oxygen_saturation_pct=106.0,
         surface_temp_c=9.8,

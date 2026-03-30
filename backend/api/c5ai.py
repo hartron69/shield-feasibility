@@ -93,8 +93,10 @@ def _run_bio_pipeline(operator_input, static_loss_nok: float = 22_600_000) -> di
     Returns a metadata dict on success, raises on failure.
     """
     from c5ai_plus.pipeline import ForecastPipeline
+    from backend.services import c5ai_state as _state
     pipeline = ForecastPipeline(verbose=False)
     forecast = pipeline.run(operator_input, static_mean_annual_loss=static_loss_nok)
+    _state.store_forecast(forecast)
     agg = forecast.operator_aggregate
     meta = forecast.metadata
     return {
@@ -120,7 +122,22 @@ def _run_c5ai_pipeline_safe() -> dict:
 
     Returns a metadata dict consumed by run_c5ai().
     """
-    # ── Try BarentsWatch data first ──────────────────────────────────────────
+    # ── Priority 0: Live Risk feed data (always available — mock or real) ────
+    try:
+        from backend.services.live_risk_to_c5ai import build_c5ai_input_from_live_feed
+        op = build_c5ai_input_from_live_feed()
+        result = _run_bio_pipeline(op)
+        result["data_mode"] = "live_risk"
+        result["source"] = "live_risk_feed"
+        result["message"] = (
+            f"C5AI+ pipeline kjørt med Live Risk-data "
+            f"({result['site_count']} lokaliteter)"
+        )
+        return result
+    except Exception:
+        pass  # fall through to BarentsWatch
+
+    # ── Try BarentsWatch data ─────────────────────────────────────────────────
     try:
         from c5ai_plus.Barentswatch.bw_to_c5ai_adapter import (
             bw_data_available,
@@ -246,6 +263,18 @@ def run_c5ai() -> C5AIRunResponse:
             else ["Simulert — demo data (prior-modus)"]
         ),
     })
+
+    # Store per-domain fractions from Live Risk overview for Gap 6 enrichment
+    try:
+        from backend.services.live_risk_feed import get_c5ai_risk_overview
+        from backend.services.c5ai_state import store_domain_fracs
+        overview = get_c5ai_risk_overview()
+        db = overview.get("domain_breakdown", {})
+        fracs = {d: db[d]["fraction"] for d in db}
+        if fracs:
+            store_domain_fracs(fracs)
+    except Exception:
+        pass
 
     run_id, run_at = c5ai_state.record_c5ai_run()
     status = c5ai_state.get_status()

@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import InputSourceBadge from './InputSourceBadge.jsx'
-import { MOCK_ENVIRONMENTAL_INPUTS, ENVIRONMENTAL_SITE_IDS } from '../../data/mockMultiDomainData.js'
-import { SITE_REGISTRY } from '../../data/mockInputsData.js'
+
+const SITE_IDS   = ['KH_S01', 'KH_S02', 'KH_S03']
+const SITE_NAMES = { KH_S01: 'Kornstad', KH_S02: 'Leite', KH_S03: 'Hogsnes' }
 
 function formatVal(v) {
+  if (v === null || v === undefined) return '—'
   if (typeof v === 'string') return v
-  if (v === undefined || v === null) return '—'
-  return typeof v === 'number' && v < 10 ? v.toFixed(2) : v.toFixed(1)
+  if (Number.isInteger(v))   return String(v)
+  return v < 10 ? v.toFixed(2) : v.toFixed(1)
 }
 
 function formatDelta(current, baseline) {
@@ -15,34 +17,47 @@ function formatDelta(current, baseline) {
   return (d >= 0 ? '+' : '') + d.toFixed(2)
 }
 
-export default function EnvironmentalInputsPanel() {
-  const [activeSite, setActiveSite] = useState(ENVIRONMENTAL_SITE_IDS[0])
-  const site = MOCK_ENVIRONMENTAL_INPUTS[activeSite]
+export default function EnvironmentalInputsPanel({ snapshots, loading }) {
+  const [activeSite, setActiveSite] = useState(SITE_IDS[0])
+
+  if (loading) {
+    return <div className="inputs-empty">Laster miljødata fra Live Risk…</div>
+  }
+
+  const snap = snapshots[activeSite]
+  if (!snap) {
+    return <div className="inputs-empty">Ingen miljødata tilgjengelig. Start backend for å laste Live Risk-data.</div>
+  }
+
+  const domain = snap.environmental
 
   return (
     <div className="bio-panel">
+      {/* Site selector */}
       <div className="bio-site-row">
-        {ENVIRONMENTAL_SITE_IDS.map(sid => (
+        {SITE_IDS.map(sid => (
           <button
             key={sid}
             className={`bio-site-btn ${activeSite === sid ? 'active' : ''}`}
             onClick={() => setActiveSite(sid)}
           >
-            {SITE_REGISTRY[sid] || sid}
+            {SITE_NAMES[sid]}
           </button>
         ))}
       </div>
 
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>
-          {site.site_name} — Environmental Conditions
+          {SITE_NAMES[activeSite]} — Environmental Conditions
         </span>
-        <InputSourceBadge source={site.source} />
+        <InputSourceBadge source={domain.source} />
         <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--dark-grey)' }}>
-          Recorded: {new Date(site.recorded_at).toLocaleString('nb-NO')}
+          Recorded: {new Date(snap.recorded_at).toLocaleString('nb-NO')}
         </span>
       </div>
 
+      {/* Table */}
       <table className="bio-table">
         <thead>
           <tr>
@@ -55,7 +70,7 @@ export default function EnvironmentalInputsPanel() {
           </tr>
         </thead>
         <tbody>
-          {site.readings.map((row, i) => (
+          {domain.readings.map((row, i) => (
             <tr key={i} className={row.adverse ? 'bio-row-adverse' : ''}>
               <td style={{ fontWeight: 500 }}>
                 {row.parameter}
@@ -72,16 +87,18 @@ export default function EnvironmentalInputsPanel() {
               </td>
               <td style={{ color: 'var(--dark-grey)', fontSize: 11 }}>{row.unit}</td>
               <td>
-                {row.adverse ? (
-                  <span className="threshold-badge threshold-adverse">Adverse</span>
-                ) : (
-                  <span className="threshold-badge threshold-ok">OK</span>
-                )}
+                {row.adverse
+                  ? <span className="threshold-badge threshold-adverse">Adverse</span>
+                  : <span className="threshold-badge threshold-ok">OK</span>}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="inputs-note">
+        O₂ og temperatur fra Live Risk-tidsserie (siste verdi). Bølgehøyde og strøm estimert
+        fra sesongbasert bølgebelastningsmodell. Oppdateres ved hvert feed-kall.
+      </div>
     </div>
   )
 }

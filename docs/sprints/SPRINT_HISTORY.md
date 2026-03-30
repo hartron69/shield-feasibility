@@ -4,6 +4,11 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Inputs Live Risk Integration (2026-03-30)
+**Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
+**Artifacts:** `docs/sprints/sprint_inputs_live_risk_integration/`
+**Summary:** Connected all C5AI+ Input Data tabs to Live Risk backend. BarentsWatch client updated to use default CLIENT_ID (`"harald@fender.link:Shield Data Client"`) so only `BW_CLIENT_SECRET` is required. `SiteProfileForm.jsx` rewritten to use `sources` dict and `bw_live` flag from API for correct badge rendering. All 7 input panels (`BiologicalInputsPanel`, `StructuralInputsPanel`, `EnvironmentalInputsPanel`, `OperationalInputsPanel`, `AlertSignalsPanel`, `DataQualityPanel`, `InputsPage`) wired to live fetch functions. `OverviewPage.jsx` completely rewritten: removed 5 mock-data sections (MOCK_ALERTS, AlertSummaryCards, Learning Status KPI, Top Alert by Domain, biomass-weighted EAL), replaced with live data from `fetchC5AIRiskOverview()` and `fetchDataQuality()`, added `RiskLevelBadge` and `Total Biomasse` KPI. Scenario endpoint default sea operator changed from empty profile to KH portfolio built from Live Risk config (`_build_kh_default()`). Fixed 3 scenario engine bugs causing baseline to show non-zero change: (1) biomass override normalization — portfolio ratio instead of per-site division; (2) float precision threshold `> 0.02` → `> 0.03` for `operational_factor`; (3) asymmetric `SEA_DIVERSIFICATION` now applied to both baseline and scenario. Added `effective_change` guard to skip scenario MC re-run when no parameters change. Added model disclaimer text to `ScenarioOverridePanel.jsx`.
+
 ## Sprint – Live Feed → C5AI Risk Score Wiring (2026-03-27)
 **Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
 **Artifacts:** `docs/sprints/sprint_live_feed_c5ai_wiring/`

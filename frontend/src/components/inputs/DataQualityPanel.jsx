@@ -1,6 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import InputSourceBadge from './InputSourceBadge.jsx'
 import InputCompletenessCard from './InputCompletenessCard.jsx'
+import { fetchDataQuality } from '../../api/client.js'
+
+const KH_SITES = ['KH_S01', 'KH_S02', 'KH_S03']
 
 const FLAG_ORDER = { SUFFICIENT: 0, LIMITED: 1, POOR: 2, MISSING: 3 }
 
@@ -9,23 +12,49 @@ function FlagPill({ flag }) {
 }
 
 function ConfidenceDot({ confidence }) {
-  const color = { high:'#16A34A', medium:'#D97706', low:'#DC2626' }[confidence] || '#9CA3AF'
+  const color = { high: '#16A34A', medium: '#D97706', low: '#DC2626' }[confidence] || '#9CA3AF'
   return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:5 }}>
-      <span style={{ width:8, height:8, borderRadius:'50%', background:color, display:'inline-block' }} />
-      <span style={{ textTransform:'capitalize' }}>{confidence}</span>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block' }} />
+      <span style={{ textTransform: 'capitalize' }}>{confidence}</span>
     </span>
   )
 }
 
-export default function DataQualityPanel({ qualityData }) {
-  if (!qualityData || qualityData.length === 0) return <div className="inputs-empty">No data quality information available.</div>
+export default function DataQualityPanel() {
+  const [qualityData, setQualityData] = useState([])
+  const [loading, setLoading]         = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    Promise.all(KH_SITES.map(id => fetchDataQuality(id)))
+      .then(results => setQualityData(results))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return <div className="inputs-empty">Laster datakvalitetsdata fra Live Risk…</div>
+  }
+
+  if (qualityData.length === 0) {
+    return <div className="inputs-empty">Ingen datakvalitetsdata tilgjengelig. Start backend for å laste Live Risk-data.</div>
+  }
+
+  // Adapt API response to the shape InputCompletenessCard expects
+  const cardData = qualityData.map(site => ({
+    site_id:              site.locality_id,
+    site_name:            site.locality_name,
+    overall_completeness: site.overall_completeness,
+    overall_confidence:   site.overall_confidence,
+    risk_types:           site.risk_types,
+  }))
 
   return (
     <div>
       {/* Completeness cards row */}
       <div className="dq-completeness-row">
-        {qualityData.map(site => (
+        {cardData.map(site => (
           <InputCompletenessCard key={site.site_id} site={site} />
         ))}
       </div>
@@ -50,9 +79,9 @@ export default function DataQualityPanel({ qualityData }) {
             Object.entries(site.risk_types)
               .sort((a, b) => FLAG_ORDER[a[1].flag] - FLAG_ORDER[b[1].flag])
               .map(([rt, d]) => (
-                <tr key={`${site.site_id}-${rt}`}>
-                  <td style={{ fontWeight: 600 }}>{site.site_name}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{rt}</td>
+                <tr key={`${site.locality_id}-${rt}`}>
+                  <td style={{ fontWeight: 600 }}>{site.locality_name}</td>
+                  <td style={{ textTransform: 'capitalize' }}>{rt.replace(/_/g, ' ')}</td>
                   <td><InputSourceBadge source={d.source} /></td>
                   <td>
                     <div className="dq-completeness-inline">
@@ -73,8 +102,8 @@ export default function DataQualityPanel({ qualityData }) {
                   <td>{d.n_obs}</td>
                   <td>
                     {d.missing_fields.length === 0
-                      ? <span style={{ color:'#16A34A', fontSize:12 }}>None</span>
-                      : <span style={{ fontSize:11, color:'var(--dark-grey)' }}>{d.missing_fields.join(', ')}</span>
+                      ? <span style={{ color: '#16A34A', fontSize: 12 }}>None</span>
+                      : <span style={{ fontSize: 11, color: 'var(--dark-grey)' }}>{d.missing_fields.join(', ')}</span>
                     }
                   </td>
                 </tr>
@@ -84,9 +113,12 @@ export default function DataQualityPanel({ qualityData }) {
       </table>
 
       <div className="inputs-note">
-        SUFFICIENT ≥ 80% complete | LIMITED 60–79% | POOR &lt; 60% | MISSING = no data.
-        Confidence drives model selection (prior vs. ML). Improve completeness by uploading
-        operator-reported environmental monitoring records.
+        SUFFICIENT ≥ 80% | LIMITED 60–79% | POOR &lt; 60% | MISSING = ingen data.
+        Kompletthetsgrad for Live Risk-parametere (lus, temp, O₂, behandlinger) er beregnet
+        fra faktisk antall ikke-null verdier i 90-dagersvinduet. Strukturelle og operasjonelle
+        verdier er avledet fra Live Risk-modellen (kilde: Live Risk) — ikke direktemålt.
+        Jellyfish, HAB-blomst, PCR-resultater og ankerkontroll er ikke tilgjengelig i feeden.
+        Oppdateres ved hvert Live Risk-kall.
       </div>
     </div>
   )

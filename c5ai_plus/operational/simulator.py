@@ -7,8 +7,8 @@ from typing import Dict
 from c5ai_plus.operational.inputs import OperationalSiteInput
 
 _DEMO_OPERATIONAL: Dict[str, dict] = {
-    'DEMO_OP_S01': dict(  # Frohavet North — open coast, most complex operations
-        site_id='DEMO_OP_S01',
+    'KH_S01': dict(  # Kornstad — open coast, most complex operations
+        site_id='KH_S01',
         staffing_score=0.55,
         training_compliance_pct=72.0,
         incident_rate_12m=1.4,
@@ -16,8 +16,8 @@ _DEMO_OPERATIONAL: Dict[str, dict] = {
         critical_ops_frequency_per_month=6.5,
         equipment_readiness_score=0.65,
     ),
-    'DEMO_OP_S02': dict(  # Sunndalsfjord — average operations
-        site_id='DEMO_OP_S02',
+    'KH_S02': dict(  # Leite — average operations
+        site_id='KH_S02',
         staffing_score=0.78,
         training_compliance_pct=88.0,
         incident_rate_12m=0.6,
@@ -25,8 +25,8 @@ _DEMO_OPERATIONAL: Dict[str, dict] = {
         critical_ops_frequency_per_month=3.8,
         equipment_readiness_score=0.82,
     ),
-    'DEMO_OP_S03': dict(  # Storfjorden South — best operational standards
-        site_id='DEMO_OP_S03',
+    'KH_S03': dict(  # Hogsnes — best operational standards
+        site_id='KH_S03',
         staffing_score=0.92,
         training_compliance_pct=97.0,
         incident_rate_12m=0.2,

@@ -186,7 +186,10 @@ export default function App() {
   }, [])
 
   function refreshC5AIRiskOverview() {
-    fetchC5AIRiskOverview().then(setC5aiRiskData).catch(() => {})
+    // Re-run C5AI+ pipeline with latest Live Risk feed data, then refresh scores
+    runC5AI().catch(() => {}).finally(() => {
+      fetchC5AIRiskOverview().then(setC5aiRiskData).catch(() => {})
+    })
   }
 
   async function handleC5AIRun() {

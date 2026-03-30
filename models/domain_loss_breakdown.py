@@ -474,6 +474,7 @@ def build_domain_loss_breakdown(
     domain_correlation: Optional["DomainCorrelationMatrix"] = None,
     rng: Optional[np.random.Generator] = None,
     cage_multipliers: Optional[Dict[str, float]] = None,
+    non_bio_fracs_override: Optional[Dict[str, float]] = None,
 ) -> DomainLossBreakdown:
     """
     Convenience factory for ``DomainLossBreakdown``.
@@ -515,8 +516,9 @@ def build_domain_loss_breakdown(
     if bio_breakdown:
         if cage_multipliers:
             # Apply cage multipliers to non-bio residual fractions only
+            _base_non_bio = non_bio_fracs_override if non_bio_fracs_override else _NON_BIO_DOMAIN_FRACTIONS
             eff_non_bio = apply_cage_multipliers_to_domain_fractions(
-                _NON_BIO_DOMAIN_FRACTIONS, cage_multipliers
+                _base_non_bio, cage_multipliers
             )
             biological = {k: v.copy() for k, v in bio_breakdown.items()}
             bio_total = sum(biological.values())
@@ -532,7 +534,22 @@ def build_domain_loss_breakdown(
                 bio_modelled=True,
             )
         else:
-            dbd = DomainLossBreakdown.from_bio_breakdown(bio_breakdown, annual_losses)
+            if non_bio_fracs_override:
+                biological = {k: v.copy() for k, v in bio_breakdown.items()}
+                bio_total = sum(biological.values())
+                residual = np.maximum(annual_losses - bio_total, 0.0)
+                structural    = _split_domain(residual, "structural",    non_bio_fracs_override)
+                environmental = _split_domain(residual, "environmental", non_bio_fracs_override)
+                operational   = _split_domain(residual, "operational",   non_bio_fracs_override)
+                dbd = DomainLossBreakdown(
+                    biological=biological,
+                    structural=structural,
+                    environmental=environmental,
+                    operational=operational,
+                    bio_modelled=True,
+                )
+            else:
+                dbd = DomainLossBreakdown.from_bio_breakdown(bio_breakdown, annual_losses)
     else:
         if cage_multipliers:
             # Apply cage multipliers to all domain fractions

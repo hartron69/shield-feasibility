@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 import InputSourceBadge from './InputSourceBadge.jsx'
-import { MOCK_STRUCTURAL_INPUTS, STRUCTURAL_SITE_IDS } from '../../data/mockMultiDomainData.js'
-import { SITE_REGISTRY } from '../../data/mockInputsData.js'
 
-function deltaClass(current, baseline, adverse) {
-  if (adverse) return 'delta-bad'
-  if (typeof current === 'number' && typeof baseline === 'number') {
-    return current >= baseline ? 'delta-good' : 'delta-bad'
-  }
-  return ''
+const SITE_IDS   = ['KH_S01', 'KH_S02', 'KH_S03']
+const SITE_NAMES = { KH_S01: 'Kornstad', KH_S02: 'Leite', KH_S03: 'Hogsnes' }
+
+function formatVal(v) {
+  if (v === null || v === undefined) return '—'
+  if (typeof v === 'string') return v
+  if (Number.isInteger(v))   return String(v)
+  return v < 10 ? v.toFixed(2) : v.toFixed(1)
 }
 
 function formatDelta(current, baseline) {
@@ -17,21 +17,31 @@ function formatDelta(current, baseline) {
   return (d >= 0 ? '+' : '') + d.toFixed(2)
 }
 
-export default function StructuralInputsPanel() {
-  const [activeSite, setActiveSite] = useState(STRUCTURAL_SITE_IDS[0])
-  const site = MOCK_STRUCTURAL_INPUTS[activeSite]
+export default function StructuralInputsPanel({ snapshots, loading }) {
+  const [activeSite, setActiveSite] = useState(SITE_IDS[0])
+
+  if (loading) {
+    return <div className="inputs-empty">Laster strukturelle data fra Live Risk…</div>
+  }
+
+  const snap = snapshots[activeSite]
+  if (!snap) {
+    return <div className="inputs-empty">Ingen strukturelle data tilgjengelig. Start backend for å laste Live Risk-data.</div>
+  }
+
+  const domain = snap.structural
 
   return (
     <div className="bio-panel">
       {/* Site selector */}
       <div className="bio-site-row">
-        {STRUCTURAL_SITE_IDS.map(sid => (
+        {SITE_IDS.map(sid => (
           <button
             key={sid}
             className={`bio-site-btn ${activeSite === sid ? 'active' : ''}`}
             onClick={() => setActiveSite(sid)}
           >
-            {SITE_REGISTRY[sid] || sid}
+            {SITE_NAMES[sid]}
           </button>
         ))}
       </div>
@@ -39,11 +49,11 @@ export default function StructuralInputsPanel() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <span style={{ fontWeight: 600, fontSize: 13 }}>
-          {site.site_name} — Structural Condition
+          {SITE_NAMES[activeSite]} — Structural Condition
         </span>
-        <InputSourceBadge source={site.source} />
+        <InputSourceBadge source={domain.source} />
         <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--dark-grey)' }}>
-          Recorded: {new Date(site.recorded_at).toLocaleString('nb-NO')}
+          Recorded: {new Date(snap.recorded_at).toLocaleString('nb-NO')}
         </span>
       </div>
 
@@ -60,7 +70,7 @@ export default function StructuralInputsPanel() {
           </tr>
         </thead>
         <tbody>
-          {site.readings.map((row, i) => (
+          {domain.readings.map((row, i) => (
             <tr key={i} className={row.adverse ? 'bio-row-adverse' : ''}>
               <td style={{ fontWeight: 500 }}>
                 {row.parameter}
@@ -70,23 +80,25 @@ export default function StructuralInputsPanel() {
                   </div>
                 )}
               </td>
-              <td style={{ fontWeight: 600 }}>{typeof row.value === 'number' ? row.value.toFixed(typeof row.value === 'number' && row.value > 10 ? 1 : 2) : row.value}</td>
-              <td style={{ color: 'var(--dark-grey)' }}>{typeof row.baseline === 'number' ? row.baseline.toFixed(typeof row.baseline > 10 ? 1 : 2) : row.baseline}</td>
-              <td className={deltaClass(row.value, row.baseline, row.adverse)}>
+              <td style={{ fontWeight: 600 }}>{formatVal(row.value)}</td>
+              <td style={{ color: 'var(--dark-grey)' }}>{formatVal(row.baseline)}</td>
+              <td className={row.adverse ? 'delta-bad' : ''}>
                 {formatDelta(row.value, row.baseline)}
               </td>
               <td style={{ color: 'var(--dark-grey)', fontSize: 11 }}>{row.unit}</td>
               <td>
-                {row.adverse ? (
-                  <span className="threshold-badge threshold-adverse">Adverse</span>
-                ) : (
-                  <span className="threshold-badge threshold-ok">OK</span>
-                )}
+                {row.adverse
+                  ? <span className="threshold-badge threshold-adverse">Adverse</span>
+                  : <span className="threshold-badge threshold-ok">OK</span>}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      <div className="inputs-note">
+        Avledet fra Live Risk-modellen: biofouling-funksjon, bølgebelastningsfunksjon og
+        behandlingshistorikk. Oppdateres ved hvert feed-kall.
+      </div>
     </div>
   )
 }

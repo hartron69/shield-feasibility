@@ -11,8 +11,8 @@ from c5ai_plus.structural.inputs import StructuralSiteInput
 
 # Realistic values calibrated to site exposure class
 _DEMO_STRUCTURAL: Dict[str, dict] = {
-    'DEMO_OP_S01': dict(  # Frohavet North — open coast, highest structural load
-        site_id='DEMO_OP_S01',
+    'KH_S01': dict(  # Kornstad — open coast, highest structural load
+        site_id='KH_S01',
         net_age_years=3.5,
         net_strength_residual_pct=72.0,
         mooring_inspection_score=0.55,
@@ -20,8 +20,8 @@ _DEMO_STRUCTURAL: Dict[str, dict] = {
         anchor_line_condition=0.58,
         last_inspection_days_ago=210,
     ),
-    'DEMO_OP_S02': dict(  # Sunndalsfjord — semi-exposed
-        site_id='DEMO_OP_S02',
+    'KH_S02': dict(  # Leite — semi-exposed
+        site_id='KH_S02',
         net_age_years=1.8,
         net_strength_residual_pct=88.0,
         mooring_inspection_score=0.78,
@@ -29,8 +29,8 @@ _DEMO_STRUCTURAL: Dict[str, dict] = {
         anchor_line_condition=0.80,
         last_inspection_days_ago=95,
     ),
-    'DEMO_OP_S03': dict(  # Storfjorden South — sheltered, lowest load
-        site_id='DEMO_OP_S03',
+    'KH_S03': dict(  # Hogsnes — sheltered, lowest load
+        site_id='KH_S03',
         net_age_years=0.9,
         net_strength_residual_pct=96.0,
         mooring_inspection_score=0.92,

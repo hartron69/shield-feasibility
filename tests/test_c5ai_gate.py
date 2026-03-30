@@ -244,7 +244,7 @@ class TestExtendedC5AIRunMeta:
         r = client.post("/api/feasibility/run", json=MINIMAL_FEASIBILITY_PAYLOAD)
         assert r.status_code == 200
         meta = r.json().get("c5ai_meta") or {}
-        assert meta.get("data_mode") in ("simulated", "real", "mixed")
+        assert meta.get("data_mode") in ("simulated", "real", "mixed", "live_risk")
 
     def test_c5ai_run_meta_source_labels_is_list(self):
         """source_labels is a list (possibly empty)."""

@@ -198,6 +198,12 @@ class ScenarioEngine:
         """
         SEA_DIVERSIFICATION = 0.89
 
+        # Total portfolio biomass — needed to scale total_biomass_override per site
+        portfolio_biomass = sum(
+            sum(s.biomass_tonnes for s in op.sites)
+            for op in site_inputs
+        ) or 1.0
+
         results = []
         total_baseline = 0.0
         total_scenario = 0.0
@@ -208,14 +214,45 @@ class ScenarioEngine:
                 or params.affected_facility_index == i
             )
 
-            sim_base  = MonteCarloEngine(site_op).run()
+            # Use a per-site fixed seed so baseline and scenario draws are identical;
+            # any change_pct then reflects only the parametric adjustment, not noise.
+            site_seed = 42 + i
+            sim_base  = MonteCarloEngine(site_op, seed=site_seed).run()
             base_loss = sim_base.mean_annual_loss
 
             if is_affected:
-                adjusted  = self._adjust_sea_params(site_op, params)
-                sim_scen  = MonteCarloEngine(adjusted).run()
-                scen_loss = sim_scen.mean_annual_loss
-                var_scen  = sim_scen.var_995
+                # Scale total_biomass_override from portfolio level to per-site level so
+                # that ratio = override_total/baseline_total (not override_total/site_biomass).
+                from dataclasses import replace as _dc_replace
+                site_biomass = sum(s.biomass_tonnes for s in site_op.sites) or 1.0
+                biomass_ratio = (
+                    (params.total_biomass_override / portfolio_biomass)
+                    if params.total_biomass_override is not None else 1.0
+                )
+                if params.total_biomass_override is not None:
+                    site_override = site_biomass * biomass_ratio
+                    site_params = _dc_replace(params, total_biomass_override=site_override)
+                else:
+                    site_params = params
+
+                # Skip MC re-run when no parameter would actually change the baseline.
+                # This avoids deepcopy floating-point drift giving spurious non-zero change.
+                effective_change = (
+                    (params.lice_pressure_index is not None and params.lice_pressure_index > 1.5) or
+                    (params.exposure_factor is not None and params.exposure_factor > 1.2) or
+                    (params.operational_factor is not None and abs(params.operational_factor - 1.0) > 0.03) or
+                    (params.dissolved_oxygen_mg_l is not None and params.dissolved_oxygen_mg_l < 7.0) or
+                    abs(biomass_ratio - 1.0) > 0.001
+                )
+
+                if effective_change:
+                    adjusted  = self._adjust_sea_params(site_op, site_params)
+                    sim_scen  = MonteCarloEngine(adjusted, seed=site_seed).run()
+                    scen_loss = sim_scen.mean_annual_loss
+                    var_scen  = sim_scen.var_995
+                else:
+                    scen_loss = base_loss
+                    var_scen  = sim_base.var_995
             else:
                 scen_loss = base_loss
                 var_scen  = sim_base.var_995
@@ -241,8 +278,11 @@ class ScenarioEngine:
             total_baseline += base_loss
             total_scenario += scen_loss
 
+        # Apply diversification symmetrically to both baseline and scenario so that
+        # the portfolio-level change_pct is not artificially distorted.
+        total_baseline_adj = total_baseline * SEA_DIVERSIFICATION
         total_scenario_adj = total_scenario * SEA_DIVERSIFICATION
-        group_change_pct   = _pct_change(total_baseline, total_scenario_adj)
+        group_change_pct   = _pct_change(total_baseline_adj, total_scenario_adj)
 
         group_driver = (
             max(results, key=lambda r: r.scenario_expected_loss).highest_risk_driver
@@ -252,7 +292,7 @@ class ScenarioEngine:
         return ScenarioResult(
             preset_id           = params.preset_id or "custom",
             facility_type       = "sea",
-            baseline_total_loss = total_baseline,
+            baseline_total_loss = total_baseline_adj,
             scenario_total_loss = total_scenario_adj,
             total_change_pct    = group_change_pct,
             facility_results    = results,
@@ -354,7 +394,7 @@ class ScenarioEngine:
         if params.exposure_factor is not None and params.exposure_factor > 1.2:
             rp.mean_loss_severity *= params.exposure_factor
 
-        if params.operational_factor is not None:
+        if params.operational_factor is not None and abs(params.operational_factor - 1.0) > 0.03:
             rp.expected_annual_events *= params.operational_factor
 
         if params.total_biomass_override is not None:
@@ -362,7 +402,8 @@ class ScenarioEngine:
                 s.biomass_tonnes for s in adjusted.sites
             ) or 1
             ratio = params.total_biomass_override / baseline_biomass
-            rp.mean_loss_severity *= ratio
+            if abs(ratio - 1.0) > 0.001:  # skip trivial rounding
+                rp.mean_loss_severity *= ratio
 
         if params.dissolved_oxygen_mg_l is not None and params.dissolved_oxygen_mg_l < 7.0:
             rp.mean_loss_severity *= 1.5

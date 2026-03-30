@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 
 const DOMAIN_COLOR = '#7C3AED'
-const SITE_IDS = ['DEMO_OP_S01', 'DEMO_OP_S02', 'DEMO_OP_S03']
+const SITE_IDS = ['KH_S01', 'KH_S02', 'KH_S03']
 const SITE_NAMES = {
-  DEMO_OP_S01: 'Frohavet North',
-  DEMO_OP_S02: 'Sunndalsfjord',
-  DEMO_OP_S03: 'Storfjorden South',
+  KH_S01: 'Kornstad',
+  KH_S02: 'Leite',
+  KH_S03: 'Hogsnes',
 }
 const RISK_LABELS = {
   human_error:         'Menneskelig feil',

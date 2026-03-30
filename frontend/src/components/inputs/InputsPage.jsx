@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import SiteProfileForm from './SiteProfileForm.jsx'
 import BiologicalInputsPanel from './BiologicalInputsPanel.jsx'
 import AlertSignalsPanel from './AlertSignalsPanel.jsx'
@@ -7,12 +7,8 @@ import ScenarioOverridePanel from './ScenarioOverridePanel.jsx'
 import StructuralInputsPanel from './StructuralInputsPanel.jsx'
 import EnvironmentalInputsPanel from './EnvironmentalInputsPanel.jsx'
 import OperationalInputsPanel from './OperationalInputsPanel.jsx'
-import {
-  MOCK_SITE_PROFILES,
-  MOCK_BIOLOGICAL_INPUTS,
-  MOCK_ALERT_SIGNALS,
-  MOCK_DATA_QUALITY,
-} from '../../data/mockInputsData.js'
+import { MOCK_BIOLOGICAL_INPUTS } from '../../data/mockInputsData.js'
+import { fetchInputsSnapshot } from '../../api/client.js'
 
 const TABS = [
   { id: 'site',          label: 'Site Profile' },
@@ -28,16 +24,32 @@ const TABS = [
 const TAB_DESCRIPTIONS = {
   site:          'Static site information used as inputs to the risk model.',
   bio:           'Environmental and biological readings per site, recorded or simulated.',
-  structural:    'Structural condition indicators: net age, mooring, deformation, anchors.',
-  environmental: 'Environmental readings: dissolved oxygen, temperature, current, wave height.',
-  operational:   'Operational indicators: staffing, training, incident rate, maintenance backlog.',
+  structural:    'Structural condition indicators derived from the Live Risk model (biofouling, wave load, treatment burden).',
+  environmental: 'Environmental readings derived from the Live Risk feed (O₂, temperature, wave height).',
+  operational:   'Operational indicators derived from treatment burden and operational risk score in the Live Risk model.',
   signals:       'Precursor pattern signals detected by the C5AI+ alert engine.',
   quality:       'Data completeness and confidence indicators per site and risk type.',
   scenario:      'Override baseline inputs to explore alternative risk scenarios.',
 }
 
+const KH_SITES = ['KH_S01', 'KH_S02', 'KH_S03']
+
 export default function InputsPage({ operatorType = 'sea', operator }) {
   const [activeTab, setActiveTab] = useState('site')
+  const [snapshots, setSnapshots] = useState({})
+  const [snapshotsLoading, setSnapshotsLoading] = useState(false)
+
+  useEffect(() => {
+    setSnapshotsLoading(true)
+    Promise.all(KH_SITES.map(id => fetchInputsSnapshot(id)))
+      .then(results => {
+        const map = {}
+        results.forEach(s => { map[s.locality_id] = s })
+        setSnapshots(map)
+      })
+      .catch(() => {})
+      .finally(() => setSnapshotsLoading(false))
+  }, [])
 
   return (
     <div className="inputs-page">
@@ -63,13 +75,13 @@ export default function InputsPage({ operatorType = 'sea', operator }) {
 
       {/* Tab content */}
       <div className="inputs-tab-content">
-        {activeTab === 'site'          && <SiteProfileForm       sites={MOCK_SITE_PROFILES} />}
-        {activeTab === 'bio'           && <BiologicalInputsPanel bioInputs={MOCK_BIOLOGICAL_INPUTS} />}
-        {activeTab === 'structural'    && <StructuralInputsPanel />}
-        {activeTab === 'environmental' && <EnvironmentalInputsPanel />}
-        {activeTab === 'operational'   && <OperationalInputsPanel />}
-        {activeTab === 'signals'       && <AlertSignalsPanel     signals={MOCK_ALERT_SIGNALS} />}
-        {activeTab === 'quality'       && <DataQualityPanel      qualityData={MOCK_DATA_QUALITY} />}
+        {activeTab === 'site'          && <SiteProfileForm />}
+        {activeTab === 'bio'           && <BiologicalInputsPanel bioInputs={MOCK_BIOLOGICAL_INPUTS} snapshots={snapshots} />}
+        {activeTab === 'structural'    && <StructuralInputsPanel    snapshots={snapshots} loading={snapshotsLoading} />}
+        {activeTab === 'environmental' && <EnvironmentalInputsPanel snapshots={snapshots} loading={snapshotsLoading} />}
+        {activeTab === 'operational'   && <OperationalInputsPanel   snapshots={snapshots} loading={snapshotsLoading} />}
+        {activeTab === 'signals'       && <AlertSignalsPanel />}
+        {activeTab === 'quality'       && <DataQualityPanel />}
         {activeTab === 'scenario'      && <ScenarioOverridePanel operatorType={operatorType} operator={operator} />}
       </div>
     </div>

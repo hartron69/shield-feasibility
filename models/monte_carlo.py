@@ -150,6 +150,7 @@ class MonteCarloEngine:
         pre_loaded_forecast=None,   # Optional[RiskForecast] – avoids circular import
         domain_correlation: Optional[DomainCorrelationMatrix] = None,
         cage_multipliers: Optional[Dict[str, float]] = None,
+        non_bio_domain_fracs: Optional[Dict[str, float]] = None,
     ):
         self.operator = operator
         self.n_simulations = n_simulations
@@ -164,6 +165,7 @@ class MonteCarloEngine:
         self.domain_correlation = domain_correlation
         # Cage technology domain multipliers (per-locality portfolio aggregate).
         self.cage_multipliers = cage_multipliers
+        self.non_bio_domain_fracs = non_bio_domain_fracs
 
         rp = operator.risk_params
         self.lam = rp.expected_annual_events
@@ -307,6 +309,7 @@ class MonteCarloEngine:
                     domain_correlation=self.domain_correlation,
                     rng=self.rng,
                     cage_multipliers=self.cage_multipliers,
+                    non_bio_fracs_override=self.non_bio_domain_fracs,
                 )
 
         return SimulationResults(

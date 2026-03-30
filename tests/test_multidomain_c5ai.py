@@ -39,15 +39,15 @@ class TestStructuralInputs:
 
     def test_simulator_known_site(self):
         sim = MockStructuralSimulator()
-        inp = sim.simulate('DEMO_OP_S01')
+        inp = sim.simulate('KH_S01')
         assert isinstance(inp, StructuralSiteInput)
-        assert inp.site_id == 'DEMO_OP_S01'
+        assert inp.site_id == 'KH_S01'
 
     def test_simulator_all_sites(self):
         sim = MockStructuralSimulator()
         all_sites = sim.simulate_all()
         assert len(all_sites) == 3
-        assert 'DEMO_OP_S01' in all_sites
+        assert 'KH_S01' in all_sites
 
     def test_simulator_unknown_site_raises(self):
         with pytest.raises(ValueError):
@@ -94,9 +94,9 @@ class TestEnvironmentalInputs:
 
     def test_simulator_known_site(self):
         sim = MockEnvironmentalSimulator()
-        inp = sim.simulate('DEMO_OP_S02')
+        inp = sim.simulate('KH_S02')
         assert isinstance(inp, EnvironmentalSiteInput)
-        assert inp.site_id == 'DEMO_OP_S02'
+        assert inp.site_id == 'KH_S02'
 
     def test_simulator_all_sites(self):
         all_sites = MockEnvironmentalSimulator().simulate_all()
@@ -142,9 +142,9 @@ class TestOperationalInputs:
 
     def test_simulator_known_site(self):
         sim = MockOperationalSimulator()
-        inp = sim.simulate('DEMO_OP_S03')
+        inp = sim.simulate('KH_S03')
         assert isinstance(inp, OperationalSiteInput)
-        assert inp.site_id == 'DEMO_OP_S03'
+        assert inp.site_id == 'KH_S03'
 
     def test_simulator_all_sites(self):
         assert len(MockOperationalSimulator().simulate_all()) == 3
@@ -221,7 +221,7 @@ class TestStructuralForecaster:
     def test_demo_site_simulation(self):
         sim = MockStructuralSimulator()
         forecaster = StructuralForecaster()
-        inp = sim.simulate('DEMO_OP_S01')
+        inp = sim.simulate('KH_S01')
         forecasts = forecaster.forecast(inp, _META)
         assert len(forecasts) == 5
 
@@ -286,7 +286,7 @@ class TestEnvironmentalForecaster:
     def test_demo_site_simulation(self):
         sim = MockEnvironmentalSimulator()
         forecaster = EnvironmentalForecaster()
-        for sid in ['DEMO_OP_S01', 'DEMO_OP_S02', 'DEMO_OP_S03']:
+        for sid in ['KH_S01', 'KH_S02', 'KH_S03']:
             inp = sim.simulate(sid)
             forecasts = forecaster.forecast(inp, _META)
             assert len(forecasts) == 5
@@ -349,7 +349,7 @@ class TestOperationalForecaster:
 
     def test_demo_site_simulation(self):
         sim = MockOperationalSimulator()
-        for sid in ['DEMO_OP_S01', 'DEMO_OP_S02', 'DEMO_OP_S03']:
+        for sid in ['KH_S01', 'KH_S02', 'KH_S03']:
             inp = sim.simulate(sid)
             forecasts = OperationalForecaster().forecast(inp, _META)
             assert len(forecasts) == 5

@@ -13,6 +13,10 @@ from backend.services.live_risk_feed import (
     get_timeseries,
     get_risk_history,
     get_cage_impact,
+    get_inputs_snapshot,
+    get_pattern_signals,
+    get_data_quality,
+    get_site_profile,
 )
 from backend.services.source_health import get_source_status
 from backend.services.risk_change_explainer import get_change_breakdown
@@ -131,6 +135,51 @@ def locality_confidence(locality_id: str):
     """
     _check_locality(locality_id)
     return compute_confidence(locality_id)
+
+
+@router.get("/localities/{locality_id}/inputs")
+def locality_inputs_snapshot(locality_id: str):
+    """
+    Returns per-domain input snapshots derived from the Live Risk model.
+    Structural, environmental, operational, and biological readings are all
+    computed from the same time-series and risk functions as the live feed —
+    no separate static mock data.
+    """
+    _check_locality(locality_id)
+    return get_inputs_snapshot(locality_id)
+
+
+@router.get("/localities/{locality_id}/site-profile")
+def locality_site_profile(locality_id: str):
+    """
+    Returns the full site profile combining Live Risk config (operator, GPS,
+    exposure), BarentsWatch Akvakulturregisteret fields (MTB, species, license,
+    NIS status), and operator-reported financials. Replaces MOCK_SITE_PROFILES.
+    """
+    _check_locality(locality_id)
+    return get_site_profile(locality_id)
+
+
+@router.get("/localities/{locality_id}/data-quality")
+def locality_data_quality(locality_id: str):
+    """
+    Returns per-risk-type data quality metrics (completeness, confidence, flag,
+    missing fields) derived from the Live Risk feed. Replaces static
+    MOCK_DATA_QUALITY in the Inputs page.
+    """
+    _check_locality(locality_id)
+    return get_data_quality(locality_id)
+
+
+@router.get("/localities/{locality_id}/pattern-signals")
+def locality_pattern_signals(locality_id: str):
+    """
+    Returns PatternDetector signals for the locality computed from Live Risk data.
+    Covers biological (hab, lice, jellyfish, pathogen), structural, environmental,
+    and operational domains. Replaces static MOCK_ALERT_SIGNALS in the Inputs page.
+    """
+    _check_locality(locality_id)
+    return get_pattern_signals(locality_id)
 
 
 @router.get("/localities/{locality_id}/cage-impact")

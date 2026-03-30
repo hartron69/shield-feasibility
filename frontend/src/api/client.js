@@ -170,3 +170,27 @@ export async function fetchLiveRiskEconomics(id, period = '30d') {
   if (!r.ok) throw new Error(`Economics fetch failed: ${r.status}`)
   return r.json()
 }
+
+export async function fetchInputsSnapshot(id) {
+  const r = await fetch(`/api/live-risk/localities/${id}/inputs`)
+  if (!r.ok) throw new Error(`Inputs snapshot fetch failed: ${r.status}`)
+  return r.json()
+}
+
+export async function fetchPatternSignals(id) {
+  const r = await fetch(`/api/live-risk/localities/${id}/pattern-signals`)
+  if (!r.ok) throw new Error(`Pattern signals fetch failed: ${r.status}`)
+  return r.json()
+}
+
+export async function fetchDataQuality(id) {
+  const r = await fetch(`/api/live-risk/localities/${id}/data-quality`)
+  if (!r.ok) throw new Error(`Data quality fetch failed: ${r.status}`)
+  return r.json()
+}
+
+export async function fetchSiteProfile(id) {
+  const r = await fetch(`/api/live-risk/localities/${id}/site-profile`)
+  if (!r.ok) throw new Error(`Site profile fetch failed: ${r.status}`)
+  return r.json()
+}

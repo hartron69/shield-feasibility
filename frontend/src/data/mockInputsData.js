@@ -37,7 +37,7 @@ export const MOCK_SITE_PROFILES = [
     equipment_value_nok:  42_000_000,
     infra_value_nok:      30_000_000,
     annual_revenue_nok:  225_000_000,
-    exposure_factor:     1.15,
+    exposure_factor:     1.10,
     operational_factor:  1.00,
     fjord_exposure:      'semi_exposed',
     lice_pressure_factor: 1.10,

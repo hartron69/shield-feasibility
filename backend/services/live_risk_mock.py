@@ -38,6 +38,14 @@ _LOCALITY_CONFIG: Dict[str, dict] = {
         "region": "Møre og Romsdal",
         "lat": 62.960383, "lon": 7.45015,
         "exposure": 1.15,
+        # ── Site profile (BarentsWatch Akvakulturregisteret) ───────────────
+        "mtb_tonnes":      3900,   # Maks Tillatt Biomasse (regulatory maximum)
+        "biomass_tonnes":  3000,   # current standing biomass
+        "species":         "Atlantisk laks (Salmo salar)",
+        "license_number":  "AK-MR-12855",
+        "start_year":      2019,
+        "nis_certified":   True,
+        # ── Time-series simulation ─────────────────────────────────────────
         "lice_base": 0.42,
         "lice_spike_day": 333,  # 364-333 = 31 days ago
         "lice_spike_mag": 0.8,
@@ -57,6 +65,14 @@ _LOCALITY_CONFIG: Dict[str, dict] = {
         "region": "Møre og Romsdal",
         "lat": 63.03515, "lon": 7.676817,
         "exposure": 1.10,
+        # ── Site profile ───────────────────────────────────────────────────
+        "mtb_tonnes":      3120,
+        "biomass_tonnes":  2500,
+        "species":         "Atlantisk laks (Salmo salar)",
+        "license_number":  "AK-MR-12870",
+        "start_year":      2015,
+        "nis_certified":   True,
+        # ── Time-series simulation ─────────────────────────────────────────
         "lice_base": 0.55,
         "lice_spike_day": 320,  # 364-320 = 44 days ago
         "lice_spike_mag": 1.1,
@@ -76,6 +92,14 @@ _LOCALITY_CONFIG: Dict[str, dict] = {
         "region": "Møre og Romsdal",
         "lat": 63.093033, "lon": 7.675883,
         "exposure": 0.85,
+        # ── Site profile ───────────────────────────────────────────────────
+        "mtb_tonnes":      3600,
+        "biomass_tonnes":  2800,
+        "species":         "Atlantisk laks (Salmo salar)",
+        "license_number":  "AK-MR-12871",
+        "start_year":      2014,
+        "nis_certified":   True,
+        # ── Time-series simulation ─────────────────────────────────────────
         "lice_base": 0.18,
         "lice_spike_day": None,
         "lice_spike_mag": 0.0,

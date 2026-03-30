@@ -321,7 +321,9 @@ class TestScenarioAPIWithSites:
         data = resp.json()
         assert len(data["facility_results"]) == 3
 
-    def test_post_scenario_sea_without_sites_still_works(self):
+    def test_post_scenario_sea_without_sites_uses_kh_portfolio(self):
+        # When no operator/sites are supplied the endpoint falls back to the
+        # KH Live Risk portfolio (Kornstad, Leite, Hogsnes) — 3 facility results.
         payload = {
             "facility_type": "sea",
             "lice_pressure_index": 2.0,
@@ -329,7 +331,11 @@ class TestScenarioAPIWithSites:
         resp = client.post("/api/c5ai/scenario", json=payload)
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data["facility_results"]) == 1
+        assert len(data["facility_results"]) == 3
+        names = [fr["facility_name"] for fr in data["facility_results"]]
+        assert any("Kornstad" in n for n in names)
+        assert any("Leite" in n for n in names)
+        assert any("Hogsnes" in n for n in names)
 
     def test_post_scenario_sea_affected_site_has_positive_change(self):
         resp = client.post("/api/c5ai/scenario", json=THREE_SITES_PAYLOAD)
