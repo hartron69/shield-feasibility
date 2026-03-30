@@ -4,6 +4,11 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – Locality Risk Engine Sprint 1 (2026-03-30)
+**Tests after:** 1940 passed, 0 failed (+82 new) | Frontend build: unchanged (backend-only)
+**Artifacts:** `docs/sprints/sprint_locality_risk_engine/`
+**Summary:** Established `LocalityRiskProfile` as the single source of truth for per-locality risk. New model (`models/locality_risk_profile.py`) with 4 dataclasses: `LocalityRiskProfile`, `DomainRiskScores`, `DomainRiskWeights`, `RiskSourceSummary`. New builder service (`backend/services/locality_risk_builder.py`) with `build_locality_risk_profile(locality_id, cages=None)` and `build_locality_risk_profiles(ids, cages_by_locality=None)` that compose Live Risk feed + confidence scoring + cage weighting without re-implementing their internals. Profile fields: domain_scores (raw 0–100), domain_weights (normalized weighted contributions, sum=1), scale_factors (fixed model weights bio=0.35/struct=0.25/env=0.25/ops=0.15), domain_multipliers (cage-derived or 1.0 defaults), concentration_flags, top_risk_drivers, confidence_level/notes, source_summary, used_defaults. New API router (`backend/api/localities.py`): `GET /api/localities/{id}/risk-profile` and `POST /api/localities/risk-profiles` (batch, partial-failure tolerant). All 3 KH localities tested with known values. 82 new tests across 8 classes. No existing module broken.
+
 ## Sprint – Inputs Live Risk Integration (2026-03-30)
 **Tests after:** 1858 passed, 0 failed | Frontend build: 0 errors, 109 modules
 **Artifacts:** `docs/sprints/sprint_inputs_live_risk_integration/`

@@ -17,6 +17,7 @@ from backend.api.c5ai import router as c5ai_router
 from backend.api.feasibility import router as feasibility_router
 from backend.api.inputs_audit import router as inputs_audit_router
 from backend.api.live_risk import router as live_risk_router
+from backend.api.localities import router as localities_router
 from backend.api.mitigation import router as mitigation_router
 from backend.api.scenario import router as scenario_router
 from backend.api.smolt_feasibility import router as smolt_router
@@ -49,6 +50,7 @@ app.include_router(c5ai_router)
 app.include_router(feasibility_router, prefix="/api/feasibility", tags=["feasibility"])
 app.include_router(inputs_audit_router)
 app.include_router(live_risk_router)
+app.include_router(localities_router)
 app.include_router(mitigation_router, prefix="/api/mitigation", tags=["mitigation"])
 app.include_router(scenario_router)
 app.include_router(smolt_router)
