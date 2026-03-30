@@ -56,6 +56,7 @@ def _minimal_profile() -> LocalityRiskProfile:
         exposure_factor=1.15,
         cage_count=0,
         cage_weighting_mode="none",
+        total_risk_score=28.5,
         domain_scores=_make_scores(),
         domain_weights=DomainRiskWeights(biological=0.5, structural=0.2, environmental=0.2, operational=0.1),
         domain_multipliers={d: 1.0 for d in DOMAINS},
@@ -142,6 +143,15 @@ class TestLocalityRiskProfileSerialisation:
     def test_drift_type_is_sjo(self):
         p = _minimal_profile()
         assert p.drift_type == "sjø"
+
+    def test_total_risk_score_in_to_dict(self):
+        p = _minimal_profile()
+        assert "total_risk_score" in p.to_dict()
+
+    def test_from_dict_preserves_total_risk_score(self):
+        p = _minimal_profile()
+        p2 = LocalityRiskProfile.from_dict(p.to_dict())
+        assert p2.total_risk_score == pytest.approx(28.5)
 
 
 # ── B. Helper functions ─────────────────────────────────────────────────────────
@@ -250,6 +260,22 @@ class TestBuilderStandardLocality:
     def test_drift_type_is_sjo(self, lid):
         p = build_locality_risk_profile(lid)
         assert p.drift_type == "sjø"
+
+    @pytest.mark.parametrize("lid", KH_IDS)
+    def test_total_risk_score_in_valid_range(self, lid):
+        p = build_locality_risk_profile(lid)
+        assert 0.0 <= p.total_risk_score <= 100.0
+
+    @pytest.mark.parametrize("lid", KH_IDS)
+    def test_total_risk_score_consistent_with_domain_scores(self, lid):
+        p = build_locality_risk_profile(lid)
+        expected = (
+            p.domain_scores.biological    * 0.35 +
+            p.domain_scores.structural    * 0.25 +
+            p.domain_scores.environmental * 0.25 +
+            p.domain_scores.operational   * 0.15
+        )
+        assert p.total_risk_score == pytest.approx(expected, abs=0.2)
 
     @pytest.mark.parametrize("lid", KH_IDS)
     def test_biomass_value_derived_from_tonnes(self, lid):
@@ -400,6 +426,7 @@ class TestLocalityRiskProfileAPI:
         resp = client.get("/api/localities/KH_S01/risk-profile")
         d = resp.json()
         assert d["locality_id"] == "KH_S01"
+        assert "total_risk_score" in d
         assert "domain_scores" in d
         assert "domain_weights" in d
         assert "domain_multipliers" in d

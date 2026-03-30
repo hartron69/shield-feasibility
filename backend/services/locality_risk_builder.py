@@ -140,7 +140,8 @@ def build_locality_risk_profile(
         used_defaults.append("domain_multipliers=1.0 (no cage portfolio)")
         used_defaults.append("cage_weighting_mode=none")
 
-    # ── 4. Domain scores ─────────────────────────────────────────────────────
+    # ── 4. Domain scores & total ─────────────────────────────────────────────
+    total_risk_score = float(risk["total"])
     domain_scores = DomainRiskScores(
         biological=float(risk["biological"]),
         structural=float(risk["structural"]),
@@ -188,6 +189,7 @@ def build_locality_risk_profile(
         exposure_factor=cfg["exposure"],
         cage_count=cage_count,
         cage_weighting_mode=cage_weighting_mode,
+        total_risk_score=total_risk_score,
         domain_scores=domain_scores,
         domain_weights=domain_weights,
         domain_multipliers=domain_multipliers,

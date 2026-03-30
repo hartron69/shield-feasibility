@@ -150,6 +150,7 @@ class LocalityRiskProfile:
     cage_weighting_mode: str    # "advanced" | "biomass_only" | "none"
 
     # ── Risk signal ─────────────────────────────────────────────────────────────
+    total_risk_score:   float               # composite 0–100 (weighted sum of domain scores)
     domain_scores:      DomainRiskScores
     domain_weights:     DomainRiskWeights   # normalized contribution fractions
     domain_multipliers: Dict[str, float]    # cage-derived or uniform 1.0 defaults
@@ -183,6 +184,7 @@ class LocalityRiskProfile:
             "exposure_factor":      self.exposure_factor,
             "cage_count":           self.cage_count,
             "cage_weighting_mode":  self.cage_weighting_mode,
+            "total_risk_score":     self.total_risk_score,
             "domain_scores":        self.domain_scores.to_dict(),
             "domain_weights":       self.domain_weights.to_dict(),
             "domain_multipliers":   dict(self.domain_multipliers),
@@ -209,6 +211,7 @@ class LocalityRiskProfile:
             exposure_factor=float(d["exposure_factor"]),
             cage_count=int(d["cage_count"]),
             cage_weighting_mode=d["cage_weighting_mode"],
+            total_risk_score=float(d["total_risk_score"]),
             domain_scores=DomainRiskScores.from_dict(d["domain_scores"]),
             domain_weights=DomainRiskWeights.from_dict(d["domain_weights"]),
             domain_multipliers=dict(d["domain_multipliers"]),
