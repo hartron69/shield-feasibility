@@ -2,6 +2,29 @@ import React, { useState, useEffect, useMemo } from 'react'
 import ConfidenceBadge from './ConfidenceBadge.jsx'
 import { fetchLiveRiskFeed } from '../../api/client.js'
 
+const ILA_VARSEL_STYLE = {
+  'GRØNN': { bg: '#e6f4ea', color: '#2e7d32' },
+  'ILA01': { bg: '#fff8e1', color: '#e65100' },
+  'ILA02': { bg: '#fff3e0', color: '#bf360c' },
+  'ILA03': { bg: '#fce4ec', color: '#b71c1c' },
+  'ILA04': { bg: '#ede7f6', color: '#4a148c' },
+}
+
+function IlaBadge({ varselniva }) {
+  if (!varselniva) return <span style={{ color: '#9ca3af', fontSize: 11 }}>—</span>
+  const s = ILA_VARSEL_STYLE[varselniva] || ILA_VARSEL_STYLE['GRØNN']
+  return (
+    <span style={{
+      background: s.bg, color: s.color,
+      border: `1px solid ${s.color}44`,
+      borderRadius: 10, padding: '2px 8px',
+      fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+    }}>
+      {varselniva}
+    </span>
+  )
+}
+
 // Overview page showing live risk feed for all monitored localities
 
 const FRESHNESS_CONFIG = {
@@ -154,6 +177,7 @@ export default function LiveRiskFeedPage({ onSelectLocality, onFeedRefreshed }) 
   const [filterFreshness, setFilterFreshness]       = useState('all')
   const [filterRiskDirection, setFilterRiskDirection] = useState('all')
   const [selectedRegion, setSelectedRegion]         = useState('all')
+  const [ilaByLocality, setIlaByLocality]           = useState({})
 
   const load = (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -170,6 +194,18 @@ export default function LiveRiskFeedPage({ onSelectLocality, onFeedRefreshed }) 
   }
 
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    fetch('/api/ila/portfolio')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return
+        const map = {}
+        ;(d.lokaliteter || []).forEach(l => { map[l.locality_id] = l.varselniva })
+        setIlaByLocality(map)
+      })
+      .catch(() => {})
+  }, [])
 
   const localities = data?.localities || []
 
@@ -341,7 +377,7 @@ export default function LiveRiskFeedPage({ onSelectLocality, onFeedRefreshed }) 
                 {[
                   'Lokalitet', 'Siste sync', 'Aktive kilder',
                   'Nye datapunkter', 'Risikopoeng', 'Endring 30d',
-                  'Dominant domene', 'Tillit', '',
+                  'Dominant domene', 'ILA', 'Tillit', '',
                 ].map(h => (
                   <th key={h} style={{ padding: '9px 10px', textAlign: 'left', fontWeight: 600, color: '#374151', whiteSpace: 'nowrap' }}>
                     {h}
@@ -392,6 +428,11 @@ export default function LiveRiskFeedPage({ onSelectLocality, onFeedRefreshed }) 
                   {/* Dominant domene */}
                   <td style={{ padding: '9px 10px' }}>
                     {loc.dominant_domain ? <DomainChip domain={loc.dominant_domain} /> : <span style={{ color: '#9ca3af' }}>—</span>}
+                  </td>
+
+                  {/* ILA varselnivå */}
+                  <td style={{ padding: '9px 10px' }}>
+                    <IlaBadge varselniva={ilaByLocality[loc.locality_id]} />
                   </td>
 
                   {/* Tillit */}

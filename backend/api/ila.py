@@ -14,7 +14,11 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 
 from backend.services.live_risk_mock import get_all_locality_ids
-from c5ai_plus.biological.ila.input_builder import bygg_mre1_input, hent_ila_profil
+from c5ai_plus.biological.ila.input_builder import (
+    bygg_mre1_input,
+    bygg_mre2_e0,
+    hent_ila_profil,
+)
 from c5ai_plus.biological.ila.mre1 import kjor_mre1
 from c5ai_plus.biological.ila.mre2 import kjor_mre2
 
@@ -79,9 +83,11 @@ def get_ila_mre2(
     if not (4 <= sesong_uker <= 104):
         raise HTTPException(status_code=422, detail="sesong_uker must be 4–104.")
 
+    e0 = bygg_mre2_e0(locality_id)
     uker = kjor_mre2(
         sesong_uker=sesong_uker,
         hpr0_tetthet=profil["hpr0_tetthet"],
+        e0=e0,
     )
 
     return {

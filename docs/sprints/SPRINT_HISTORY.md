@@ -4,6 +4,11 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – ILA Live Data Integration (2026-04-02)
+**Tests after:** 2116 passed, 0 failed (unchanged) | Frontend: 109 modules, 0 errors (+1 file)
+**Artifacts:** `docs/sprints/sprint_ila_live_data/`
+**Summary:** Wired ILA motor inputs to live operational data. `input_builder.py` rewritten: `biomasse_tetthet_norm` = `biomass_tonnes/mtb_tonnes`; `stressniva_norm` = 7-day weighted composite (lice 0.30, temp 0.15, O₂ 0.35, treatment 0.20); `antall_nabo_med_ila` from neighbor disease flags; `i_fraksjon_naboer` from neighbor lice proxy; `e0` for MRE-2 from disease flag recency (7d→0.03, 21d→0.01). New neighbor group map covers KH_S01/02/03 and LM_S01. `backend/api/ila.py` updated: MRE-2 endpoint now calls `bygg_mre2_e0()` and passes `e0` to SEIR motor. `LiveRiskFeedPage.jsx` gains "ILA" column: fetches `/api/ila/portfolio` on mount, renders `IlaBadge` per row (GRØNN/ILA01–ILA04).
+
 ## Sprint – ILA Risk Module (2026-04-02)
 **Tests after:** 2116 passed, 0 failed (+68 new) | Frontend: 108 modules, 0 errors (+2 files)
 **Artifacts:** `docs/sprints/sprint_ila_risk_module/`
