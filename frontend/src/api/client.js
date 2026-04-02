@@ -194,3 +194,14 @@ export async function fetchSiteProfile(id) {
   if (!r.ok) throw new Error(`Site profile fetch failed: ${r.status}`)
   return r.json()
 }
+
+// ── Locality Monte Carlo ────────────────────────────────────────────────────
+
+export async function fetchLocalityMC(id, nSimulations = 5000) {
+  const r = await fetch(`/api/localities/${id}/mc?n_simulations=${nSimulations}`)
+  if (!r.ok) {
+    const text = await r.text()
+    throw new Error(`MC simulation failed (${r.status}): ${text}`)
+  }
+  return r.json()
+}

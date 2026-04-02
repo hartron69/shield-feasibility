@@ -4,6 +4,16 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – ILA Risk Module (2026-04-02)
+**Tests after:** 2116 passed, 0 failed (+68 new) | Frontend: 108 modules, 0 errors (+2 files)
+**Artifacts:** `docs/sprints/sprint_ila_risk_module/`
+**Summary:** Integrated ILA (Infeksiøs lakseanemi) risk models as a new sub-module of the C5AI+ v5.0 biological domain. New `c5ai_plus/biological/ila/` package: `mre1.py` (7-source instantaneous P_total snapshot ported from `/reference/mre_full_comparison.py`), `mre2.py` (52-week SEIR seasonal hazard model ported from `/reference/mre2_progression.py`), `patogen_kobling.py` (blends ILA P_total into existing C5AI+ pathogen prior, vekt=0.60, cap=0.70), `input_builder.py` (mock profiles for KH_S01/02/03 and LM_S01). New API: `GET /api/ila/{id}/mre1`, `GET /api/ila/{id}/mre2`, `GET /api/ila/portfolio`. Frontend: `ILARiskTab.jsx` with varselnivå-header (ILA01–ILA04), source attribution table with bar charts, pure SVG 52-week seasonal curve with threshold bands, SEIR badge; wired as "ILA-risiko" tab (9th) in `LocalityLiveRiskPage`. 68 new tests across 5 files. DB/Celery components (ORM models, Alembic, Celery tasks, auth) documented and ready for production DB integration.
+
+## Sprint – Locality Monte Carlo Integration Sprint 2 (2026-03-30)
+**Tests after:** 2048 passed, 0 failed (+97 new) | Frontend: 107 modules, 0 errors (+3 files)
+**Artifacts:** `docs/sprints/sprint_locality_mc_integration/`
+**Summary:** Bridged `LocalityRiskProfile` (Sprint 1) into the existing `MonteCarloEngine` for per-locality stochastic loss distributions. New `models/locality_mc_inputs.py`: `build_locality_mc_inputs()` translates profile into `LocalityMonteCarloInput` via sigmoid score multipliers (freq range 0.40–1.60, sev range 0.70–1.30, both neutral at score=50), domain-weighted multiplier blends (bio/env/ops → freq; struct/ops/bio → sev), and `non_bio_domain_fracs` from `domain_weights`. New `backend/services/locality_mc_runner.py`: `LocalityMCResult` with EAL, SCR (VaR 99.5%), VaR 95/99, TVaR 95, std, domain_eal_nok, domain_fractions, transparency fields; `run_locality_mc()` and `run_locality_mc_batch()`. New API: `GET /api/localities/{id}/mc?n_simulations=5000` and `POST /api/localities/mc-batch`. Frontend: `LocalityMCPanel.jsx` with KPI cards, pure SVG stacked domain bar, collapsible transparency table; wired as "Tap (MC)" tab in `LocalityLiveRiskPage.jsx`. 97 new tests across 10 classes including monotonicity and KH known-value range checks.
+
 ## Sprint – Locality Risk Engine Sprint 1 (2026-03-30)
 **Tests after:** 1940 passed, 0 failed (+82 new) | Frontend build: unchanged (backend-only)
 **Artifacts:** `docs/sprints/sprint_locality_risk_engine/`

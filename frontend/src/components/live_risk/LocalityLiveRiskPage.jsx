@@ -6,6 +6,8 @@ import RiskChangeBreakdownPanel from './RiskChangeBreakdownPanel.jsx'
 import SourceStatusPanel from './SourceStatusPanel.jsx'
 import RiskEventsTimeline from './RiskEventsTimeline.jsx'
 import EconomicsTab from './EconomicsTab.jsx'
+import LocalityMCPanel from './LocalityMCPanel.jsx'
+import ILARiskTab from './ILARiskTab.jsx'
 import {
   fetchLiveRiskLocality,
   fetchLiveRiskTimeseries,
@@ -35,6 +37,8 @@ const TABS = [
   { key: 'events',     label: 'Hendelser' },
   { key: 'confidence', label: 'Tillit' },
   { key: 'economics',  label: 'Økonomi' },
+  { key: 'mc',         label: 'Tap (MC)' },
+  { key: 'ila',        label: 'ILA-risiko' },
 ]
 
 const DOMAIN_COLORS = {
@@ -309,6 +313,12 @@ export default function LocalityLiveRiskPage({ localityId, onBack }) {
         if (loading.economics) return <LoadingBlock label="økonomidata" />
         if (errors.economics) return <ErrorBlock label="økonomidata" error={errors.economics} />
         return <EconomicsTab economics={economics} />
+
+      case 'mc':
+        return <LocalityMCPanel localityId={localityId} />
+
+      case 'ila':
+        return <ILARiskTab localityId={localityId} />
 
       default:
         return null
