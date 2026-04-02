@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
 
 from backend.services.live_risk_mock import get_all_locality_ids
+from backend.services.norshelf_adapter import get_norshelf
 from c5ai_plus.biological.ila.input_builder import (
     bygg_mre1_input,
     bygg_mre2_e0,
@@ -53,10 +54,17 @@ def get_ila_mre1(locality_id: str) -> Dict[str, Any]:
     ila_input = bygg_mre1_input(locality_id)
     resultat  = kjor_mre1(ila_input, biomasse_verdi_mnok=profil["biomasse_verdi_mnok"])
 
+    # NorShelf DQI — hent uten ekstra BW-kall (cache er allerede populert av input_builder)
+    from backend.services.live_risk_mock import get_locality_config
+    cfg = get_locality_config(locality_id)
+    norshelf = get_norshelf(cfg.get("lat", 63.0), cfg.get("lon", 7.5))
+
     return {
         "locality_id":        locality_id,
         "ila_sone":           profil.get("ila_sone", "fri"),
         "hpr0_tetthet":       profil["hpr0_tetthet"],
+        "norshelf_dqi":       norshelf.dqi,
+        "norshelf":           norshelf.to_dict(),
         **resultat.to_dict(),
     }
 

@@ -4,6 +4,11 @@ Sprints are listed chronologically. Each entry links to the full sprint artifact
 
 ---
 
+## Sprint – NorShelf Adapter — BW Havdata til ILA Motor (2026-04-03)
+**Tests after:** 2153 passed, 0 failed (+37 new) | Frontend: 109 modules, 0 errors
+**Artifacts:** `docs/sprints/sprint_norshelf_adapter/`
+**Summary:** New `backend/services/norshelf_adapter.py` — fetches u/v currents, T_water, and Hs from BW NorShelf (`/v2/geodata/ocean/currents`, `/v2/geodata/ocean/temperature`, `/v2/geodata/weather/wave`). Re-uses BW OAuth2 token from `barentswatch_client.py`. In-process cache keyed by (lat, lon) at 2-decimal precision (~1 km grid). DQI: 1=live (<55 min), 2=stale cache (55 min–6 h), 3=fallback (climatological defaults for Møre og Romsdal, April). Parsers tolerate list/point response and alternative BW field names. `input_builder._compute_stressniva()` gains 5th component `bolge_stress` (0.15 weight) from NorShelf Hs; `temp_stress` now prefers NorShelf T_water over mock temperature (DQI≤2). `_compute_nabo_smittepress()` multiplies `i_fraksjon_naboer` by current_factor ∈ [1.0, 2.0] based on `sqrt(u²+v²)` — high current (≥0.3 m/s) doubles HPR0 transport from neighbours. MRE-1 API response now includes `norshelf_dqi` and full `norshelf` dict. 37 new tests covering DQI transitions, parsers, fallback, cache refresh, and integration with input_builder.
+
 ## Sprint – ILA Live Data Integration (2026-04-02)
 **Tests after:** 2116 passed, 0 failed (unchanged) | Frontend: 109 modules, 0 errors (+1 file)
 **Artifacts:** `docs/sprints/sprint_ila_live_data/`
