@@ -195,6 +195,14 @@ export async function fetchSiteProfile(id) {
   return r.json()
 }
 
+// ── NorShelf ocean time series ─────────────────────────────────────────────
+
+export async function fetchLiveRiskOcean(id, period = '30d') {
+  const r = await fetch(`/api/live-risk/localities/${id}/ocean?period=${period}`)
+  if (!r.ok) throw new Error(`Ocean data fetch failed: ${r.status}`)
+  return r.json()
+}
+
 // ── Locality Monte Carlo ────────────────────────────────────────────────────
 
 export async function fetchLocalityMC(id, nSimulations = 5000) {

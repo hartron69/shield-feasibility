@@ -17,6 +17,7 @@ from backend.services.live_risk_feed import (
     get_pattern_signals,
     get_data_quality,
     get_site_profile,
+    get_ocean_timeseries,
 )
 from backend.services.source_health import get_source_status
 from backend.services.risk_change_explainer import get_change_breakdown
@@ -190,6 +191,21 @@ def locality_cage_impact(locality_id: str):
     """
     _check_locality(locality_id)
     return get_cage_impact(locality_id)
+
+
+@router.get("/localities/{locality_id}/ocean")
+def locality_ocean(
+    locality_id: str,
+    period: str = Query(default="30d", description="Time window: 7d, 30d, 90d, 12m"),
+):
+    """
+    Returns NorShelf oceanographic time series: t_water, Hs, current u/v/speed.
+    Last data point is annotated with live NorShelf reading (DQI=1/2) when
+    BW credentials are available; otherwise fully synthetic (DQI=3).
+    """
+    _check_locality(locality_id)
+    _check_period(period)
+    return get_ocean_timeseries(locality_id, period)
 
 
 @router.get("/localities/{locality_id}/economics")

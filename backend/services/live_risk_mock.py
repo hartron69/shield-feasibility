@@ -132,6 +132,14 @@ _LOCALITY_CONFIG: Dict[str, dict] = {
     },
 }
 
+# ── Ocean / NorShelf generation constants ─────────────────────────────────────
+# Derived per-locality from exposure factor — no need to repeat in _LOCALITY_CONFIG.
+#   hs_base   = Hs at summer minimum (m)
+#   hs_amp    = seasonal half-amplitude (m); winter peak ≈ base + amp
+#   u_base    = mean eastward current (m/s)
+#   v_base    = mean northward current (m/s)  [Norwegian Coastal Current is northward]
+
+
 _SOURCE_DEFINITIONS = [
     {"source_id": "bw_lice",         "source_name": "BW Lakselus",        "source_type": "BarentsWatch"},
     {"source_id": "bw_disease",      "source_name": "BW Sykdomsstatus",   "source_type": "BarentsWatch"},
@@ -256,6 +264,92 @@ def _gen_treatment(lice: List[Optional[float]], disease: List[int]) -> List[int]
     return result
 
 
+# ── NorShelf oceanographic generators ─────────────────────────────────────────
+
+def _ocean_params(cfg: dict) -> dict:
+    """Derive ocean generation parameters from locality exposure."""
+    exp = cfg["exposure"]
+    return {
+        "hs_base":  round(0.35 * exp, 3),          # summer minimum Hs (m)
+        "hs_amp":   round(0.90 * exp, 3),           # seasonal amplitude (m)
+        "u_base":   round(0.05 + 0.06 * exp, 4),   # mean eastward current (m/s)
+        "v_base":   round(0.03 + 0.05 * exp, 4),   # mean northward current (m/s)
+    }
+
+
+def _gen_t_water(cfg: dict, rng: np.random.Generator) -> list:
+    """
+    NorShelf ocean temperature time series (°C).
+
+    Smoother and ~0.8°C cooler than surface air-influenced temperature.
+    Day 0 = late March; seasonal min in Feb (~day 330), max in Aug (~day 130).
+    """
+    base = cfg["temp_base"] - 0.8
+    amp  = cfg["temp_amp"]  * 0.85
+    vals = []
+    for d in range(DAYS):
+        seasonal = amp * math.sin(2 * math.pi * (d - 28) / 365)
+        noise    = rng.normal(0, 0.15)            # low noise — ocean buffering
+        vals.append(round(base + seasonal + noise, 2))
+    return vals
+
+
+def _gen_hs(cfg: dict, rng: np.random.Generator) -> list:
+    """
+    Significant wave height (m) — seasonal with winter peak (~day 280, late Dec).
+
+    Uses Gamma noise (right-skewed) to mimic realistic wave height distribution.
+    Short calm spells and occasional storm peaks.
+    """
+    op = _ocean_params(cfg)
+    hs_base = op["hs_base"]
+    hs_amp  = op["hs_amp"]
+    vals = []
+    for d in range(DAYS):
+        # Cosine: peak in winter (d~280), trough in summer (d~100)
+        seasonal  = hs_amp * (1 + math.cos(2 * math.pi * (d - 280) / 365)) / 2
+        # Right-skewed noise via Gamma(shape=2, scale=0.12)
+        noise     = rng.gamma(2, 0.10) - 0.20      # mean≈0, right tail for storms
+        raw       = hs_base + seasonal + noise
+        vals.append(round(max(0.05, raw), 2))
+    return vals
+
+
+def _gen_current_u(cfg: dict, rng: np.random.Generator) -> list:
+    """
+    Eastward current component u (m/s).
+
+    Positive = eastward. Norwegian coastal regime: slightly positive (inshore flow).
+    Seasonal peak in spring when snowmelt adds freshwater and increases coastal jet.
+    """
+    op = _ocean_params(cfg)
+    u_base = op["u_base"]
+    vals = []
+    for d in range(DAYS):
+        # Spring peak ~day 60 (late May after snowmelt)
+        seasonal = 0.04 * math.sin(2 * math.pi * (d - 60) / 365)
+        noise    = rng.normal(0, 0.05)
+        vals.append(round(u_base + seasonal + noise, 4))
+    return vals
+
+
+def _gen_current_v(cfg: dict, rng: np.random.Generator) -> list:
+    """
+    Northward current component v (m/s).
+
+    Positive = northward. The Norwegian Coastal Current flows northward.
+    Stronger in spring/early summer due to freshwater input.
+    """
+    op = _ocean_params(cfg)
+    v_base = op["v_base"]
+    vals = []
+    for d in range(DAYS):
+        seasonal = 0.03 * math.sin(2 * math.pi * (d - 50) / 365)
+        noise    = rng.normal(0, 0.04)
+        vals.append(round(v_base + seasonal + noise, 4))
+    return vals
+
+
 # ── Risk score derivation ──────────────────────────────────────────────────────
 
 def _compute_risk(
@@ -332,6 +426,12 @@ def _build_locality_data(locality_id: str) -> dict:
     treatment = _gen_treatment(lice, disease)
     risk_scores = _compute_risk(lice, disease, temperature, oxygen, treatment, cfg)
 
+    # NorShelf oceanographic time series
+    t_water   = _gen_t_water(cfg, rng)
+    hs        = _gen_hs(cfg, rng)
+    current_u = _gen_current_u(cfg, rng)
+    current_v = _gen_current_v(cfg, rng)
+
     timestamps = [_days_back(d) for d in range(DAYS)]
 
     return {
@@ -344,6 +444,11 @@ def _build_locality_data(locality_id: str) -> dict:
         "disease": disease,
         "treatment": treatment,
         "risk_scores": risk_scores,
+        # NorShelf ocean parameters
+        "t_water":   t_water,
+        "hs":        hs,
+        "current_u": current_u,
+        "current_v": current_v,
     }
 
 

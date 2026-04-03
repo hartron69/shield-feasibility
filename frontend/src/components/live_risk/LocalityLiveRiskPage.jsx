@@ -8,6 +8,7 @@ import RiskEventsTimeline from './RiskEventsTimeline.jsx'
 import EconomicsTab from './EconomicsTab.jsx'
 import LocalityMCPanel from './LocalityMCPanel.jsx'
 import ILARiskTab from './ILARiskTab.jsx'
+import OceanDataTab from './OceanDataTab.jsx'
 import {
   fetchLiveRiskLocality,
   fetchLiveRiskTimeseries,
@@ -39,6 +40,7 @@ const TABS = [
   { key: 'economics',  label: 'Økonomi' },
   { key: 'mc',         label: 'Tap (MC)' },
   { key: 'ila',        label: 'ILA-risiko' },
+  { key: 'ocean',      label: 'Havmiljø' },
 ]
 
 const DOMAIN_COLORS = {
@@ -319,6 +321,9 @@ export default function LocalityLiveRiskPage({ localityId, onBack }) {
 
       case 'ila':
         return <ILARiskTab localityId={localityId} />
+
+      case 'ocean':
+        return <OceanDataTab localityId={localityId} period={period} />
 
       default:
         return null

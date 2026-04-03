@@ -233,6 +233,104 @@ def get_timeseries(locality_id: str, period: str = "30d") -> dict:
     }
 
 
+def get_ocean_timeseries(locality_id: str, period: str = "30d") -> dict:
+    """
+    Returns NorShelf oceanographic time series for the locality:
+      t_water    — ocean temperature (°C)
+      hs         — significant wave height (m)
+      current_u  — eastward current u (m/s)
+      current_v  — northward current v (m/s)
+      current_speed — |u,v| derived (m/s)
+
+    The last data point is annotated with the live NorShelf DQI when credentials
+    are available; otherwise the series is fully synthetic (DQI=3).
+    """
+    import math as _math
+    from backend.services.norshelf_adapter import get_norshelf
+
+    data = get_locality_data(locality_id)
+    cfg  = get_locality_config(locality_id)
+    sliced_ts, start_idx = slice_by_period(data["timestamps"], period)
+    n = len(sliced_ts)
+    last_i = n - 1
+
+    # Fetch NorShelf (uses cache — no extra BW call if input_builder already ran)
+    norshelf = get_norshelf(cfg.get("lat", 63.0), cfg.get("lon", 7.5))
+    norshelf_dqi = norshelf.dqi
+
+    def _make_ocean_series(param: str, values: list, label: str, unit: str,
+                           color: str, threshold=None, norshelf_val=None):
+        points = []
+        for i, ts in enumerate(sliced_ts):
+            raw = values[start_idx + i]
+            is_last = (i == last_i)
+            if is_last and norshelf_val is not None and norshelf_dqi <= 2:
+                # Override last point with live NorShelf reading
+                val = round(norshelf_val, 4)
+                quality = "observed"
+                source = f"NorShelf (DQI={norshelf_dqi})"
+            else:
+                val = raw
+                quality = "estimated"
+                source = "NorShelf (syntetisk)"
+            points.append({
+                "timestamp": ts.isoformat(),
+                "value": val,
+                "quality": quality,
+                "source": source,
+            })
+        return {
+            "parameter": param, "label": label, "unit": unit,
+            "color": color, "threshold": threshold,
+            "chart_type": "line", "points": points,
+        }
+
+    # Derived current speed series
+    u_vals = data["current_u"]
+    v_vals = data["current_v"]
+    speed_vals = [
+        round(_math.sqrt(u**2 + v**2), 4)
+        for u, v in zip(u_vals, v_vals)
+    ]
+    ns_speed = norshelf.current_speed() if norshelf_dqi <= 2 else None
+
+    return {
+        "locality_id": locality_id,
+        "locality_name": cfg["name"],
+        "period": period,
+        "norshelf_dqi": norshelf_dqi,
+        "norshelf": norshelf.to_dict() if norshelf_dqi <= 2 else None,
+        "ocean_data": [
+            _make_ocean_series(
+                "t_water", data["t_water"],
+                "Havtemperatur (NorShelf)", "°C", "#0ea5e9",
+                threshold=14.0, norshelf_val=norshelf.t_water,
+            ),
+            _make_ocean_series(
+                "hs", data["hs"],
+                "Signifikant bølgehøyde Hs", "m", "#7c3aed",
+                threshold=2.0, norshelf_val=norshelf.hs,
+            ),
+            _make_ocean_series(
+                "current_speed", speed_vals,
+                "Strømhastighet |u,v|", "m/s", "#059669",
+                threshold=0.3, norshelf_val=ns_speed,
+            ),
+            _make_ocean_series(
+                "current_u", data["current_u"],
+                "Strøm Øst (u)", "m/s", "#d97706",
+                norshelf_val=norshelf.u,
+            ),
+            _make_ocean_series(
+                "current_v", data["current_v"],
+                "Strøm Nord (v)", "m/s", "#db2777",
+                norshelf_val=norshelf.v,
+            ),
+        ],
+        "available_periods": ["7d", "30d", "90d", "12m"],
+    }
+
+
 def get_risk_history(locality_id: str, period: str = "30d") -> dict:
     data = get_locality_data(locality_id)
     sliced_ts, start_idx = slice_by_period(data["timestamps"], period)
