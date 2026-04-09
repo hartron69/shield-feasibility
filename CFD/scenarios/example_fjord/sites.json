@@ -1,0 +1,60 @@
+
+{
+  "sites": [
+    {
+      "site_id": "SITE_A",
+      "name": "Anlegg A (vest)",
+      "x": -100.0,
+      "y": 0.0,
+      "site_type": "production",
+      "lat": 0.0,
+      "lon": 0.0,
+      "nets": [
+        {
+          "name": "A-Not 1",
+          "center_offset": [
+            -30.0,
+            0.0
+          ],
+          "radius": 25.0,
+          "depth": 5.0,
+          "solidity": 0.25,
+          "Cr": 0.8
+        },
+        {
+          "name": "A-Not 2",
+          "center_offset": [
+            30.0,
+            0.0
+          ],
+          "radius": 25.0,
+          "depth": 5.0,
+          "solidity": 0.6,
+          "Cr": 0.8
+        }
+      ]
+    },
+    {
+      "site_id": "SITE_B",
+      "name": "Anlegg B (øst)",
+      "x": 150.0,
+      "y": 15.0,
+      "site_type": "production",
+      "lat": 0.0,
+      "lon": 0.0,
+      "nets": [
+        {
+          "name": "B-Not 1",
+          "center_offset": [
+            0.0,
+            0.0
+          ],
+          "radius": 25.0,
+          "depth": 5.0,
+          "solidity": 0.95,
+          "Cr": 0.8
+        }
+      ]
+    }
+  ]
+}

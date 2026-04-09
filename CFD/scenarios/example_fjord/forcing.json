@@ -1,0 +1,11 @@
+{
+  "mode": "timeseries",
+  "cases": [
+    "langs",
+    "tverrs",
+    "diagonal"
+  ],
+  "U_inf": 0.5,
+  "timeseries_file": "currents.csv",
+  "_comment": "Set mode to 'timeseries' to use currents.csv instead of named cases"
+}

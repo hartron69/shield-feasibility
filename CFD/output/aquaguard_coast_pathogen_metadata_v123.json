@@ -1,0 +1,108 @@
+{
+  "version": "v1.23",
+  "case": "three_nets_coastline_pathogen_v1.23_risk_autocal",
+  "coast": {
+    "y_coast_m": -151.22222222222223,
+    "type": "polyline",
+    "n_segments": 8
+  },
+  "coast_y_m": -151.22222222222223,
+  "biology": {
+    "enabled": true,
+    "base_inactivation_rate_1_s": 0.0005,
+    "effective_inactivation_rate_1_s": 0.0005,
+    "temperature_c": 10.0,
+    "reference_temperature_c": 10.0,
+    "q10_inactivation": 1.5,
+    "uv_inactivation_factor": 1.0,
+    "species_infectivity_factor": 1.0,
+    "minimum_infectivity": 0.001
+  },
+  "risk_thresholds": {
+    "arrival_alarm_threshold_s": 900.0,
+    "exposure_alarm_threshold_mass_seconds": 80.0,
+    "yellow_arrival_threshold_s": 1200.0,
+    "yellow_peak_risk_concentration": 0.01,
+    "yellow_exposure_threshold_mass_seconds": 40.0,
+    "red_arrival_threshold_s": 600.0,
+    "red_peak_risk_concentration": 0.025,
+    "red_exposure_threshold_mass_seconds": 100.0,
+    "no_arrival_means_green": true,
+    "auto_calibrate_from_first_case": true,
+    "baseline_case_name": "langs",
+    "baseline_peak_reference": "max",
+    "baseline_exposure_reference": "max",
+    "yellow_peak_factor": 1.5,
+    "red_peak_factor": 2.5,
+    "yellow_exposure_factor": 1.5,
+    "red_exposure_factor": 2.5,
+    "baseline_min_peak": 0.002,
+    "baseline_min_exposure": 10.0
+  },
+  "nets": [
+    {
+      "name": "A-Not 1",
+      "center": [
+        -130.0,
+        0.0
+      ],
+      "diameter_m": 50.0,
+      "depth_m": 5.0,
+      "soliditet": 0.25,
+      "beta": 0.8
+    },
+    {
+      "name": "A-Not 2",
+      "center": [
+        -70.0,
+        0.0
+      ],
+      "diameter_m": 50.0,
+      "depth_m": 5.0,
+      "soliditet": 0.6,
+      "beta": 0.52
+    },
+    {
+      "name": "B-Not 1",
+      "center": [
+        150.0,
+        15.0
+      ],
+      "diameter_m": 50.0,
+      "depth_m": 5.0,
+      "soliditet": 0.95,
+      "beta": 0.24
+    }
+  ],
+  "risk_baseline": {
+    "baseline_case_name": "langs",
+    "peak_baseline": 0.020119084102581966,
+    "exposure_baseline": 990.062197053111,
+    "baseline_peak_reference": "max",
+    "baseline_exposure_reference": "max",
+    "yellow_peak_factor": 1.5,
+    "red_peak_factor": 2.5,
+    "yellow_exposure_factor": 1.5,
+    "red_exposure_factor": 2.5,
+    "yellow_peak_risk_concentration": 0.03017862615387295,
+    "red_peak_risk_concentration": 0.050297710256454915,
+    "yellow_exposure_threshold_mass_seconds": 1485.0932955796666,
+    "red_exposure_threshold_mass_seconds": 2475.1554926327776,
+    "exposure_alarm_threshold_mass_seconds": 2475.1554926327776,
+    "previous_thresholds": {
+      "yellow_peak_risk_concentration": 0.01,
+      "red_peak_risk_concentration": 0.025,
+      "yellow_exposure_threshold_mass_seconds": 40.0,
+      "red_exposure_threshold_mass_seconds": 100.0,
+      "exposure_alarm_threshold_mass_seconds": 80.0
+    }
+  },
+  "outputs": [
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_langs_7samples_v123.png",
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_langs_concentration_v123.png",
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_langs_risk_v123.png",
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_langs_timeseries_v123.csv",
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_summary_v123.csv",
+    "C:\\Users\\haral\\dev\\shield-feasibility\\CFD\\output\\aquaguard_coast_pathogen_risk_heatmap_v123.png"
+  ]
+}

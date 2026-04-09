@@ -1,0 +1,9 @@
+# Generated simulation outputs
+scenarios/*/output/
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
